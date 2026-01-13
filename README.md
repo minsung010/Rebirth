@@ -1,61 +1,75 @@
-# 🌱 Re:birth (리버스) - 지속 가능한 패션 플랫폼
+# 🌱 Re:birth (리버스) - 지속 가능한 의류 순환 관리 시스템
 
-> "옷 한 벌에 담긴 2,700리터의 물과 2.6kg의 탄소를 지킵니다."
+> **"안 입는 옷은 버리지 말고 순환시키자. 환경과 지갑을 모두 살리는 스마트 옷장 플랫폼."**
 
-**Re:birth**는 입지 않는 옷을 공유하고, AI 기술을 통해 새로운 가치를 발견하며, 지속 가능한 패션 라이프스타일을 제안하는 플랫폼입니다.
+**Re:birth**는 탄소 배출 절감과 의류 과소비 방지를 목표로 하는 **의류 순환(Re:Store) 및 체계적 디지털 관리 플랫폼**입니다.
+옷장에 방치된 의류를 자산으로 전환하고, AI 기술을 통해 나에게 딱 맞는 패션 라이프를 제안합니다.
 
 ---
 
-## 🚀 프로젝트 소개 (Overview)
+## 🚀 프로젝트 개요 (Overview)
 
-패션 산업은 전 세계 온실가스 배출량의 약 10%를 차지합니다. 우리는 '옷장 속에 잠든 옷'을 깨워 자원 순환을 돕고, 환경 보호를 실천하고자 합니다.
-
-*   **Period**: 2024.12 ~ 2025.01 (약 2개월)
-*   **Team**: 1인 개발 (Full Stack)
+*   **Period**: 2024.12.19 ~ 2025.01.24 (약 1개월)
+*   **Team**: 6명 (Backend 5, AI 1)
 *   **Keywords**: `Spring Boot`, `AI Agent`, `RAG`, `Vector Search`, `3D WebGL`, `Sustainability`
+*   **Repository**: [GitHub Link](https://github.com/minsung010/Rebirth.git)
+
+---
+
+## 👥 팀원 역할 (Team Roles)
+
+총 6명의 팀원이 각자의 전문 분야를 맡아 프로젝트를 완성했습니다.
+
+| 역할 | 담당 업무 상세 |
+| --- | --- |
+| **팀장 (PM)** | 프로젝트 일정 관리, 발표 자료(PPT) 제작 및 최종 발표 |
+| **AI/Backend (Main)** | **RAG 챗봇** 개발, **Milvus 벡터 DB** 구축, **Gemini API** 연동, **3D 마네킹(Three.js)** 구현, OOTD 캘린더, 마켓 중고 거래 로직 및 UI |
+| **Backend** | **마이페이지** 전반, 랭킹 시스템(활동왕), 에코 포인트 사용/적립 로직 구현 |
+| **Backend** | **마켓(Re:Store) UI/UX**, **실시간 채팅(WebSocket)**, **Spring Security & OAuth2** (소셜 로그인), 폐의류 수거/기부 프로세스 구현 |
+| **AI/Backend** | **AI 의류 분석 모델링(YOLO)**, **OCR** (라벨 인식 및 소재 추출), 데이터 수집 및 전처리 |
+| **Backend** | 고객센터(**공지사항/FAQ**) 게시판 구현, 메인 홈 화면 UI 및 기능 개발 |
 
 ---
 
 ## 🛠 사용 기술 (Tech Stack)
 
 ### Backend
-*   **Java 17** / **Spring Boot 3.x**
-*   **MyBatis** / **Oracle Database** (Main Memory)
-*   **Milvus 2.3** (Vector Database)
-*   **Spring Security & OAuth2** (Kakao, Naver, Google Login)
+*   **Language**: Java 17
+*   **Framework**: Spring Boot 3.x (STS4), Spring Security, MyBatis
+*   **Database**: Oracle Database 19c (Main), Redis (Caching)
+*   **Communication**: WebSocket (STOMP)
 
 ### AI & Data
-*   **LLM Engine**: `Groq LPU` + `Llama 3.3 70B` (Real-time Chat)
-*   **Embedding**: `Google Gemini text-embedding-004`
-*   **External APIs**:
-    *   `Kakao Maps API` (Geocoding & Maps)
-    *   `기상청 단기예보 API` (Weather)
+*   **Engines**: `Groq LPU` (Llama 3.3), `Google Gemini Pro` (Multimodal/Embedding)
+*   **Models**: Custom YOLOv8 (AI Hub 폐의류 데이터 학습), Tesseract OCR
+*   **Vector DB**: `Milvus 2.3` (Hybrid Search)
+*   **External APIs**: `Kakao Maps/Geocoding`, `기상청 단기예보 API`
 
-### Frontend
-*   **HTML/CSS/JS** (Thymeleaf)
-*   **Three.js** (3D Rendering)
-*   **FullCalendar** (Scheduling)
-*   **TailwindCSS**
+### Frontend & 3D
+*   **Web**: Thymeleaf, HTML5, CSS3, JavaScript (ES6+), TailwindCSS
+*   **3D/Visualization**: `Three.js` (WebGL), `Blender` (Modeling), `FullCalendar`
 
 ---
 
 ## 💡 주요 기능 (Key Features)
 
-### 1. 💬 AI 퍼스널 에이전트 (Actionable AI)
-*   **초고속 대화**: Groq LPU를 도입하여 지연 없는 실시간 대화 경험 제공
-*   **하이브리드 RAG**: `Milvus(Vector)`와 `Oracle(Keyword)` 검색을 결합하여 내 옷장 기반의 정교한 스타일링 제안
-*   **실시간 날씨 코디**: 사용자 위치의 실시간 날씨(기온, 강수)를 파악하여 TPO에 맞는 옷차림 추천
-*   **앱 제어(Agentic)**: 대화만으로 페이지 이동, 포인트 조회, 옷 등록 화면 연결 등 앱 제어 가능
+### 1. 👕 AI 의류 등록 (Smart Wardrobe)
+*   **YOLO & OCR 분석**: 옷 사진을 올리면 AI가 자동으로 **종류(자켓/코트 등), 색상, 패턴**을 분류하고 라벨의 **소재 혼용률**까지 스캔하여 등록합니다.
+*   **디지털 옷장**: 내 옷을 데이터화하여 한눈에 관리하고, 언제 어디서든 확인할 수 있습니다.
 
-### 2. 🛒 하이퍼로컬 마켓 (Re:Store)
-*   **동네 기반 거래**: 내 위치 반경 Nkm 이내의 의류만 직거래 가능
-*   **실시간 거리 정렬**: 하버사인 공식(Haversine Formula) 자체 구현으로 대량의 매물을 거리순 실시간 정렬
-*   **간편 등록**: 사진 업로드 시 Gemini Vision AI가 옷의 특징(색상, 카테고리)을 자동 분석
+### 2. 💬 AI 퍼스널 에이전트 (Actionable AI)
+*   **실시간 날씨 코디**: 사용자의 현재 위치 날씨(기온, 강수)를 실시간으로 파악하여 **"오늘 입기 딱 좋은"** 옷을 추천합니다.
+*   **하이브리드 RAG**: 내 옷장 데이터(Vector)와 날씨/TPO 정보(Keyword)를 결합하여 **"갖고 있는 옷"** 중에서 최적의 스타일링을 제안합니다.
+*   **앱 제어(Agentic)**: "포인트 보여줘", "마켓 바로가기" 등 대화만으로 앱 기능을 제어합니다.
 
-### 3. 👕 3D 가상 피팅룸 (Virtual Fitting)
-*   **웹 3D 시각화**: Three.js 기반의 3D 공간에서 내 옷을 마네킹에 입혀보는 경험 제공
-*   **커브드 패널(Curved Panel)**: 2D 옷 이미지를 입체적인 마네킹에 왜곡 없이 입히기 위한 독자적인 렌더링 기법 적용
-*   **OOTD 캘린더**: 완성된 코디를 캡처하여 캘린더에 기록하고 나만의 스타일 로그 관리
+### 3. 🛒 Re:Store (위치 기반 마켓 & 수거)
+*   **하이퍼로컬 마켓**: 내 위치 반경 Nkm 이내의 이웃과 옷을 직거래하거나 나눔할 수 있습니다.
+*   **에코 포인트**: 거래 완료 시 포인트가 적립되며, 폐의류 수거 신청 시에도 보상을 제공하여 자원 순환을 독려합니다.
+*   **실시간 거리 정렬**: 하버사인 공식(Haversine Formula)을 적용하여 대량의 매물을 거리순으로 즉시 정렬합니다.
+
+### 4. 👔 3D 가상 피팅룸 (Virtual Fitting)
+*   **웹 3D 시각화**: Three.js 기반의 3D 공간에서 내 옷을 마네킹에 입혀보며 코디를 미리 시뮬레이션할 수 있습니다.
+*   **OOTD 캘린더**: 완성된 코디를 저장하여 캘린더에 기록하고, 나만의 데일리 룩북을 만들 수 있습니다.
 
 ---
 
@@ -65,10 +79,6 @@
 > **Problem**: Llama 모델 사용 시 다국어/외계어(`thật`, `ayrıca` 등)가 섞여 나오는 Hallucination 발생
 > **Solution**: **유니코드 필터링 & 프롬프트 강화**
 > 정규식을 적용하여 비한국어 유니코드 범위를 제거하고, 시스템 프롬프트에 한국어 출력 규칙 강제화
-
-> **Problem**: 서버 재시작 시마다 전체 옷 데이터를 벡터 DB로 동기화하여 부팅 지연
-> **Solution**: **On-Demand Sync Strategy**
-> 서버 시작 시 동기화를 스킵하고, 신규 옷 등록 시점에만 실시간으로 임베딩/저장하도록 로직 변경
 
 ### 2️⃣ Location Service
 > **Problem**: Oracle DB 버전에 Spatial Index 부재로 위치 기반 거리 정렬 쿼리 작성 난항
