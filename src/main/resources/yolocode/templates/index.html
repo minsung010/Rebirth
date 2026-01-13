@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO + K-Fashion 통합 분석</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .upload-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .upload-box {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-box:hover {
+            border-color: #764ba2;
+            background: #f8f9ff;
+        }
+
+        .upload-box input {
+            display: none;
+        }
+
+        .upload-box img {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 1rem;
+            border-radius: 8px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.02);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .result-card {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 1.5rem;
+        }
+
+        .result-card.wide {
+            grid-column: span 2;
+        }
+
+        .result-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .grade-S {
+            background: linear-gradient(135deg, #00c853, #69f0ae);
+        }
+
+        .grade-A {
+            background: linear-gradient(135deg, #2196f3, #64b5f6);
+        }
+
+        .grade-B {
+            background: linear-gradient(135deg, #f44336, #e57373);
+        }
+
+        .defect-list {
+            list-style: none;
+        }
+
+        .defect-list li {
+            padding: 0.5rem;
+            margin: 0.3rem 0;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .annotated-img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* K-Fashion 스타일 */
+        .fashion-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .fashion-item {
+            background: white;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .fashion-item .label {
+            color: #999;
+            font-size: 0.75rem;
+        }
+
+        .fashion-item .value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .style-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 0.3rem;
+        }
+
+        /* 예시 이미지 스타일 */
+        .example-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #ddd;
+        }
+
+        .example-label {
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        .example-img {
+            max-width: 120px;
+            max-height: 100px;
+            border-radius: 8px;
+            opacity: 0.8;
+            border: 1px solid #ddd;
+            object-fit: cover;
+        }
+
+        .example-img:hover {
+            opacity: 1;
+            transform: scale(1.05);
+            transition: all 0.2s;
+        }
+
+        /* Tooltip 스타일 */
+        .tooltip-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        .tooltip-icon {
+            cursor: help;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .tooltip-icon:hover {
+            color: #764ba2;
+        }
+
+        .tooltip-content {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 100;
+            white-space: nowrap;
+        }
+
+        .tooltip-content::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: white;
+        }
+
+        .tooltip-wrapper:hover .tooltip-content {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔍 YOLO + K-Fashion AI 분석</h1>
+        <p class="subtitle">의류 상태 분석 + K-Fashion 스타일 분류</p>
+
+        <div class="upload-section">
+            <div class="upload-box" onclick="document.getElementById('clothingImage').click()">
+                <h3>👚 의류 사진</h3>
+                <p>클릭하여 업로드</p>
+                <input type="file" id="clothingImage" accept="image/*" onchange="previewImage(this, 'clothingPreview')">
+                <img id="clothingPreview" style="display:none;">
+                <!-- ? 아이콘 + Tooltip -->
+                <div class="tooltip-wrapper" onclick="event.stopPropagation()">
+                    <span class="tooltip-icon">❓</span>
+                    <div class="tooltip-content">
+                        <p style="font-size:12px; font-weight:bold; margin-bottom:8px;">👕 예시 사진</p>
+                        <img src="/static/examples/example_clothing.jpg" alt="의류 예시"
+                            style="width:120px; border-radius:8px;">
+                    </div>
+                </div>
+            </div>
+            <div class="upload-box" onclick="document.getElementById('labelImage').click()">
+                <h3>🏷️ 케어라벨 사진</h3>
+                <p>클릭하여 업로드 (선택)</p>
+                <input type="file" id="labelImage" accept="image/*" onchange="previewImage(this, 'labelPreview')">
+                <img id="labelPreview" style="display:none;">
+                <!-- ? 아이콘 + Tooltip -->
+                <div class="tooltip-wrapper" onclick="event.stopPropagation()">
+                    <span class="tooltip-icon">❓</span>
+                    <div class="tooltip-content">
+                        <p style="font-size:12px; font-weight:bold; margin-bottom:8px;">🏷️ 케어라벨 예시</p>
+                        <img src="/static/examples/example_label.png" alt="케어라벨 예시"
+                            style="width:120px; border-radius:8px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn" onclick="analyze()" id="analyzeBtn">🚀 분석 시작</button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>분석 중... 잠시만 기다려주세요</p>
+        </div>
+
+        <div class="results" id="results" style="display:none;">
+            <!-- 등급 & 결함 분석 -->
+            <div class="result-card">
+                <h3>📊 AI 등급 판정</h3>
+                <div id="gradeSection"></div>
+                <h4 style="margin-top:1rem; font-size:0.9rem; color:#666;">발견된 결함</h4>
+                <ul class="defect-list" id="defectList"></ul>
+            </div>
+
+            <!-- 결함 표시 이미지 -->
+            <div class="result-card">
+                <h3>🔍 결함 분석 이미지</h3>
+                <img id="annotatedImage" class="annotated-img">
+            </div>
+
+            <!-- 누끼 이미지 -->
+            <div class="result-card">
+                <h3>✂️ 배경 제거 이미지</h3>
+                <img id="nobgImage" class="annotated-img"
+                    style="background: repeating-conic-gradient(#ddd 0% 25%, transparent 0% 50%) 50% / 20px 20px">
+            </div>
+
+            <!-- K-Fashion 스타일 분류 -->
+            <div class="result-card wide">
+                <h3>👗 K-Fashion 스타일 분류</h3>
+                <div id="styleSection"></div>
+            </div>
+
+            <!-- K-Fashion 세부 속성 -->
+            <div class="result-card wide">
+                <h3>📋 세부 속성</h3>
+                <div class="fashion-grid" id="attributeSection"></div>
+            </div>
+
+            <!-- 케어라벨 정보 -->
+            <div class="result-card">
+                <h3>🏷️ 케어라벨 분석</h3>
+                <div id="tagInfo"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function analyze() {
+            const clothingFile = document.getElementById('clothingImage').files[0];
+            const labelFile = document.getElementById('labelImage').files[0];
+
+            if (!clothingFile && !labelFile) {
+                alert('이미지를 하나 이상 업로드해주세요.');
+                return;
+            }
+
+            const formData = new FormData();
+            if (clothingFile) formData.append('clothingImage', clothingFile);
+            if (labelFile) formData.append('labelImage', labelFile);
+
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('results').style.display = 'none';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                console.log('분석 결과:', data);
+                displayResults(data);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('분석 중 오류가 발생했습니다.');
+            } finally {
+                document.getElementById('analyzeBtn').disabled = false;
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        function displayResults(data) {
+            document.getElementById('results').style.display = 'grid';
+
+            // 등급 표시
+            if (data.condition_analysis) {
+                const cond = data.condition_analysis;
+                const gradeClass = 'grade-' + cond.grade.charAt(0);
+                document.getElementById('gradeSection').innerHTML = `
+                    <span class="grade-badge ${gradeClass}">${cond.grade}</span>
+                    <p style="margin-top:1rem;"><strong>점수:</strong> ${cond.score}점</p>
+                    <p><strong>권장:</strong> ${cond.recommendation}</p>
+                `;
+
+                // 결함 목록
+                const defectList = document.getElementById('defectList');
+                defectList.innerHTML = '';
+                if (cond.defects && cond.defects.length > 0) {
+                    cond.defects.forEach(d => {
+                        const typeName = d.type.includes('(') ? d.type.split('(')[1].replace(')', '') : d.type;
+                        defectList.innerHTML += `
+                            <li>
+                                <span>${typeName}</span>
+                            </li>
+                        `;
+                    });
+                    // 신뢰도 기준 표시
+                    defectList.innerHTML += `
+                        <li style="background: #f0f0f0; color: #888; font-size: 0.8rem; justify-content: center;">
+                            신뢰도 기준: conf ≥ 0.15
+                        </li>
+                    `;
+                } else {
+                    defectList.innerHTML = '<li>결함 없음 ✨</li>';
+                }
+
+                // 결함 표시 이미지
+                if (cond.annotated_image_base64) {
+                    document.getElementById('annotatedImage').src =
+                        'data:image/jpeg;base64,' + cond.annotated_image_base64;
+                }
+            }
+
+            // 누끼 이미지
+            if (data.clothing_image_no_bg_base64) {
+                document.getElementById('nobgImage').src =
+                    'data:image/png;base64,' + data.clothing_image_no_bg_base64;
+            }
+
+            // K-Fashion 스타일 분류
+            if (data.clothing_analysis) {
+                const info = data.clothing_analysis;
+
+                // 스타일 섹션
+                let styleHtml = '';
+                if (info.style) {
+                    styleHtml += `<span class="style-badge">📌 ${info.style}</span>`;
+                }
+                if (info.sub_style) {
+                    styleHtml += `<span class="style-badge">🎨 ${info.sub_style}</span>`;
+                }
+                if (info.category) {
+                    styleHtml += `<span class="style-badge">👕 ${info.category}</span>`;
+                }
+                if (info.sub_category) {
+                    styleHtml += `<span class="style-badge">📂 ${info.sub_category}</span>`;
+                }
+                document.getElementById('styleSection').innerHTML = styleHtml || '<p>분석 결과 없음</p>';
+
+                // 세부 속성 섹션
+                const attrs = [
+                    ['컬러', info.color],
+                    ['서브컬러', info.sub_color],
+                    ['프린트', info.print],
+                    ['소재', info.material],
+                    ['기장', info.length],
+                    ['소매기장', info.sleeve_length],
+                    ['넥라인', info.neckline],
+                    ['칼라', info.collar],
+                    ['핏', info.fit],
+                    ['계절', info.season]
+                ];
+
+                let attrHtml = '';
+                attrs.forEach(([label, value]) => {
+                    if (value && value !== 'null' && value !== null) {
+                        attrHtml += `
+                            <div class="fashion-item">
+                                <div class="label">${label}</div>
+                                <div class="value">${value}</div>
+                            </div>
+                        `;
+                    }
+                });
+
+                // 디테일 태그
+                if (info.detail && Array.isArray(info.detail) && info.detail.length > 0) {
+                    attrHtml += `
+                        <div class="fashion-item" style="grid-column: span 2;">
+                            <div class="label">디테일</div>
+                            <div class="tag-list">
+                                ${info.detail.map(d => `<span class="tag">${d}</span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 설명
+                if (info.description) {
+                    attrHtml += `
+                        <div class="fashion-item" style="grid-column: span 2;">
+                            <div class="label">설명</div>
+                            <div class="value">${info.description}</div>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('attributeSection').innerHTML = attrHtml || '<p>분석 결과 없음</p>';
+            }
+
+            // 케어라벨 정보
+            if (data.tag_analysis) {
+                const tag = data.tag_analysis;
+                document.getElementById('tagInfo').innerHTML = `
+                    <p><strong>소재:</strong> ${tag.material || '-'}</p>
+                    <p><strong>사이즈:</strong> ${tag.size || '-'}</p>
+                    <p><strong>브랜드:</strong> ${tag.brand || '-'}</p>
+                    <p><strong>제조국:</strong> ${tag.origin || '-'}</p>
+                    <p><strong>세탁법:</strong> ${tag.washing_instruction || '-'}</p>
+                `;
+            } else {
+                document.getElementById('tagInfo').innerHTML = '<p>케어라벨 이미지를 업로드하면 분석됩니다.</p>';
+            }
+        }
+    </script>
+</body>
+
+</html>
