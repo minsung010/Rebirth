@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.mapper.BadgeMapper">
+
+    <resultMap id="BadgeResultMap" type="com.rebirth.my.domain.Badge">
+        <id property="id" column="ID"/>
+        <result property="code" column="CODE"/>
+        <result property="name" column="NAME"/>
+        <result property="description" column="DESCRIPTION"/>
+        <result property="iconUrl" column="ICON_URL"/>
+        <result property="conditionType" column="CONDITION_TYPE"/>
+        <result property="thresholdValue" column="THRESHOLD_VALUE"/>
+        <result property="createdAt" column="CREATED_AT"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="BadgeResultMap">
+        SELECT * FROM BADGES ORDER BY ID
+    </select>
+
+    <resultMap id="UserBadgeMap" type="com.rebirth.my.domain.UserBadge">
+        <id property="id" column="ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="badgeId" column="BADGE_ID"/>
+        <result property="awardedAt" column="AWARDED_AT"/>
+        <association property="badge" javaType="com.rebirth.my.domain.Badge">
+            <id property="id" column="B_ID"/>
+            <result property="code" column="CODE"/>
+            <result property="name" column="NAME"/>
+            <result property="description" column="DESCRIPTION"/>
+            <result property="iconUrl" column="ICON_URL"/>
+            <result property="conditionType" column="CONDITION_TYPE"/>
+            <result property="thresholdValue" column="THRESHOLD_VALUE"/>
+        </association>
+    </resultMap>
+
+    <select id="findUserBadges" resultMap="UserBadgeMap">
+        SELECT 
+            UB.ID, UB.USER_ID, UB.BADGE_ID, UB.AWARDED_AT,
+            B.ID AS B_ID, B.CODE, B.NAME, B.DESCRIPTION, B.ICON_URL, B.CONDITION_TYPE, B.THRESHOLD_VALUE
+        FROM USER_BADGES UB
+        JOIN BADGES B ON UB.BADGE_ID = B.ID
+        WHERE UB.USER_ID = #{userId}
+        ORDER BY UB.AWARDED_AT DESC
+    </select>
+
+    <select id="countUserBadge" resultType="int">
+        SELECT COUNT(*) FROM USER_BADGES 
+        WHERE USER_ID = #{userId} AND BADGE_ID = #{badgeId}
+    </select>
+
+    <insert id="insertUserBadge" parameterType="com.rebirth.my.domain.UserBadge">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT S_USER_BADGES.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO USER_BADGES (ID, USER_ID, BADGE_ID, AWARDED_AT)
+        VALUES (#{id}, #{userId}, #{badgeId}, SYSTIMESTAMP)
+    </insert>
+
+</mapper>

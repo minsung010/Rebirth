@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.donation.DonationDao">
+
+    <resultMap id="DonationItemResultMap" type="com.rebirth.my.domain.MarketVo">
+        <id property="id" column="ID" />
+        <result property="userId" column="USER_ID" />
+        <result property="name" column="NAME" />
+        <result property="category" column="CATEGORY" />
+        <result property="imageUrl" column="IMAGE_URL" />
+    </resultMap>
+
+    <!-- 내 옷장 조회 (판매중 X, 기부/폐기 X, 오직 IN_CLOSET 상태) -->
+    <select id="selectClosetItems" resultMap="DonationItemResultMap">
+        SELECT 
+            C.ID,
+            C.USER_ID,
+            C.NAME,
+            C.CATEGORY,
+            (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID AND ROWNUM = 1) AS IMAGE_URL
+        FROM CLOTHING_ITEMS C
+        WHERE C.USER_ID = #{userId}
+          AND C.STATUS = 'IN_CLOSET'
+          AND C.IS_FOR_SALE = 'N'
+        ORDER BY C.CREATED_AT DESC
+    </select>
+
+    <!-- 기부 처리 업데이트 -->
+    <update id="updateItemToDonated">
+        UPDATE CLOTHING_ITEMS
+        SET 
+            STATUS = 'DONATED',
+            LIFECYCLE_TYPE = 'REUSE',
+            LIFECYCLE_DETAIL = 'DONATE',
+            DISPOSAL_METHOD = #{disposalMethod},
+            DISPOSED_AT = SYSDATE
+        WHERE ID = #{id} AND USER_ID = #{userId}
+    </update>
+
+</mapper>

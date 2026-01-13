@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Re:birth</title>
+</head>
+
+<body>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var msg = [[${ msg }]];
+        var url = [[${ url }]];
+
+        if (msg) {
+            alert(msg);
+        }
+
+        if (url) {
+            location.href = url;
+        } else {
+            history.back();
+        }
+        /*]]>*/
+    </script>
+</body>
+
+</html>

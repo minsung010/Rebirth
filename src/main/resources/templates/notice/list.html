@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col">
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-60 px-4 pb-12">
+        <div class="max-w-4xl mx-auto w-full">
+
+            <!-- Title & Tabs -->
+            <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+                <div class="w-full md:w-auto">
+                    <h1 class="text-3xl font-bold mb-6">문의 및 공지사항</h1>
+
+                    <!-- 카테고리 탭: NOTICE / QNA -->
+                    <div
+                        class="flex p-1 bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark inline-flex">
+                        <!-- 공지사항 탭 -->
+                        <a th:href="@{/community(category='NOTICE', page=${page != null ? page.number : 0}, keyword=${keyword})}"
+                            class="px-6 py-2 rounded-lg font-bold text-sm transition-all"
+                            th:classappend="${currentCategory} == 'NOTICE' ?
+                             ' bg-primary text-white shadow-sm' :
+                             ' text-text-light/60 dark:text-text-dark/60 hover:text-text-light hover:bg-background-light dark:hover:bg-background-dark'">
+                            공지사항
+                        </a>
+
+                        <!-- 문의하기 탭 -->
+                        <a th:href="@{/community(category='QNA', page=${page != null ? page.number : 0}, keyword=${keyword})}"
+                            class="px-6 py-2 rounded-lg font-bold text-sm transition-all"
+                            th:classappend="${currentCategory} == 'QNA' ?
+                             ' bg-primary text-white shadow-sm' :
+                             ' text-text-light/60 hover:text-text-light hover:bg-background-light dark:hover:bg-background-dark'">
+                            문의하기
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 우측 버튼 영역 -->
+                <div class="flex gap-2 w-full md:w-auto justify-end">
+                    <!-- 관리자만 보이는 글쓰기 버튼 (공지사항 탭일 때만) -->
+                    <a th:if="${isAdmin} and ${currentCategory == 'NOTICE'}"
+                        th:href="@{/community/new(category='NOTICE')}"
+                        class="px-4 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-xl font-bold text-sm hover:border-primary/50 transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">edit</span>
+                        <span class="hidden sm:inline">글쓰기 (관리자)</span>
+                    </a>
+
+                    <!-- 문의하기 버튼: QNA 글쓰기 바로 이동 -->
+                    <a th:href="@{/community/new(category='QNA')}"
+                        class="px-4 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/30 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">support_agent</span>
+                        <span class="hidden sm:inline">문의하기</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <form th:action="@{/community}" method="get" class="relative mb-8">
+                <input type="hidden" name="category" th:value="${currentCategory}">
+                <span
+                    class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-text-light/50 dark:text-text-dark/50">search</span>
+                <input type="text" name="keyword" placeholder="검색어를 입력하세요" th:value="${keyword}"
+                    class="w-full h-12 pl-12 pr-4 rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-shadow">
+            </form>
+
+            <!-- Notice / Post List -->
+            <div class="flex flex-col gap-4">
+
+                <!-- 게시글이 하나도 없는 경우 -->
+                <div th:if="${#lists.isEmpty(posts)}"
+                    class="p-6 bg-card-light dark:bg-card-dark rounded-2xl border border-dashed border-border-light/70 dark:border-border-dark/70 text-center text-sm text-text-light/60 dark:text-text-dark/60">
+                    등록된 게시글이 없습니다.
+                </div>
+
+                <!-- 일반 게시글 목록 -->
+                <a th:each="post : ${posts}" th:href="@{/community/{id}(id=${post.id})}"
+                    class="p-6 bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark hover:border-primary/30 transition-colors cursor-pointer block">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <!-- 카테고리 뱃지 -->
+                            <span
+                                class="inline-block px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-text-light/60 dark:text-text-dark/60 text-xs font-bold mb-2"
+                                th:text="${post.category == 'NOTICE' ? '공지사항' :
+                                          (post.category == 'QNA' ? '문의하기' : post.category)}">
+                                업데이트
+                            </span>
+                            <span th:if="${post.answer != null}"
+                                class="inline-block ml-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-xs font-bold mb-2">답변완료</span>
+
+                            <!-- 제목 (비밀글이면 🔒 표시) -->
+                            <h3 class="text-lg font-bold mb-2 flex items-center gap-2">
+                                <span th:if="${post.isSecret == 'Y'}"
+                                    class="material-symbols-outlined text-base text-gray-500">lock</span>
+                                <span th:text="${post.isSecret == 'Y'} ? '비밀글입니다.' : ${post.title}"
+                                    th:classappend="${post.isSecret == 'Y'} ? 'text-gray-500 dark:text-gray-400' : ''">
+                                    AI 분석 기능 2.0 업데이트 노트
+                                </span>
+                            </h3>
+
+                            <!-- 내용 한 줄 미리보기 (비밀글이면 숨김) -->
+                            <p class="text-sm text-text-light/60 dark:text-text-dark/60 dark:text-text-dark/60 line-clamp-1"
+                                th:if="${post.isSecret != 'Y'}">
+                                <span th:text="${post.content}">더 정확해진 AI 의류 분석 기능을 만나보세요.</span>
+                            </p>
+                        </div>
+
+                        <div class="flex flex-col items-end gap-1">
+                            <span class="text-xs text-text-light/40 dark:text-text-dark/40 whitespace-nowrap"
+                                th:text="${#temporals.format(post.createdAt, 'yyyy.MM.dd')}">
+                                2025.04.10
+                            </span>
+                            <span class="text-[11px] text-text-light/40 dark:text-text-dark/40"
+                                th:text="|조회 ${post.viewCount}|">
+                                조회 0
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Pagination -->
+            <div th:if="${page != null and page.totalPages > 0}" class="flex justify-center mt-12 gap-2">
+                <!-- 이전 페이지 -->
+                <a th:if="${page.hasPrevious()}"
+                    th:href="@{/community(page=${page.number - 1}, category=${currentCategory}, keyword=${keyword})}"
+                    class="size-10 rounded-lg flex items-center justify-center hover:bg-card-light dark:hover:bg-card-dark text-text-light/50 dark:text-text-dark/50">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </a>
+                <span th:unless="${page.hasPrevious()}"
+                    class="size-10 rounded-lg flex items-center justify-center text-text-light/30 dark:text-text-dark/30 cursor-not-allowed">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </span>
+
+                <!-- 페이지 번호들 -->
+                <a th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                    th:href="@{/community(page=${i}, category=${currentCategory}, keyword=${keyword})}"
+                    th:text="${i + 1}"
+                    class="size-10 rounded-lg flex items-center justify-center text-sm font-bold hover:bg-card-light dark:hover:bg-card-dark"
+                    th:classappend="${i} == ${page.number} ?
+                     ' bg-primary text-white shadow-lg shadow-primary/30' :
+                     ' text-text-light/70 dark:text-text-dark/70'">
+                    1
+                </a>
+
+                <!-- 다음 페이지 -->
+                <a th:if="${page.hasNext()}"
+                    th:href="@{/community(page=${page.number + 1}, category=${currentCategory}, keyword=${keyword})}"
+                    class="size-10 rounded-lg flex items-center justify-center hover:bg-card-light dark:hover:bg-card-dark text-text-light/50 dark:text-text-dark/50">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </a>
+                <span th:unless="${page.hasNext()}"
+                    class="size-10 rounded-lg flex items-center justify-center text-text-light/30 dark:text-text-dark/30 cursor-not-allowed">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+</body>
+
+</html>

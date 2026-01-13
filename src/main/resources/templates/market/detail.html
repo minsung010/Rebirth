@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark overflow-x-hidden">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <main class="pt-24 min-h-screen pb-20">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8">
+            <!-- Breadcrumb -->
+            <nav class="flex mb-6 text-sm text-gray-500">
+                <a href="/market/list" class="hover:text-primary flex items-center gap-1">
+                    <span class="material-symbols-outlined text-lg">storefront</span>
+                    마켓
+                </a>
+                <span class="mx-2">/</span>
+                <span class="text-gray-900 dark:text-white font-medium" th:text="${item.name}">상품명</span>
+            </nav>
+
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <!-- Left: Image Section (3 cols) -->
+                <div class="lg:col-span-3 space-y-4">
+                    <!-- Main Image with Gallery -->
+                    <div class="flex gap-3">
+                        <!-- 썸네일 리스트 (왼쪽) -->
+                        <div th:if="${item.additionalImages != null && !item.additionalImages.isEmpty()}"
+                            class="flex flex-col gap-2 w-20">
+                            <!-- 메인 이미지 썸네일 -->
+                            <div class="aspect-square rounded-lg overflow-hidden border-2 border-primary cursor-pointer thumbnail-item"
+                                th:data-src="${item.imageUrl}" onclick="setMainImage(this)">
+                                <img th:if="${item.imageUrl != null}" th:src="${item.imageUrl}"
+                                    class="w-full h-full object-cover">
+                            </div>
+                            <!-- 추가 이미지 썸네일들 -->
+                            <div th:each="img : ${item.additionalImages}"
+                                class="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 hover:border-primary cursor-pointer thumbnail-item transition-all"
+                                th:data-src="${img}" onclick="setMainImage(this)">
+                                <img th:src="${img}" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+
+                        <!-- 메인 이미지 -->
+                        <div
+                            class="flex-1 aspect-[4/3] rounded-3xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 relative shadow-xl">
+                            <img id="mainProductImage" th:if="${item.imageUrl != null}" th:src="${item.imageUrl}"
+                                alt="Product Image"
+                                class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+                            <div th:unless="${item.imageUrl != null}"
+                                class="w-full h-full flex flex-col items-center justify-center bg-gray-200 dark:bg-gray-700 text-gray-400">
+                                <span class="material-symbols-outlined text-8xl mb-4">checkroom</span>
+                                <span>이미지 없음</span>
+                            </div>
+                            <!-- Sold Overlay -->
+                            <div th:if="${item.status == 'SOLD'}"
+                                class="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-10">
+                                <span class="material-symbols-outlined text-6xl text-white/80 mb-2">check_circle</span>
+                                <span
+                                    class="px-8 py-3 border-4 border-white text-white text-3xl font-black rounded-full uppercase tracking-widest">Sold
+                                    Out</span>
+                            </div>
+                            <!-- Status Badge -->
+                            <div th:if="${item.status != 'SOLD'}"
+                                class="absolute top-4 left-4 px-4 py-2 bg-primary text-white text-sm font-bold rounded-full shadow-lg flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">sell</span>
+                                판매중
+                            </div>
+                            <!-- 이미지 개수 표시 -->
+                            <div th:if="${item.additionalImages != null && !item.additionalImages.isEmpty()}"
+                                class="absolute bottom-4 right-4 px-3 py-1.5 bg-black/60 text-white text-xs font-medium rounded-full backdrop-blur-sm">
+                                <span class="material-symbols-outlined text-sm align-middle">photo_library</span>
+                                <span th:text="${#lists.size(item.additionalImages) + 1}">2</span>장
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trade Location Map (Only if trade location exists) -->
+                    <div th:if="${item.tradeLocation != null && item.tradeLocation != ''}"
+                        class="rounded-2xl overflow-hidden bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 shadow-lg">
+                        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
+                            <span class="material-symbols-outlined text-green-600">location_on</span>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">거래 희망 장소</p>
+                                <p class="font-bold text-gray-900 dark:text-white" th:text="${item.tradeLocation}">거래 장소
+                                </p>
+                            </div>
+                        </div>
+                        <div id="tradeLocationMap" class="w-full h-[250px]"></div>
+                    </div>
+                </div>
+
+                <!-- Right: Content Section (2 cols) -->
+                <div class="lg:col-span-2 flex flex-col">
+                    <!-- Sticky Content -->
+                    <div class="lg:sticky lg:top-24 space-y-6">
+                        <!-- Seller Card -->
+                        <div
+                            class="p-5 rounded-2xl bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 shadow-lg">
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="size-14 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                                    <span
+                                        th:text="${item.sellerName != null ? item.sellerName.substring(0,1) : 'U'}">U</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-lg dark:text-white" th:text="${item.sellerName}">판매자</p>
+                                    <div class="flex items-center gap-2 text-sm text-gray-500">
+                                        <span class="material-symbols-outlined text-yellow-500 text-sm"
+                                            style="font-variation-settings: 'FILL' 1">star</span>
+                                        <span>신뢰지수 99%</span>
+                                    </div>
+                                </div>
+                                <th:block th:if="${currentUserId != item.userId}">
+                                    <a th:href="@{/chat/room(targetUserId=${item.userId})}"
+                                        class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-lg">chat</span>
+                                        문의
+                                    </a>
+                                </th:block>
+                            </div>
+                        </div>
+
+                        <!-- Product Info Card -->
+                        <div
+                            class="p-6 rounded-2xl bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 shadow-lg space-y-5">
+                            <!-- Category Badge -->
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full">판매</span>
+                                <span th:if="${item.category != null}"
+                                    class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium rounded-full"
+                                    th:text="${item.category}">카테고리</span>
+                            </div>
+
+                            <!-- Title -->
+                            <h1 class="text-2xl lg:text-3xl font-black dark:text-white leading-tight"
+                                th:text="${item.name}">상품명</h1>
+
+                            <!-- Price -->
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-4xl font-black text-primary"
+                                    th:text="${#numbers.formatInteger(item.targetPrice, 0, 'COMMA')}">15,000</span>
+                                <span class="text-xl font-bold text-gray-900 dark:text-white">원</span>
+                            </div>
+
+                            <!-- Stats -->
+                            <div
+                                class="flex flex-wrap gap-4 text-sm text-gray-500 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-lg">schedule</span>
+                                    <span
+                                        th:text="${#dates.format(item.createdAt, 'yyyy.MM.dd HH:mm')}">2023.10.25</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-lg text-red-400"
+                                        style="font-variation-settings: 'FILL' 1">favorite</span>
+                                    <span id="statsWishCount" th:text="${item.wishCount}">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="space-y-3">
+                            <!-- Buyer Buttons -->
+                            <th:block th:if="${currentUserId != item.userId}">
+                                <!-- Wish Button -->
+                                <button th:if="${currentUserId != null}" id="wishBtn" onclick="toggleWish()"
+                                    class="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all group border-2"
+                                    th:classappend="${item.isWished} ? 'bg-primary/5 border-primary text-primary' : 'bg-white dark:bg-card-dark border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary'">
+                                    <span
+                                        class="material-symbols-outlined transition-transform duration-300 group-hover:scale-110"
+                                        th:text="${item.isWished} ? 'favorite' : 'favorite_border'"
+                                        th:style="${item.isWished} ? 'font-variation-settings: \'FILL\' 1;' : 'font-variation-settings: \'FILL\' 0;'"
+                                        id="wishIcon">favorite_border</span>
+                                    <span id="wishText" th:text="${item.isWished} ? '찜 취소' : '찜하기'">찜하기</span>
+                                    <span id="wishCount" class="text-sm opacity-70"
+                                        th:text="'(' + ${item.wishCount} + ')'"></span>
+                                </button>
+
+                                <!-- Chat/Purchase Button -->
+                                <a th:href="@{/chat/room(targetUserId=${item.userId}, itemId=${item.id})}"
+                                    class="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl font-bold shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined">chat_bubble</span>
+                                    채팅으로 구매하기
+                                </a>
+                            </th:block>
+
+                            <!-- Owner Buttons -->
+                            <div th:if="${currentUserId == item.userId}" class="space-y-3">
+                                <a th:href="@{/market/edit/{id}(id=${item.id})}"
+                                    class="w-full py-4 bg-gray-100 dark:bg-gray-800 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined">edit</span>
+                                    수정하기
+                                </a>
+                                <form th:action="@{/market/delete/{id}(id=${item.id})}" method="post"
+                                    onsubmit="return confirm('정말 판매를 취소하시겠습니까?');" class="w-full">
+                                    <button type="submit"
+                                        class="w-full py-4 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-2xl font-bold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors flex items-center justify-center gap-2">
+                                        <span class="material-symbols-outlined">delete</span>
+                                        판매 취소
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Share Button -->
+                            <button onclick="shareProduct()"
+                                class="w-full py-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium">
+                                <span class="material-symbols-outlined text-lg">share</span>
+                                공유하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Section -->
+            <div class="mt-12">
+                <div class="max-w-4xl">
+                    <h2 class="text-xl font-bold mb-4 dark:text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined">description</span>
+                        상품 설명
+                    </h2>
+                    <div
+                        class="p-6 rounded-2xl bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 shadow-lg">
+                        <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line"
+                            th:text="${item.detailDesc != null && item.detailDesc != '' ? item.detailDesc : '상세 설명이 없습니다.'}">
+                            상품 상세 설명이 들어갑니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety Tips -->
+            <div class="mt-8 max-w-4xl">
+                <div
+                    class="p-5 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                    <div class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">info</span>
+                        <div>
+                            <p class="font-bold text-amber-800 dark:text-amber-300 mb-1">안전거래 안내</p>
+                            <p class="text-sm text-amber-700 dark:text-amber-400/80">직거래 시 공공장소에서 만나세요. 선입금 및 개인정보 요구에
+                                주의하세요.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <!-- Kakao Map SDK (conditional) -->
+    <script th:if="${item.tradeLocation != null && item.tradeLocation != ''}"
+        th:src="@{'//dapi.kakao.com/v2/maps/sdk.js?appkey=' + ${kakaoMapsAppKey} + '&libraries=services'}"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const itemId = /*[[${item.id}]]*/ 0;
+        const tradeLocation = /*[[${item.tradeLocation}]]*/ null;
+        const itemLat = /*[[${item.latitude}]]*/ null;
+        const itemLng = /*[[${item.longitude}]]*/ null;
+        /*]]>*/
+
+        // 거래 장소 지도 초기화
+        document.addEventListener('DOMContentLoaded', function () {
+            if (tradeLocation && document.getElementById('tradeLocationMap')) {
+                initTradeLocationMap();
+            }
+        });
+
+        function initTradeLocationMap() {
+            const mapContainer = document.getElementById('tradeLocationMap');
+
+            // DB에 저장된 좌표가 있으면 사용
+            if (itemLat && itemLng) {
+                showMapWithMarker(itemLat, itemLng);
+            } else {
+                // 좌표가 없으면 주소로 검색
+                const geocoder = new kakao.maps.services.Geocoder();
+                const ps = new kakao.maps.services.Places();
+
+                // 괄호 안 주소 추출
+                const addressMatch = tradeLocation.match(/\(([^)]+)\)/);
+                const searchKeyword = addressMatch ? addressMatch[1] : tradeLocation;
+
+                ps.keywordSearch(searchKeyword, function (data, status) {
+                    if (status === kakao.maps.services.Status.OK && data.length > 0) {
+                        showMapWithMarker(data[0].y, data[0].x);
+                    } else {
+                        geocoder.addressSearch(searchKeyword, function (result, addrStatus) {
+                            if (addrStatus === kakao.maps.services.Status.OK && result.length > 0) {
+                                showMapWithMarker(result[0].y, result[0].x);
+                            } else {
+                                // 기본 위치 (서울)
+                                showMapWithMarker(37.5665, 126.9780);
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        function showMapWithMarker(lat, lng) {
+            const mapContainer = document.getElementById('tradeLocationMap');
+            const position = new kakao.maps.LatLng(lat, lng);
+
+            const map = new kakao.maps.Map(mapContainer, {
+                center: position,
+                level: 4
+            });
+
+            // 마커 생성
+            const marker = new kakao.maps.Marker({
+                position: position,
+                map: map
+            });
+
+            // 인포윈도우
+            const infoWindow = new kakao.maps.InfoWindow({
+                content: '<div style="padding:8px 12px;font-size:12px;font-weight:bold;color:#10B981;">📍 거래 희망 장소</div>'
+            });
+            infoWindow.open(map, marker);
+        }
+
+        // 찜하기 토글
+        function toggleWish() {
+            fetch(`/market/wish/${itemId}`, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(isWished => {
+                    const btn = document.getElementById('wishBtn');
+                    const icon = document.getElementById('wishIcon');
+                    const text = document.getElementById('wishText');
+                    const countSpan = document.getElementById('wishCount');
+                    const statsCountSpan = document.getElementById('statsWishCount');
+
+                    let count = parseInt(countSpan.innerText.replace(/[^0-9]/g, ''));
+
+                    if (isWished) {
+                        btn.classList.remove('bg-white', 'dark:bg-card-dark', 'border-gray-200', 'dark:border-gray-700', 'text-gray-600', 'dark:text-gray-300');
+                        btn.classList.add('bg-primary/5', 'border-primary', 'text-primary');
+                        icon.innerText = 'favorite';
+                        icon.style.fontVariationSettings = "'FILL' 1";
+                        text.innerText = '찜 취소';
+                        count++;
+                    } else {
+                        btn.classList.remove('bg-primary/5', 'border-primary', 'text-primary');
+                        btn.classList.add('bg-white', 'dark:bg-card-dark', 'border-gray-200', 'dark:border-gray-700', 'text-gray-600', 'dark:text-gray-300');
+                        icon.innerText = 'favorite_border';
+                        icon.style.fontVariationSettings = "'FILL' 0";
+                        text.innerText = '찜하기';
+                        count--;
+                    }
+                    countSpan.innerText = `(${count})`;
+                    if (statsCountSpan) statsCountSpan.innerText = count;
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('오류가 발생했습니다.');
+                });
+        }
+
+        // 공유하기
+        function shareProduct() {
+            const shareData = {
+                title: document.querySelector('h1').textContent,
+                text: '이 상품을 확인해보세요!',
+                url: window.location.href
+            };
+
+            if (navigator.share) {
+                navigator.share(shareData).catch(console.error);
+            } else {
+                // Fallback: 클립보드에 URL 복사
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('링크가 클립보드에 복사되었습니다!');
+                }).catch(() => {
+                    prompt('아래 링크를 복사하세요:', window.location.href);
+                });
+            }
+        }
+
+        // 갤러리 이미지 변경
+        function setMainImage(element) {
+            const newSrc = element.dataset.src;
+            if (!newSrc) return;
+
+            // 메인 이미지 변경
+            const mainImg = document.getElementById('mainProductImage');
+            if (mainImg) {
+                mainImg.src = newSrc;
+            }
+
+            // 선택 상태 업데이트
+            document.querySelectorAll('.thumbnail-item').forEach(thumb => {
+                thumb.classList.remove('border-primary');
+                thumb.classList.add('border-gray-200', 'dark:border-gray-700');
+            });
+            element.classList.remove('border-gray-200', 'dark:border-gray-700');
+            element.classList.add('border-primary');
+        }
+    </script>
+</body>
+
+</html>

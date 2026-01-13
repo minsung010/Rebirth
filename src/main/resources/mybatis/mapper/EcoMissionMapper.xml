@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rebirth.my.mapper.EcoMissionMapper">
+
+    <!-- USER_TODO_CHECKS 매핑 -->
+    <resultMap id="UserTodoCheckMap" type="com.rebirth.my.domain.UserTodoCheck">
+        <id column="ID" property="id"/>
+        <result column="USER_ID" property="userId"/>
+        <result column="TASK_ID" property="taskId"/>
+        <result column="CHECK_DATE" property="checkDate"/>
+        <result column="CHECKED" property="checked"/>
+        <result column="POINTS_EARNED" property="pointsEarned"/>
+        <result column="CREATED_AT" property="createdAt"/>
+    </resultMap>
+
+    <!-- 오늘 미션 + 체크 여부 -->
+    <select id="findTodayMissions" resultType="com.rebirth.my.domain.EcoMission">
+        SELECT
+            m.ID,
+            m.TITLE,
+            m.REWARD_POINT,
+            CASE WHEN c.CHECKED = 'Y' THEN 1 ELSE 0 END AS checked
+        FROM ECO_MISSION m
+        LEFT JOIN USER_TODO_CHECKS c
+            ON c.TASK_ID = m.ID
+            AND c.USER_ID = #{userId}
+            AND TRUNC(c.CHECK_DATE) = #{today}
+        ORDER BY m.ID
+    </select>
+
+    <select id="findUserCheck" resultMap="UserTodoCheckMap">
+        SELECT *
+        FROM USER_TODO_CHECKS
+        WHERE USER_ID = #{userId}
+          AND TASK_ID = #{taskId}
+          AND TRUNC(CHECK_DATE) = #{today}
+    </select>
+
+    <insert id="insertUserCheck">
+        INSERT INTO USER_TODO_CHECKS (
+            ID, USER_ID, TASK_ID, CHECK_DATE, CHECKED, POINTS_EARNED, CREATED_AT
+        ) VALUES (
+            SEQ_USER_TODO_CHECKS.NEXTVAL,
+            #{userId},
+            #{taskId},
+            #{checkDate},
+            #{checked},
+            #{pointsEarned},
+            #{createdAt}
+        )
+    </insert>
+
+    <select id="findAllCompletedChecksByDate" resultMap="UserTodoCheckMap">
+        SELECT *
+        FROM USER_TODO_CHECKS
+        WHERE TRUNC(CHECK_DATE) = #{today}
+          AND CHECKED = 'Y'
+    </select>
+
+    <update id="updateUserCheck">
+        UPDATE USER_TODO_CHECKS
+        SET CHECKED = #{checked},
+            POINTS_EARNED = #{pointsEarned}
+        WHERE ID = #{id}
+    </update>
+
+    <delete id="deleteUserCheck">
+        DELETE FROM USER_TODO_CHECKS
+        WHERE USER_ID = #{userId}
+          AND TASK_ID = #{taskId}
+          AND TRUNC(CHECK_DATE) = #{today}
+    </delete>
+
+</mapper>

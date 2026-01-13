@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark overflow-x-hidden">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <main class="pt-24 min-h-screen px-4 max-w-4xl mx-auto pb-20">
+        <div class="text-center mb-12">
+            <h1 class="text-3xl font-bold mb-3">기부 물품 기록하기</h1>
+            <p class="text-gray-500">기부하신 옷을 선택하고 기록을 남겨주세요.</p>
+        </div>
+
+        <form action="/donation/complete" method="post" id="donationForm" enctype="multipart/form-data">
+            <!-- 1. 기부처 선택 -->
+            <div
+                class="bg-white dark:bg-card-dark rounded-2xl p-6 shadow-sm mb-8 border border-gray-100 dark:border-gray-800">
+                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                    <span
+                        class="flex items-center justify-center size-6 rounded-full bg-primary text-white text-xs">1</span>
+                    기부 방법을 선택해주세요
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="disposalMethod" value="BEAUTIFUL_STORE" class="peer sr-only" checked>
+                        <div
+                            class="p-4 rounded-xl border-2 border-gray-200 peer-checked:border-primary peer-checked:bg-primary/5 hover:bg-gray-50 transition-all text-center h-full flex flex-col items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-3xl">store</span>
+                            <span class="font-bold text-sm">아름다운가게</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="disposalMethod" value="GOODWILL" class="peer sr-only">
+                        <div
+                            class="p-4 rounded-xl border-2 border-gray-200 peer-checked:border-primary peer-checked:bg-primary/5 hover:bg-gray-50 transition-all text-center h-full flex flex-col items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-3xl">volunteer_activism</span>
+                            <span class="font-bold text-sm">굿윌스토어</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="disposalMethod" value="OTHER" class="peer sr-only">
+                        <div
+                            class="p-4 rounded-xl border-2 border-gray-200 peer-checked:border-primary peer-checked:bg-primary/5 hover:bg-gray-50 transition-all text-center h-full flex flex-col items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-3xl">more_horiz</span>
+                            <span class="font-bold text-sm">기타</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 2. 옷 선택 -->
+            <div
+                class="bg-white dark:bg-card-dark rounded-2xl p-6 shadow-sm mb-12 border border-gray-100 dark:border-gray-800">
+                <h3 class="font-bold text-lg mb-6 flex items-center gap-2">
+                    <span
+                        class="flex items-center justify-center size-6 rounded-full bg-primary text-white text-xs">2</span>
+                    기부한 옷을 선택해주세요
+                </h3>
+
+                <div th:if="${#lists.isEmpty(myClothes)}" class="text-center py-10 text-gray-500">
+                    <p>옷장에 등록된 옷이 없습니다.</p>
+                    <a href="/wardrobe" class="text-primary underline mt-2 inline-block">옷장 정리하러 가기</a>
+                </div>
+
+                <div th:unless="${#lists.isEmpty(myClothes)}" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div th:each="item : ${myClothes}" class="relative">
+                        <label class="cursor-pointer group block">
+                            <input type="checkbox" name="itemIds" th:value="${item.id}"
+                                class="peer sr-only item-checkbox">
+                            <div
+                                class="relative aspect-square rounded-xl overflow-hidden mb-2 border-2 border-transparent peer-checked:border-primary peer-checked:ring-2 peer-checked:ring-primary/30 transition-all">
+                                <img th:if="${item.imageUrl != null}" th:src="${item.imageUrl}"
+                                    class="w-full h-full object-cover">
+                                <div th:unless="${item.imageUrl != null}"
+                                    class="w-full h-full bg-gray-100 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-gray-300">image</span>
+                                </div>
+                                <div
+                                    class="absolute inset-0 bg-primary/20 opacity-0 peer-checked:opacity-100 transition-opacity flex items-center justify-center">
+                                    <span
+                                        class="material-symbols-outlined text-white text-4xl drop-shadow-md">check_circle</span>
+                                </div>
+                            </div>
+                            <p class="text-sm font-medium truncate group-hover:text-primary transition-colors"
+                                th:text="${item.name}">옷 이름</p>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 기부 영수증 업로드 (선택) -->
+            <div
+                class="bg-white dark:bg-card-dark rounded-2xl p-6 shadow-sm mb-12 border border-gray-100 dark:border-gray-800">
+                <h3 class="font-bold text-lg mb-6 flex items-center gap-2">
+                    <span
+                        class="flex items-center justify-center size-6 rounded-full bg-primary text-white text-xs">3</span>
+                    기부 영수증이 있다면 올려주세요 (선택)
+                </h3>
+
+                <div class="relative group">
+                    <label for="receiptImage"
+                        class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 dark:border-gray-700 dark:bg-white/5 dark:hover:bg-white/10 transition-all">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6 text-gray-500">
+                            <span class="material-symbols-outlined text-3xl mb-2">cloud_upload</span>
+                            <p class="text-sm"><span class="font-semibold">클릭하여 업로드</span></p>
+                            <p class="text-xs text-gray-400 mt-1">PNG, JPG (5MB 이하)</p>
+                        </div>
+                        <input id="receiptImage" name="receiptImage" type="file" class="hidden" accept="image/*" />
+                    </label>
+                    <div id="filePreview"
+                        class="hidden mt-4 relative w-full h-48 bg-gray-100 rounded-xl overflow-hidden">
+                        <img id="previewImg" class="w-full h-full object-contain">
+                        <button type="button" id="removeFileBtn"
+                            class="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors">
+                            <span class="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div
+                class="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-card-dark border-t border-gray-200 dark:border-gray-800 md:static md:bg-transparent md:border-t-0 md:p-0">
+                <button type="submit" id="submitBtn"
+                    class="w-full md:max-w-xs mx-auto block py-4 bg-primary text-white font-bold rounded-xl shadow-lg opacity-50 cursor-not-allowed transition-all"
+                    disabled>
+                    기록 완료하기
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <!-- Script for validation -->
+    <script>
+        const checkboxes = document.querySelectorAll('.item-checkbox');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function updateButtonState() {
+            const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+            if (checkedCount > 0) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.classList.add('hover:scale-105', 'shadow-primary/30');
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitBtn.classList.remove('hover:scale-105', 'shadow-primary/30');
+            }
+        }
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateButtonState);
+        });
+
+        // File Upload Preview
+        const fileInput = document.getElementById('receiptImage');
+        const previewContainer = document.getElementById('filePreview');
+        const previewImg = document.getElementById('previewImg');
+        const removeFileBtn = document.getElementById('removeFileBtn');
+        const uploadLabel = document.querySelector('label[for="receiptImage"]');
+
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                    uploadLabel.classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        removeFileBtn.addEventListener('click', function () {
+            fileInput.value = '';
+            previewContainer.classList.add('hidden');
+            uploadLabel.classList.remove('hidden');
+        });
+    </script>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+</body>
+
+</html>

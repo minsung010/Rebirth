@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}">
+    <title th:text="${post.title} + ' - Re:birth'">글 상세 - Re:birth</title>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-32 px-4 pb-20">
+        <div class="max-w-3xl mx-auto w-full">
+
+            <!-- Page Header -->
+            <div class="flex items-center gap-4 mb-8 animate-fade-in-up">
+                <a th:href="${post.category == 'QNA'} ? @{/community(category='QNA', page=0, keyword='')} : @{/community}"
+                    class="size-10 rounded-full bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark flex items-center justify-center hover:border-primary/50 transition-colors text-text-light/60 dark:text-text-dark/60">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <div>
+                    <span class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-2"
+                        th:text="${post.category == 'NOTICE' ? '공지사항' : (post.category == 'QNA' ? '문의하기' : post.category)}">
+                        카테고리
+                    </span>
+                    <h2 class="text-2xl md:text-3xl font-bold text-text-light dark:text-text-dark break-keep"
+                        th:text="${post.title}">제목</h2>
+                </div>
+            </div>
+
+            <!-- Detail Card -->
+            <div class="bg-card-light dark:bg-card-dark rounded-3xl shadow-xl border border-border-light dark:border-border-dark p-8 md:p-10 animate-fade-in-up"
+                style="animation-delay: 0.1s">
+
+                <!-- Meta Info -->
+                <div
+                    class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-border-light dark:border-border-dark mb-8 text-sm text-text-light/60 dark:text-text-dark/60">
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="size-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-base">person</span>
+                            </div>
+                            <span class="font-bold text-text-light dark:text-text-dark"
+                                th:text="${post.writer}">작성자</span>
+                        </div>
+                        <span class="w-px h-3 bg-border-light dark:bg-border-dark"></span>
+                        <span th:text="${#temporals.format(post.createdAt, 'yyyy.MM.dd HH:mm')}">2025.04.15 14:30</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">visibility</span>
+                        <span th:text="${post.viewCount}">123</span>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="prose dark:prose-invert max-w-none min-h-[200px] whitespace-pre-wrap text-text-light dark:text-text-dark leading-relaxed"
+                    th:text="${post.content}">
+                    내용이 들어갑니다.
+                </div>
+
+                <!-- Admin Answer Section -->
+                <div class="mt-12 pt-8 border-t border-border-light dark:border-border-dark"
+                    th:if="${post.category == 'QNA'}">
+
+                    <!-- Existing Answer Display -->
+                    <div th:if="${post.answer != null}"
+                        class="bg-violet-50 dark:bg-violet-900/10 rounded-2xl p-6 md:p-8 border border-violet-100 dark:border-violet-900/30">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="px-2.5 py-1 rounded-full bg-primary text-white text-xs font-bold">Admin
+                                Answer</span>
+                            <span class="text-sm text-text-light/60 dark:text-text-dark/60"
+                                th:text="${#temporals.format(post.answeredAt, 'yyyy.MM.dd HH:mm')}">2024.12.30</span>
+                        </div>
+                        <div class="whitespace-pre-wrap text-text-light dark:text-text-dark leading-relaxed"
+                            th:text="${post.answer}">
+                            답변 내용
+                        </div>
+                    </div>
+
+                    <!-- Answer Form (Admin Only, No Answer Yet) -->
+                    <div th:if="${isAdmin and post.answer == null}" class="mt-8">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">edit_note</span>
+                            관리자 답변 작성
+                        </h3>
+                        <form th:action="@{/community/{id}/answer(id=${post.id})}" method="post" class="space-y-4">
+                            <textarea name="answer" rows="6"
+                                class="w-full rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark px-4 py-3 focus:outline-none focus:border-primary transition-colors resize-none"
+                                placeholder="회원님의 문의에 대한 친절한 답변을 작성해주세요."></textarea>
+                            <div class="flex justify-end">
+                                <button type="submit"
+                                    class="px-6 py-2.5 rounded-xl bg-primary text-white font-bold hover:opacity-90 transition-opacity">
+                                    답변 등록
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Edit Answer Button (Admin only, Answer exists) - Optional improvement -->
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-between mt-12 pt-8 border-t border-border-light dark:border-border-dark">
+                    <!-- DEBUG INFO (Remove after fixing) -->
+                    <div class="hidden">
+                        Current User ID: <span th:text="${currentUserId}"></span><br>
+                        Post User ID: <span th:text="${post.userId}"></span><br>
+                        Category: <span th:text="${post.category}"></span><br>
+                        Is Admin: <span th:text="${isAdmin}"></span>
+                    </div>
+
+                    <a th:href="${post.category == 'QNA'} ? @{/community(category='QNA', page=0, keyword='')} : @{/community}"
+                        class="px-6 py-2.5 rounded-xl bg-background-light dark:bg-background-dark text-text-light/70 dark:text-text-dark/70 font-bold border border-border-light dark:border-border-dark hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">list</span>
+                        목록으로
+                    </a>
+
+                    <!-- Admin/Owner Actions -->
+                    <div class="flex gap-2"
+                        th:if="${isAdmin or (currentUserId != null and currentUserId == post.userId and post.category == 'QNA')}">
+                        <form th:action="@{/community/{id}/delete(id=${post.id})}" method="post"
+                            onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                            <button type="submit"
+                                class="px-4 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-bold text-sm">
+                                삭제
+                            </button>
+                        </form>
+                        <a th:href="@{/community/{id}/edit(id=${post.id})}"
+                            class="px-4 py-2.5 rounded-xl text-primary hover:bg-primary/10 transition-colors font-bold text-sm">
+                            수정
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+</body>
+
+</html>

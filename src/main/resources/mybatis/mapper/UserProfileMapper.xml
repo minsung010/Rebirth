@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.mapper.UserProfileMapper">
+
+    <insert id="save" parameterType="com.rebirth.my.domain.UserProfile">
+        INSERT INTO USER_PROFILES (
+            USER_ID, NICKNAME, AVATAR_URL, TOTAL_WATER_SAVED_L, TOTAL_CARBON_SAVED_KG,
+            ECO_POINTS, TOTAL_COLLECTED_KG, TOTAL_CLOTHING_COUNT, LAST_LOGIN_AT, GENDER, STYLE_PREFERENCE,
+            ACTIVE_DECORATION
+        ) VALUES (
+            #{userId}, #{nickname}, #{avatarUrl}, #{totalWaterSavedL}, #{totalCarbonSavedKg},
+            #{ecoPoints}, #{totalCollectedKg}, #{totalClothingCount}, #{lastLoginAt}, #{gender}, #{stylePreference},
+            #{activeDecoration}
+        )
+    </insert>
+
+    <select id="findById" parameterType="long" resultType="com.rebirth.my.domain.UserProfile">
+        SELECT * FROM USER_PROFILES WHERE USER_ID = #{userId}
+    </select>
+ 
+    <update id="update" parameterType="com.rebirth.my.domain.UserProfile">
+        UPDATE USER_PROFILES
+        SET
+            NICKNAME = #{nickname},
+            AVATAR_URL = #{avatarUrl},
+            TOTAL_WATER_SAVED_L = #{totalWaterSavedL},
+            TOTAL_CARBON_SAVED_KG = #{totalCarbonSavedKg},
+            ECO_POINTS = #{ecoPoints},
+            TOTAL_COLLECTED_KG = #{totalCollectedKg},
+            TOTAL_CLOTHING_COUNT = #{totalClothingCount},
+            LAST_LOGIN_AT = #{lastLoginAt},
+            GENDER = #{gender},
+            STYLE_PREFERENCE = #{stylePreference},
+            ACTIVE_DECORATION = #{activeDecoration}
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <update id="updateLastLoginAt">
+        UPDATE USER_PROFILES
+        SET LAST_LOGIN_AT = #{lastLoginAt}
+        WHERE USER_ID = #{userId}
+    </update>
+
+</mapper>

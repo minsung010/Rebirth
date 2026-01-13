@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.chat.ChatDao">
+
+    <!-- 
+      CHAT_MESSAGES 테이블 스키마:
+      ID, ROOM_ID, SENDER_ID, MESSAGE_TYPE('TEXT'...), CONTENT, IMAGE_URL, OUTFIT_ID, CREATED_AT 
+    -->
+    <!-- 암호화 키 (고정) -->
+    <sql id="encryptionKey">RebirthChatSecretKey2024!</sql>
+
+    <insert id="insertChat" parameterType="com.rebirth.my.chat.ChatVo">
+        /* ChatDao.insertChat - 암호화 저장 */
+        INSERT INTO CHAT_MESSAGES (
+            ID, 
+            ROOM_ID, 
+            SENDER_ID, 
+            MESSAGE_TYPE, 
+            CONTENT,
+            CONTENT_ENCRYPTED, 
+            IMAGE_URL, 
+            OUTFIT_ID, 
+            CREATED_AT
+        ) VALUES (
+            S_CHAT_MESSAGES.NEXTVAL,
+            #{roomId}, 
+            #{senderId}, 
+            COALESCE(#{messageType}, 'TEXT'), 
+            #{content},
+            encrypt_clob(#{content}, 'RebirthChatSecretKey2024!'), 
+            #{imageUrl, jdbcType=VARCHAR}, 
+            #{outfitId, jdbcType=NUMERIC}, 
+            SYSDATE
+        )
+    </insert>
+
+    <!-- 
+       채팅 목록: 최근 메시지 순으로 정렬 ?? 
+       기존 메서드 이름 유지: selectChatListByUserId 
+       하지만 실제로는 '해당 유저가 속한 방의 메시지들' 혹은 '해당 방의 메시지들' 이어야 함.
+       일단 봇(Bot)과의 1:1 채팅방 메시지 내역을 가져오는 것으로 가정.
+       (실제로는 ROOM_ID로 조회해야 함)
+    -->
+    <select id="selectChatListByUserId" parameterType="String" resultType="com.rebirth.my.chat.ChatVo">
+        /* ChatDao.selectChatListByUserId - 복호화 조회 */
+        SELECT 
+            m.ID as id,
+            m.ROOM_ID as roomId,
+            m.SENDER_ID as senderId,
+            m.MESSAGE_TYPE as messageType,
+            CASE 
+                WHEN m.CONTENT_ENCRYPTED IS NOT NULL 
+                THEN decrypt_blob(m.CONTENT_ENCRYPTED, 'RebirthChatSecretKey2024!')
+                ELSE TO_CHAR(m.CONTENT)
+            END as content,
+            m.IMAGE_URL as imageUrl,
+            m.OUTFIT_ID as outfitId,
+            m.CREATED_AT as createdAt
+        FROM CHAT_MESSAGES m
+        JOIN CHAT_ROOM_MEMBERS crm ON m.ROOM_ID = crm.ROOM_ID
+        WHERE crm.USER_ID = #{userId}
+        ORDER BY m.CREATED_AT ASC
+    </select>
+    
+    <!-- 특정 방의 메시지 조회 - 복호화 -->
+    <select id="selectMessagesByRoomId" parameterType="long" resultType="com.rebirth.my.chat.ChatVo">
+         SELECT 
+            m.ID as id,
+            m.ROOM_ID as roomId,
+            m.SENDER_ID as senderId,
+            m.MESSAGE_TYPE as messageType,
+            CASE 
+                WHEN m.CONTENT_ENCRYPTED IS NOT NULL 
+                THEN decrypt_blob(m.CONTENT_ENCRYPTED, 'RebirthChatSecretKey2024!')
+                ELSE TO_CHAR(m.CONTENT)
+            END as content,
+            m.IMAGE_URL as imageUrl,
+            m.OUTFIT_ID as outfitId,
+            m.CREATED_AT as createdAt
+        FROM CHAT_MESSAGES m
+        WHERE m.ROOM_ID = #{roomId}
+        ORDER BY m.CREATED_AT ASC
+    </select>
+
+    <!-- 대화 문맥용: 특정 방의 최근 N개 메시지 조회 - 복호화 -->
+    <select id="selectRecentMessages" parameterType="java.util.Map" resultType="com.rebirth.my.chat.ChatVo">
+        SELECT * FROM (
+            SELECT 
+                m.ID as id,
+                m.ROOM_ID as roomId,
+                m.SENDER_ID as senderId,
+                m.MESSAGE_TYPE as messageType,
+                CASE 
+                    WHEN m.CONTENT_ENCRYPTED IS NOT NULL 
+                    THEN decrypt_blob(m.CONTENT_ENCRYPTED, 'RebirthChatSecretKey2024!')
+                    ELSE TO_CHAR(m.CONTENT)
+                END as content,
+                m.IMAGE_URL as imageUrl,
+                m.OUTFIT_ID as outfitId,
+                m.CREATED_AT as createdAt
+            FROM CHAT_MESSAGES m
+            WHERE m.ROOM_ID = #{roomId}
+            ORDER BY m.CREATED_AT DESC
+        ) WHERE ROWNUM &lt;= #{limit}
+        ORDER BY createdAt ASC
+    </select>
+
+
+    <!-- 챗봇과 1:1 채팅방 찾기 (Bot ID hardcoded as 0 or logic) -->
+    <!-- Assuming Room Type 'BOT' or checking members -->
+    <select id="selectBotRoomId" parameterType="String" resultType="Long">
+        SELECT r.ID
+        FROM CHAT_ROOMS r
+        JOIN CHAT_ROOM_MEMBERS m1 ON r.ID = m1.ROOM_ID
+        WHERE m1.USER_ID = #{userId}
+          AND r.ROOM_TYPE = 'BOT'
+          AND ROWNUM = 1
+    </select>
+
+    <!-- 챗봇 채팅방 생성 -->
+    <insert id="createBotRoom" parameterType="java.util.Map">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT S_CHAT_ROOMS.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO CHAT_ROOMS (
+            ID, ROOM_TYPE, TITLE, CREATED_BY, CREATED_AT
+        ) VALUES (
+            #{id}, 'BOT', '1:1 문의', #{userId}, SYSDATE
+        )
+    </insert>
+
+    <!-- 채팅방 멤버 추가 -->
+    <insert id="insertRoomMember" parameterType="java.util.Map">
+        INSERT INTO CHAT_ROOM_MEMBERS (
+            ID, ROOM_ID, USER_ID, JOINED_AT
+        ) VALUES (
+            S_CHAT_ROOM_MEMBERS.NEXTVAL, #{roomId}, #{userId}, SYSDATE
+        )
+    </insert>
+
+    <!-- 1:1 채팅방 찾기 (Find room with EXACTLY these two members and TYPE='PRIVATE') -->
+    <!-- Simplified logic: Find a PRIVATE room where both users are members -->
+    <select id="selectPrivateRoomId" parameterType="java.util.Map" resultType="Long">
+        SELECT r.ID
+        FROM CHAT_ROOMS r
+        JOIN CHAT_ROOM_MEMBERS m1 ON r.ID = m1.ROOM_ID
+        JOIN CHAT_ROOM_MEMBERS m2 ON r.ID = m2.ROOM_ID
+        WHERE m1.USER_ID = #{userId1}
+          AND m2.USER_ID = #{userId2}
+          AND r.ROOM_TYPE = 'PRIVATE'
+          AND m2.USER_ID = #{userId2}
+          AND r.ROOM_TYPE = 'PRIVATE'
+          <if test="itemId != null">
+              AND r.ITEM_ID = #{itemId}
+          </if>
+          <if test="itemId == null">
+              AND r.ITEM_ID IS NULL
+          </if>
+          AND ROWNUM = 1
+    </select>
+
+    <!-- 1:1 채팅방 생성 -->
+    <insert id="createPrivateRoom" parameterType="java.util.Map">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT S_CHAT_ROOMS.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO CHAT_ROOMS (
+            ID, ROOM_TYPE, TITLE, CREATED_BY, CREATED_AT, ITEM_ID
+        ) VALUES (
+            #{id}, 'PRIVATE', #{title}, #{createdBy}, SYSDATE, #{itemId, jdbcType=NUMERIC}
+        )
+    </insert>
+
+    <!-- 내 채팅방 목록 조회 (마지막 메시지 복호화 포함 + 안 읽은 메시지 수) -->
+    <select id="selectMyRoomList" parameterType="long" resultType="java.util.Map">
+        SELECT
+            r.ID as "roomId",
+            u.NAME as "otherName",
+            u.EMAIL as "otherEmail",
+            u.MEM_IMG as "otherImg",
+            (
+                SELECT 
+                    CASE 
+                        WHEN CONTENT_ENCRYPTED IS NOT NULL 
+                        THEN decrypt_blob(CONTENT_ENCRYPTED, 'RebirthChatSecretKey2024!')
+                        ELSE TO_CHAR(CONTENT)
+                    END
+                FROM (
+                    SELECT CONTENT, CONTENT_ENCRYPTED, ROOM_ID 
+                    FROM CHAT_MESSAGES 
+                    ORDER BY CREATED_AT DESC
+                ) msg 
+                WHERE msg.ROOM_ID = r.ID AND ROWNUM = 1
+            ) as "lastMessage",
+            (
+                SELECT TO_CHAR(CREATED_AT, 'YYYY-MM-DD"T"HH24:MI:SS') 
+                FROM (
+                    SELECT CREATED_AT, ROOM_ID 
+                    FROM CHAT_MESSAGES 
+                    ORDER BY CREATED_AT DESC
+                ) msg 
+                WHERE msg.ROOM_ID = r.ID AND ROWNUM = 1
+            ) as "lastDate",
+            (
+                SELECT COUNT(*)
+                FROM CHAT_MESSAGES m_count
+                WHERE m_count.ROOM_ID = r.ID
+                  AND m_count.CREATED_AT > COALESCE(cm.LAST_READ_AT, cm.JOINED_AT)
+                  AND m_count.SENDER_ID != #{userId}
+            ) as "unreadCount"
+        FROM CHAT_ROOM_MEMBERS cm
+        JOIN CHAT_ROOMS r ON cm.ROOM_ID = r.ID
+        JOIN CHAT_ROOM_MEMBERS cm_other ON r.ID = cm_other.ROOM_ID AND cm_other.USER_ID != #{userId}
+        JOIN USERS u ON cm_other.USER_ID = u.ID
+        WHERE cm.USER_ID = #{userId}
+          AND cm.LEFT_AT IS NULL
+          AND r.ROOM_TYPE = 'PRIVATE'
+          AND EXISTS (SELECT 1 FROM CHAT_MESSAGES WHERE ROOM_ID = r.ID)
+        ORDER BY "lastDate" DESC NULLS LAST
+    </select>
+
+    <!-- 채팅방 상대방 조회 (1:1 채팅) -->
+    <select id="getPartnerInRoom" resultType="com.rebirth.my.domain.User">
+        SELECT u.ID as id,
+               u.LOGIN_ID as loginId,
+               u.NAME as name,
+               u.EMAIL as email,
+               u.MEM_IMG as memImg,
+               u.PHONE as phone,
+               u.ADDRESS as address
+        FROM CHAT_ROOM_MEMBERS cm
+        JOIN USERS u ON cm.USER_ID = u.ID
+        WHERE cm.ROOM_ID = #{roomId}
+          AND cm.USER_ID != #{userId}
+          AND ROWNUM = 1
+    </select>
+
+    <!-- 마지막 읽은 시간 업데이트 -->
+    <update id="updateLastReadAt" parameterType="java.util.Map">
+        UPDATE CHAT_ROOM_MEMBERS
+        SET LAST_READ_AT = SYSDATE
+        WHERE ROOM_ID = #{roomId} AND USER_ID = #{userId}
+    </update>
+
+    <!-- 채팅방 나가기 (LEFT_AT 업데이트) -->
+    <update id="updateLeaveRoom" parameterType="java.util.Map">
+        UPDATE CHAT_ROOM_MEMBERS
+        SET LEFT_AT = SYSDATE
+        WHERE ROOM_ID = #{roomId} AND USER_ID = #{userId}
+    </update>
+
+    <!-- 메시지 검색 - 복호화된 내용에서 검색 -->
+    <select id="selectSearchMessages" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT 
+            m.ID as "id",
+            m.ROOM_ID as "roomId",
+            m.SENDER_ID as "senderId",
+            CASE 
+                WHEN m.CONTENT_ENCRYPTED IS NOT NULL 
+                THEN decrypt_blob(m.CONTENT_ENCRYPTED, 'RebirthChatSecretKey2024!')
+                ELSE DBMS_LOB.SUBSTR(m.CONTENT, 2000, 1)
+            END as "content",
+            TO_CHAR(m.CREATED_AT, 'YYYY-MM-DD"T"HH24:MI:SS') as "createdAt",
+            u.NAME as "senderName",
+            u.MEM_IMG as "senderImg"
+        FROM CHAT_MESSAGES m
+        JOIN CHAT_ROOM_MEMBERS cm ON m.ROOM_ID = cm.ROOM_ID
+        LEFT JOIN USERS u ON m.SENDER_ID = u.ID
+        WHERE cm.USER_ID = #{userId}
+          AND cm.LEFT_AT IS NULL
+          AND (
+              (m.CONTENT_ENCRYPTED IS NOT NULL AND INSTR(decrypt_blob(m.CONTENT_ENCRYPTED, 'RebirthChatSecretKey2024!'), #{keyword}) > 0)
+              OR (m.CONTENT_ENCRYPTED IS NULL AND DBMS_LOB.INSTR(m.CONTENT, #{keyword}) > 0)
+          )
+          <if test="roomId != null">
+              AND m.ROOM_ID = #{roomId}
+          </if>
+        ORDER BY m.CREATED_AT DESC
+    </select>
+
+    <!-- 채팅방 멤버 정보 조회 (LAST_READ_AT 포함) -->
+    <select id="getRoomMember" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT 
+            ID, ROOM_ID, USER_ID, JOINED_AT, LAST_READ_AT as "lastReadAt"
+        FROM CHAT_ROOM_MEMBERS
+        WHERE ROOM_ID = #{roomId} AND USER_ID = #{userId}
+    </select>
+
+    <!-- 전체 안 읽은 메시지 수 조회 (1:1 채팅만, 나간 방 제외) -->
+    <select id="selectTotalUnreadCount" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM CHAT_MESSAGES m
+        JOIN CHAT_ROOM_MEMBERS cm ON m.ROOM_ID = cm.ROOM_ID
+        JOIN CHAT_ROOMS r ON m.ROOM_ID = r.ID
+        WHERE cm.USER_ID = #{userId}
+          AND cm.LEFT_AT IS NULL
+          AND r.ROOM_TYPE = 'PRIVATE'
+          AND m.SENDER_ID != #{userId}
+          AND m.CREATED_AT > COALESCE(cm.LAST_READ_AT, cm.JOINED_AT)
+    </select>
+
+    <!-- 채팅방 재입장 처리 (모든 멤버의 LEFT_AT 초기화) -->
+    <update id="rejoinRoomMembers" parameterType="long">
+        UPDATE CHAT_ROOM_MEMBERS
+        SET LEFT_AT = NULL
+        WHERE ROOM_ID = #{roomId}
+    </update>
+
+    <!-- 채팅방 ID로 조회 -->
+    <select id="selectRoomById" parameterType="long" resultType="java.util.Map">
+        SELECT ID, ROOM_TYPE, TITLE, CREATED_BY, CREATED_AT, ITEM_ID as "itemId"
+        FROM CHAT_ROOMS
+        WHERE ID = #{roomId}
+    </select>
+</mapper>

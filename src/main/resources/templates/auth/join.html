@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center py-24 px-4">
+        <div class="w-full max-w-lg animate-fade-in-up">
+
+            <div
+                class="bg-card-light dark:bg-card-dark rounded-3xl p-8 border border-border-light dark:border-border-dark shadow-xl relative overflow-hidden">
+                <!-- Decorative Background -->
+                <div
+                    class="absolute bottom-0 left-0 w-64 h-64 bg-secondary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2">
+                </div>
+
+                <!-- Logo & Title -->
+                <div class="text-center mb-8 relative">
+                    <h1 class="text-2xl font-bold">회원가입</h1>
+                    <p class="text-text-light/60 dark:text-text-dark/60 text-sm mt-1">리버스와 함께 지속 가능한 여정을 시작하세요.</p>
+                </div>
+
+                <!-- Join Form -->
+                <form class="space-y-5 relative" action="/auth/join" method="post" onsubmit="return validateForm()">
+
+                    <!-- 1. Login ID -->
+                    <div class="space-y-1">
+                        <label for="loginId"
+                            class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">아이디</label>
+                        <input type="text" id="loginId" name="loginId" placeholder="아이디 입력" required
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                        <p id="idErrorMsg" class="text-xs ml-1 text-red-500 font-bold hidden"></p>
+                    </div>
+
+                    <!-- 2. Password -->
+                    <div class="space-y-1">
+                        <label for="password"
+                            class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">비밀번호</label>
+                        <input type="password" id="password" name="password" placeholder="영문, 숫자, 특수문자 포함 8자 이상"
+                            required
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="confirm-password"
+                            class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">비밀번호 확인</label>
+                        <input type="password" id="confirm-password" placeholder="비밀번호 재입력" required
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                    </div>
+
+                    <!-- 3. Email & Verification -->
+                    <div class="space-y-2">
+                        <label for="email"
+                            class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">이메일</label>
+                        <div class="flex gap-2">
+                            <input type="email" id="email" name="email" placeholder="example@rebirth.com" required
+                                class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                            <button type="button" onclick="sendVerificationCode()"
+                                class="px-4 h-12 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors whitespace-nowrap">
+                                인증번호 전송
+                            </button>
+                        </div>
+                        <div class="flex gap-2" id="verificationArea" style="display:none;">
+                            <div class="relative w-full">
+                                <input type="text" id="verificationCode" placeholder="인증번호 입력"
+                                    class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                                <span id="timer"
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-red-500 font-bold z-10"></span>
+                            </div>
+                            <button type="button" onclick="verifyCode()"
+                                class="px-4 h-12 bg-secondary/10 text-secondary font-bold rounded-xl hover:bg-secondary/20 transition-colors whitespace-nowrap">
+                                확인
+                            </button>
+                        </div>
+                        <p id="verificationMsg" class="text-xs ml-1"></p>
+                        <input type="hidden" id="isEmailVerified" value="false">
+                    </div>
+
+                    <!-- 4. Nickname -->
+                    <div class="space-y-1">
+                        <label for="nickname"
+                            class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">닉네임</label>
+                        <input type="text" id="nickname" name="nickname" placeholder="별명 입력" required
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                    </div>
+
+                    <!-- 5. Address -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">주소</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="zipcode" name="zipcode" placeholder="우편번호" readonly
+                                class="w-32 h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                            <button type="button" onclick="execDaumPostcode()"
+                                class="px-4 h-12 bg-secondary/10 text-secondary font-bold rounded-xl hover:bg-secondary/20 transition-colors whitespace-nowrap">
+                                우편번호 찾기
+                            </button>
+                        </div>
+                        <input type="text" id="address" name="address" placeholder="주소" readonly
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="detailAddress" name="detailAddress" placeholder="상세주소"
+                                class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                            <input type="text" id="extraAddress" placeholder="참고항목" readonly
+                                class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <!-- 6. Phone -->
+                    <div class="space-y-1">
+                        <label for="phone"
+                            class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">휴대전화</label>
+                        <input type="tel" id="phone" name="phone" placeholder="01012345678" required maxlength="11"
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                    </div>
+
+                    <!-- Resident Number -->
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">주민등록번호</label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" name="residentNumberFront" maxlength="6" placeholder="생년월일 6자리" required
+                                class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all text-center tracking-widest">
+                            <span class="text-text-light/40 dark:text-text-dark/40">-</span>
+                            <div class="flex items-center gap-1 w-full">
+                                <input type="text" name="residentNumberBack" maxlength="1" placeholder="●" required
+                                    class="w-12 h-12 px-0 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all text-center text-lg">
+                                <span
+                                    class="text-text-light/40 dark:text-text-dark/40 text-lg tracking-widest">●●●●●●</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms -->
+                    <!-- Terms -->
+                    <div class="space-y-4 pt-4 border-t border-border-light dark:border-border-dark">
+                        <!-- Terms of Service -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">서비스
+                                이용약관</label>
+                            <div
+                                class="w-full h-32 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark p-4 overflow-y-auto text-xs text-text-light/70 dark:text-text-dark/70 leading-relaxed scrollbar-thin">
+                                <h4 class="font-bold mb-2">제 1 조 (목적)</h4>
+                                <p class="mb-2">본 약관은 Re:birth(이하 "회사")가 제공하는 패션 업사이클링 및 커뮤니티 서비스(이하 "서비스")의 이용과 관련하여
+                                    회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
+
+                                <h4 class="font-bold mb-2">제 2 조 (용어의 정의)</h4>
+                                <p class="mb-1">1. "회원"이라 함은 회사에 개인정보를 제공하여 회원등록을 한 자로서, 회사의 정보를 지속적으로 제공받으며 회사가 제공하는
+                                    서비스를 계속적으로 이용할 수 있는 자를 말합니다.</p>
+                                <p class="mb-2">2. "서비스"라 함은 회사가 웹사이트를 통해 제공하는 업사이클링 정보 공유, 커뮤니티 활동, 포인트 상점 등 제반 서비스를
+                                    의미합니다.</p>
+
+                                <h4 class="font-bold mb-2">제 3 조 (약관의 개정)</h4>
+                                <p class="mb-2">회사는 「전자상거래 등에서의 소비자보호에 관한 법률」, 「약관의 규제에 관한 법률」 등 관련법을 위배하지 않는 범위에서 본 약관을
+                                    개정할 수 있습니다.</p>
+
+                                <h4 class="font-bold mb-2">제 4 조 (회원가입)</h4>
+                                <p class="mb-2">이용자는 회사가 정한 가입 양식에 따라 회원정보를 기입한 후 본 약관에 동의한다는 의사표시를 함으로서 회원가입을 신청합니다.
+                                </p>
+
+                                <h4 class="font-bold mb-2">제 5 조 (회원의 의무)</h4>
+                                <p class="mb-2">회원은 관계법령, 본 약관의 규정, 이용안내 및 서비스와 관련하여 공지한 주의사항, 회사가 통지하는 사항 등을 준수하여야 하며,
+                                    기타 회사의 업무에 방해되는 행위를 하여서는 안 됩니다.</p>
+                            </div>
+                            <label class="flex items-center gap-3 cursor-pointer group select-none">
+                                <input type="checkbox" name="termsAgreement" required class="peer hidden">
+                                <div
+                                    class="size-5 rounded border-2 border-border-light dark:border-border-dark peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center transition-all">
+                                    <span
+                                        class="material-symbols-outlined text-white text-sm opacity-0 peer-checked:opacity-100">check</span>
+                                </div>
+                                <span class="text-sm text-text-light/80 dark:text-text-dark/80">[필수] 서비스 이용약관 동의</span>
+                            </label>
+                        </div>
+
+                        <!-- Privacy Policy -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">개인정보 수집 및
+                                이용</label>
+                            <div
+                                class="w-full h-32 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark p-4 overflow-y-auto text-xs text-text-light/70 dark:text-text-dark/70 leading-relaxed scrollbar-thin">
+                                <h4 class="font-bold mb-2">1. 수집하는 개인정보 항목</h4>
+                                <p class="mb-2">회사는 회원가입, 상담, 서비스 신청 등을 위해 아래와 같은 개인정보를 수집하고 있습니다.<br>- 수집항목: 이름, 로그인ID,
+                                    비밀번호, 이메일, 휴대전화번호, 주소, 생년월일</p>
+
+                                <h4 class="font-bold mb-2">2. 개인정보의 수집 및 이용목적</h4>
+                                <p class="mb-2">회사는 수집한 개인정보를 다음의 목적을 위해 활용합니다.<br>- 서비스 제공에 따른 본인인증, 콘텐츠 제공<br>- 회원 관리:
+                                    회원제 서비스 이용에 따른 본인확인, 개인식별, 가입의사 확인</p>
+
+                                <h4 class="font-bold mb-2">3. 개인정보의 보유 및 이용기간</h4>
+                                <p class="mb-2">원칙적으로 개인정보 수집 및 이용목적이 달성된 후에는 해당 정보를 지체 없이 파기합니다. 단, 관계법령의 규정에 의하여 보존할
+                                    필요가 있는 경우 회사는 아래와 같이 관계법령에서 정한 일정한 기간 동안 회원정보를 보관합니다.<br>- 보존 항목: 로그인ID, 결제기록<br>-
+                                    보존 근거: 전자상거래 등에서의 소비자보호에 관한 법률<br>- 보존 기간: 5년</p>
+                            </div>
+                            <label class="flex items-center gap-3 cursor-pointer group select-none">
+                                <input type="checkbox" name="privacyAgreement" required class="peer hidden">
+                                <div
+                                    class="size-5 rounded border-2 border-border-light dark:border-border-dark peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center transition-all">
+                                    <span
+                                        class="material-symbols-outlined text-white text-sm opacity-0 peer-checked:opacity-100">check</span>
+                                </div>
+                                <span class="text-sm text-text-light/80 dark:text-text-dark/80">[필수] 개인정보 수집 및 이용
+                                    동의</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full h-12 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95 mt-4">
+                        가입 완료
+                    </button>
+
+                </form>
+
+                <!-- Login Link -->
+                <div class="mt-8 text-center text-sm">
+                    <span class="text-text-light/60 dark:text-text-dark/60">이미 계정이 있으신가요?</span>
+                    <a href="/login" class="font-bold text-primary hover:underline ml-1">로그인</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <!-- Daum Postcode Script -->
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    <script>
+        function execDaumPostcode() {
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    var addr = ''; // 주소 변수
+                    var extraAddr = ''; // 참고항목 변수
+
+                    if (data.userSelectedType === 'R') { // 도로명 주소 선택
+                        addr = data.roadAddress;
+                    } else { // 지번 주소 선택
+                        addr = data.jibunAddress;
+                    }
+
+                    if (data.userSelectedType === 'R') {
+                        if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
+                            extraAddr += data.bname;
+                        }
+                        if (data.buildingName !== '' && data.apartment === 'Y') {
+                            extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                        }
+                        if (extraAddr !== '') {
+                            extraAddr = ' (' + extraAddr + ')';
+                        }
+                        document.getElementById("extraAddress").value = extraAddr;
+                    } else {
+                        document.getElementById("extraAddress").value = '';
+                    }
+
+                    document.getElementById('zipcode').value = data.zonecode;
+                    document.getElementById("address").value = addr;
+                    document.getElementById("detailAddress").focus();
+                }
+            }).open();
+        }
+
+        let timerInterval;
+
+        function startTimer(duration) {
+            let timer = duration, minutes, seconds;
+            const timerElement = document.getElementById('timer');
+            const codeInput = document.getElementById('verificationCode');
+
+            clearInterval(timerInterval); // 기존 타이머 초기화
+            codeInput.disabled = false; // 입력 활성화
+
+            // 초기 표시
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+            timerElement.textContent = minutes + ":" + seconds;
+            console.log("Timer started: " + minutes + ":" + seconds);
+
+            timerInterval = setInterval(function () {
+                if (--timer < 0) {
+                    clearInterval(timerInterval);
+                    timerElement.textContent = "시간초과";
+                    codeInput.disabled = true; // 시간 초과 시 입력 비활성화
+                    alert("인증 시간이 초과되었습니다. 다시 시도해주세요.");
+                    return;
+                }
+
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                timerElement.textContent = minutes + ":" + seconds;
+            }, 1000);
+        }
+
+        function sendVerificationCode() {
+            const email = document.getElementById('email').value;
+            console.log("Sending verification code to:", email); // Debug Log
+            if (!email) {
+                alert('이메일을 입력해주세요.');
+                return;
+            }
+
+            // UI 초기화
+            document.getElementById('verificationMsg').innerText = '인증번호 전송 중...';
+            document.getElementById('verificationMsg').className = 'text-xs ml-1 text-text-light/60';
+
+            fetch('/api/email/send?email=' + email, {
+                method: 'POST'
+            })
+                .then(async response => {
+                    if (response.ok) {
+                        // alert('인증 코드가 발송되었습니다. 이메일을 확인해주세요.'); // 제거
+                        document.getElementById('verificationMsg').innerText = '인증 코드가 발송되었습니다. 이메일을 확인해주세요.';
+                        document.getElementById('verificationMsg').className = 'text-xs ml-1 text-green-500 font-bold';
+                        document.getElementById('verificationArea').style.display = 'flex';
+                        startTimer(180); // 3분 타이머 시작
+                    } else {
+                        const errorMsg = await response.text();
+                        alert('이메일 발송 실패: ' + errorMsg);
+                        document.getElementById('verificationMsg').innerText = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('오류가 발생했습니다: ' + error);
+                    document.getElementById('verificationMsg').innerText = '';
+                });
+        }
+
+        function verifyCode() {
+            const code = document.getElementById('verificationCode').value;
+            if (!code) {
+                alert('인증 코드를 입력해주세요.');
+                return;
+            }
+
+            fetch('/api/email/verify?code=' + code, {
+                method: 'POST'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('verificationMsg').innerText = '인증이 완료되었습니다.';
+                        document.getElementById('verificationMsg').className = 'text-xs ml-1 text-green-500 font-bold';
+                        document.getElementById('isEmailVerified').value = 'true';
+                        document.getElementById('email').readOnly = true;
+                        document.getElementById('verificationArea').style.display = 'none';
+                        clearInterval(timerInterval); // 인증 성공 시 타이머 중지
+                    } else {
+                        document.getElementById('verificationMsg').innerText = '인증 코드가 일치하지 않습니다.';
+                        document.getElementById('verificationMsg').className = 'text-xs ml-1 text-red-500 font-bold';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('오류가 발생했습니다.');
+                });
+        }
+
+        function validateForm() {
+            const isVerified = document.getElementById('isEmailVerified').value;
+            if (isVerified !== 'true') {
+                alert('이메일 인증을 완료해주세요.');
+                return false;
+            }
+
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            if (password !== confirmPassword) {
+                alert('비밀번호가 일치하지 않습니다.');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Duplicate Checks & Phone Input Restriction
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginIdInput = document.getElementById('loginId');
+            const emailInput = document.getElementById('email');
+            const phoneInput = document.getElementById('phone');
+            const idErrorMsg = document.getElementById('idErrorMsg');
+            const verificationMsg = document.getElementById('verificationMsg'); // Reusing existing msg element for email duplicate error
+
+            // ID Duplicate Check
+            loginIdInput.addEventListener('blur', function () {
+                const loginId = this.value;
+                if (!loginId) return;
+
+                fetch('/auth/check-id?loginId=' + loginId)
+                    .then(response => response.json())
+                    .then(isDuplicate => {
+                        if (isDuplicate) {
+                            idErrorMsg.innerText = '이미 사용 중인 아이디입니다.';
+                            idErrorMsg.classList.remove('hidden');
+                            idErrorMsg.classList.remove('text-green-500');
+                            idErrorMsg.classList.add('text-red-500');
+                            this.classList.add('border-red-500');
+                        } else {
+                            idErrorMsg.innerText = '사용 가능한 아이디입니다.';
+                            idErrorMsg.classList.remove('hidden', 'text-red-500');
+                            idErrorMsg.classList.add('text-green-500');
+                            this.classList.remove('border-red-500');
+                        }
+                    })
+                    .catch(err => console.error(err));
+            });
+
+            // Email Duplicate Check
+            emailInput.addEventListener('blur', function () {
+                const email = this.value;
+                if (!email) return;
+
+                fetch('/auth/check-email?email=' + email)
+                    .then(response => response.json())
+                    .then(isDuplicate => {
+                        if (isDuplicate) {
+                            verificationMsg.innerText = '이미 가입된 이메일입니다.';
+                            verificationMsg.className = 'text-xs ml-1 text-red-500 font-bold';
+                            this.classList.add('border-red-500');
+                        } else {
+                            // Reset message if valid (verification will handle the rest)
+                            if (verificationMsg.innerText === '이미 가입된 이메일입니다.') {
+                                verificationMsg.innerText = '';
+                                this.classList.remove('border-red-500');
+                            }
+                        }
+                    })
+                    .catch(err => console.error(err));
+            });
+
+            // Phone Input Restriction
+            phoneInput.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);
+            });
+        });
+    </script>
+</body>
+
+</html>

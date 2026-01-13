@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>리버스 - Rebirth & Reverse</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Noto+Sans+KR:wght@100..900&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" />
+
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/wardrobe.css}">
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8B5CF6",
+                        "primary-light": "#A78BFA",
+                        "secondary": "#C4B5FD",
+                        "background-light": "#F5F3FF",
+                        "background-dark": "#1e1b2f",
+                        "text-light": "#1F2937",
+                        "text-dark": "#E5E7EB",
+                        "card-light": "#FFFFFF",
+                        "card-dark": "#2a263f",
+                        "border-light": "#E5E7EB",
+                        "border-dark": "#403a59",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans KR", "Space Grotesk", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark h-screen overflow-hidden">
+    <div class="relative flex h-full w-full flex-col scene-wrapper">
+
+        <div id="scene-background" class="scene-background" aria-hidden="true"></div>
+
+        <!-- Header Removed on Home Page as per User Request -->
+
+        <main id="snap-container" class="scene-container flex-grow h-full relative">
+            <!-- Global Background Effects -->
+            <div class="fixed inset-0 pointer-events-none z-0">
+                <div
+                    class="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-violet-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse">
+                </div>
+                <div class="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-pink-500/10 rounded-full blur-[100px] mix-blend-screen animate-pulse"
+                    style="animation-delay: 2s"></div>
+            </div>
+
+            <!-- Hero Section -->
+            <section class="scene-section h-screen w-full flex flex-col justify-center items-center py-20 px-4 relative"
+                data-scene="intro">
+                <div
+                    class="flex flex-col-reverse lg:flex-row gap-12 max-w-7xl items-center mx-auto w-full relative z-10">
+                    <div class="flex flex-col gap-8 text-center lg:text-left lg:w-1/2">
+                        <div class="flex flex-col gap-6">
+                            <div
+                                class="inline-flex items-center justify-center lg:justify-start gap-3 mb-2 animate-fade-in-up">
+                                <span
+                                    class="px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-primary text-xs font-bold tracking-wider uppercase shadow-lg">
+                                    Re:birth 2.0
+                                </span>
+                                <span class="text-sm font-medium text-text-light/60 dark:text-gray-400 tracking-wide">
+                                    Sustainable Fashion Platform
+                                </span>
+                            </div>
+                            <h1 class="text-5xl sm:text-7xl lg:text-8xl font-black leading-normal sm:leading-none tracking-normal sm:tracking-tighter text-text-light dark:text-white mb-2 animate-fade-in-up"
+                                style="animation-delay: 0.1s">
+                                WEAR<br />
+                                <span
+                                    class="text-transparent bg-clip-text bg-gradient-to-r from-violet-500 via-pink-500 to-orange-400">
+                                    BETTER
+                                </span>
+                            </h1>
+                            <h2 class="text-xl sm:text-2xl text-text-light/70 dark:text-gray-300 font-light leading-relaxed max-w-xl animate-fade-in-up"
+                                style="animation-delay: 0.2s">
+                                당신의 옷장에서 시작되는 지구를 위한 변화.<br />
+                                AI로 분석하고, 3D로 입어보고, 가치를 나누세요.
+                            </h2>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/2 relative perspective-1000 animate-fade-in-up"
+                        style="animation-delay: 0.3s">
+                        <div
+                            class="absolute -inset-10 bg-gradient-to-tr from-violet-500/20 to-pink-500/20 opacity-50 blur-3xl rounded-full">
+                        </div>
+                        <div
+                            class="relative w-full aspect-[4/5] sm:aspect-square lg:aspect-[4/5] max-h-[600px] rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 group">
+                            <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2070&auto=format&fit=crop"
+                                alt="Hero Image"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60">
+                            </div>
+                            <div class="absolute bottom-8 left-8 text-white">
+                                <p class="text-sm font-bold tracking-widest uppercase mb-2 text-white/80">Style Your
+                                    Life
+                                </p>
+                                <p class="text-3xl font-display font-bold">New Cycle</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer z-20"
+                    data-scene-trigger="next">
+                    <div
+                        class="w-12 h-12 rounded-full border border-black/10 dark:border-white/10 flex items-center justify-center backdrop-blur-sm">
+                        <span
+                            class="material-symbols-outlined text-text-light/50 dark:text-white/50">arrow_downward</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Story Section (Bento Grid) -->
+            <section
+                class="scene-section min-h-screen lg:h-screen w-full flex flex-col justify-center items-center py-20 px-4 bg-white/50 dark:bg-[#0d0a12]/50 backdrop-blur-3xl relative overflow-visible lg:overflow-hidden"
+                data-scene="story">
+                <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-violet-500/5 to-transparent">
+                </div>
+
+                <div class="max-w-7xl w-full relative z-10">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl md:text-5xl font-bold mb-6 text-text-light dark:text-white tracking-tight">
+                            The <span
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-pink-500">Re:flow</span>
+                        </h2>
+                        <p class="text-lg text-text-light/60 dark:text-gray-400 font-light">패션을 소비하는 새로운 방식</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-auto md:auto-rows-[300px]">
+                        <!-- Card 1: AI Analysis (Large) -->
+                        <div
+                            class="md:col-span-2 row-span-1 group relative rounded-[2rem] overflow-hidden bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 hover:shadow-2xl transition-all duration-500 min-h-[300px]">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                            </div>
+                            <div class="absolute top-8 left-8 z-10">
+                                <div
+                                    class="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center mb-4 text-violet-500">
+                                    <span class="material-symbols-outlined text-2xl">psychology</span>
+                                </div>
+                                <h3 class="text-2xl font-bold text-text-light dark:text-white mb-2">AI Smart Analysis
+                                </h3>
+                                <p class="text-text-light/60 dark:text-gray-400 max-w-sm">
+                                    업로드한 옷의 브랜드, 소재, 카테고리를 AI가 3초 만에 분석하여 자동으로 분류합니다.
+                                </p>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop"
+                                class="absolute right-0 bottom-0 w-1/2 h-full object-cover mask-image-gradient"
+                                alt="AI">
+                        </div>
+
+                        <!-- Card 2: Carbon Footprint -->
+                        <div
+                            class="group relative rounded-[2rem] overflow-hidden bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 hover:shadow-2xl transition-all duration-500 flex flex-col justify-center items-center text-center p-6 md:p-8 min-h-[300px]">
+                            <div
+                                class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-6 text-green-500 group-hover:scale-110 transition-transform">
+                                <span class="material-symbols-outlined text-3xl">eco</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-text-light dark:text-white mb-2">Carbon Zero</h3>
+                            <p class="text-sm text-text-light/60 dark:text-gray-400">
+                                당신의 선택이 줄인 탄소 발자국을<br>실시간으로 확인하세요.
+                            </p>
+                        </div>
+
+                        <!-- Card 3: Circular Economy -->
+                        <div
+                            class="group relative rounded-[2rem] overflow-hidden bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 hover:shadow-2xl transition-all duration-500 flex flex-col justify-center items-center text-center p-6 md:p-8 min-h-[300px]">
+                            <div
+                                class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center mb-6 text-blue-500 group-hover:scale-110 transition-transform">
+                                <span class="material-symbols-outlined text-3xl">recycling</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-text-light dark:text-white mb-2">Value Cycle</h3>
+                            <p class="text-sm text-text-light/60 dark:text-gray-400">
+                                잠자는 옷에 새 생명을 불어넣는<br>가장 쉬운 방법.
+                            </p>
+                        </div>
+
+                        <!-- Card 4: Community (Large) -->
+                        <div
+                            class="md:col-span-2 row-span-1 group relative rounded-[2rem] overflow-hidden bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 hover:shadow-2xl transition-all duration-500 min-h-[300px]">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                            </div>
+                            <div class="absolute top-8 left-8 z-10">
+                                <div
+                                    class="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-500/20 flex items-center justify-center mb-4 text-pink-500">
+                                    <span class="material-symbols-outlined text-2xl">group</span>
+                                </div>
+                                <h3 class="text-2xl font-bold text-text-light dark:text-white mb-2">With Community</h3>
+                                <p class="text-text-light/60 dark:text-gray-400 max-w-sm">
+                                    비슷한 취향을 가진 사람들과 스타일을 공유하고, 지속 가능한 패션 라이프를 함께 즐기세요.
+                                </p>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1529139574466-a302d20501d0?q=80&w=2068&auto=format&fit=crop"
+                                class="absolute right-0 bottom-0 w-1/2 h-full object-cover mask-image-gradient"
+                                alt="Community">
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer z-20"
+                    data-scene-trigger="next">
+                    <div
+                        class="w-12 h-12 rounded-full border border-black/10 dark:border-white/10 flex items-center justify-center backdrop-blur-sm">
+                        <span
+                            class="material-symbols-outlined text-text-light/50 dark:text-white/50">arrow_downward</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Metrics Section -->
+            <section class="scene-section h-screen w-full flex flex-col justify-center items-center py-20 px-4 relative"
+                data-scene="metrics">
+                <div class="max-w-7xl w-full">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                        <div class="flex flex-col gap-8">
+                            <div>
+                                <span
+                                    class="inline-block py-1 px-3 rounded-full border border-white/30 bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase mb-4">
+                                    Impact Report
+                                </span>
+                                <h2
+                                    class="text-3xl md:text-6xl font-black text-text-light dark:text-white leading-normal md:leading-tight">
+                                    Our Collective<br>
+                                    <span
+                                        class="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600">
+                                        Green Impact
+                                    </span>
+                                </h2>
+                            </div>
+                            <p class="text-lg text-text-light/70 dark:text-gray-400 leading-relaxed font-light">
+                                리버스와 함께하는 작은 실천들이 모여 놀라운 변화를 만들어내고 있습니다.<br>
+                                지속 가능한 미래를 위한 우리의 여정에 동참해주세요.
+                            </p>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Stat 1 -->
+                                <div
+                                    class="p-6 rounded-3xl bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 hover:bg-white/10 transition-colors">
+                                    <p
+                                        class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-b from-text-light to-text-light/50 dark:from-white dark:to-white/50">
+                                        258k</p>
+                                    <p
+                                        class="text-sm font-bold text-text-light/60 dark:text-gray-500 mt-2 uppercase tracking-wide">
+                                        Recycled Items</p>
+                                </div>
+                                <!-- Stat 2 -->
+                                <div
+                                    class="p-6 rounded-3xl bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 hover:bg-white/10 transition-colors">
+                                    <p
+                                        class="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-b from-green-400 to-green-600">
+                                        12.8t</p>
+                                    <p
+                                        class="text-sm font-bold text-text-light/60 dark:text-gray-500 mt-2 uppercase tracking-wide">
+                                        CO2 Saved</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative h-[500px] w-full">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-[3rem] blur-2xl">
+                            </div>
+                            <div
+                                class="relative h-full w-full bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-[3rem] border border-white/20 p-8 flex items-center justify-center overflow-hidden">
+                                <span
+                                    class="material-symbols-outlined text-[15rem] text-white/5 rotate-12">public</span>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <p class="text-6xl font-black text-white/90">32,587</p>
+                                        <p class="text-xl text-white/50 mt-2 font-light">Liters of Water Saved</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer z-20"
+                    data-scene-trigger="next">
+                    <div
+                        class="w-12 h-12 rounded-full border border-black/10 dark:border-white/10 flex items-center justify-center backdrop-blur-sm">
+                        <span
+                            class="material-symbols-outlined text-text-light/50 dark:text-white/50">arrow_downward</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Wardrobe Overlay & CTA Section -->
+            <div id="wardrobe-overlay"
+                class="fixed inset-0 z-[9999] pointer-events-none opacity-0 transition-opacity duration-1000">
+                <div class="wardrobe-door left-door absolute top-0 left-0 w-1/2 h-full transform -translate-x-full transition-transform duration-1000 ease-in-out"
+                    style="background-image: url('/images/antique_wardrobe.png'); background-size: 200% 100%; background-position: left center;">
+                    <div
+                        class="wardrobe-knob absolute top-1/2 right-8 w-6 h-6 rounded-full bg-amber-700 shadow-lg transform translate-x-1/2 border-2 border-amber-900">
+                    </div>
+                </div>
+                <div class="wardrobe-door right-door absolute top-0 right-0 w-1/2 h-full transform translate-x-full transition-transform duration-1000 ease-in-out"
+                    style="background-image: url('/images/antique_wardrobe.png'); background-size: 200% 100%; background-position: right center;">
+                    <div
+                        class="wardrobe-knob absolute top-1/2 left-8 w-6 h-6 rounded-full bg-amber-700 shadow-lg transform -translate-x-1/2 border-2 border-amber-900">
+                    </div>
+                </div>
+                <div
+                    class="wardrobe-content absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-1000">
+                    <div class="text-white text-center">
+                        <h2 class="text-4xl font-bold mb-4 font-display">Welcome to Re:birth</h2>
+                        <p class="text-xl mb-8 font-light text-white/70">Entering your sustainable wardrobe...</p>
+                    </div>
+                </div>
+            </div>
+
+            <section class="scene-section min-h-screen w-full flex flex-col relative" data-scene="cta"
+                id="final-section" style="background: black;">
+
+                <!-- Galaxy Background -->
+                <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div
+                        class="absolute inset-0 bg-[url('https://cdn.pixabay.com/photo/2017/08/30/01/05/milky-way-2695569_1280.jpg')] bg-cover bg-center opacity-40">
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-b from-[#1a1625] via-transparent to-black"></div>
+                </div>
+
+                <div
+                    class="flex-grow flex flex-col items-center justify-start gap-2 text-center px-4 max-w-3xl mx-auto relative z-10 pt-0 pb-0">
+                    <!-- Antique Wardrobe Container -->
+                    <div id="wardrobe-container" class="relative mx-auto flex-grow"
+                        style="width: min(90vw, 700px); height: calc(100vh - 180px); max-height: 800px; perspective: 2000px;">
+
+                        <!-- Backing for Wardrobe (Prevent Transparency) - Fixed with inline style -->
+                        <div class="absolute inset-0 z-0 opacity-100 transform scale-95"
+                            style="background: radial-gradient(ellipse at center, #000000 40%, rgba(0,0,0,0.8) 60%, transparent 80%); filter: blur(20px);">
+                        </div>
+
+                        <!-- 옷장 동영상 -->
+                        <video id="wardrobe-video"
+                            class="absolute inset-0 w-full h-full object-contain z-10 drop-shadow-[0_0_50px_rgba(139,92,246,0.3)]"
+                            muted playsinline preload="metadata">
+                            <source src="/images/wardrobe_opening_transparent.webm" type="video/webm">
+                        </video>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', () => {
+                                const video = document.getElementById('wardrobe-video');
+                                if (video) {
+                                    video.playbackRate = 1.3;
+                                    // video.play(); // Auto-play removed as per user request
+                                }
+                            });
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Modern Gradient Button -->
+                <button id="open-wardrobe-btn" onclick="openWardrobeAndEnter()"
+                    class="absolute bottom-16 left-1/2 -translate-x-1/2 px-10 py-4 rounded-full text-white font-bold text-lg transition-all duration-300 flex items-center gap-2 group whitespace-nowrap z-30 hover:scale-105 hover:shadow-[0_0_40px_rgba(139,92,246,0.6)] border border-white/20 backdrop-blur-md"
+                    style="background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);">
+                    <span class="tracking-widest uppercase text-sm">Open Wardrobe</span>
+                    <span
+                        class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                </button>
+
+                <!-- Suction Overlay - Enhanced -->
+                <div id="suction-overlay" class="fixed inset-0 z-[9999] pointer-events-none opacity-0">
+                    <!-- Light Burst -->
+                    <div id="light-burst" class="absolute inset-0 bg-white opacity-0"></div>
+                    <!-- Vortex Center -->
+                    <div id="suction-vortex" class="absolute inset-0 flex items-center justify-center">
+                        <div class="vortex-ring"></div>
+                        <div class="vortex-ring delay-1"></div>
+                        <div class="vortex-ring delay-2"></div>
+                        <div class="vortex-core"></div>
+                    </div>
+                    <!-- Speed Lines -->
+                    <div id="speed-lines" class="absolute inset-0 opacity-0">
+                        <div class="speed-line" style="left: 10%; animation-delay: 0s;"></div>
+                        <div class="speed-line" style="left: 25%; animation-delay: 0.1s;"></div>
+                        <div class="speed-line" style="left: 40%; animation-delay: 0.05s;"></div>
+                        <div class="speed-line" style="left: 55%; animation-delay: 0.15s;"></div>
+                        <div class="speed-line" style="left: 70%; animation-delay: 0.08s;"></div>
+                        <div class="speed-line" style="left: 85%; animation-delay: 0.12s;"></div>
+                    </div>
+                </div>
+
+                <footer class="w-full py-8 px-4 bg-[#0d0a12] border-t border-white/10 mt-0">
+                    <div class="w-full max-w-6xl mx-auto text-center text-sm text-white/40">
+                        <p>© 2025 리버스 (Rebirth). All rights reserved.</p>
+                    </div>
+                </footer>
+            </section>
+
+            <style>
+                /* Snowflake Animation */
+                .snowflake {
+                    position: absolute;
+                    top: -20px;
+                    color: #fff;
+                    font-size: 1rem;
+                    text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+                    animation: snowfall 4s linear infinite;
+                    opacity: 0.8;
+                }
+
+                @keyframes snowfall {
+                    0% {
+                        top: -20px;
+                        opacity: 0;
+                        transform: translateX(0) rotate(0deg);
+                    }
+
+                    10% {
+                        opacity: 0.8;
+                    }
+
+                    90% {
+                        opacity: 0.6;
+                    }
+
+                    100% {
+                        top: 100%;
+                        opacity: 0;
+                        transform: translateX(20px) rotate(360deg);
+                    }
+                }
+
+                /* Galaxy Star Animation - Milky Way Effect */
+                .galaxy-star {
+                    position: absolute;
+                    width: var(--size, 2px);
+                    height: var(--size, 2px);
+                    background: #ffffff;
+                    border-radius: 50%;
+                    animation: galaxy-twinkle 3s ease-in-out infinite;
+                    animation-delay: var(--delay, 0s);
+                    box-shadow:
+                        0 0 calc(var(--size, 2px) * 2) rgba(255, 255, 255, 0.8),
+                        0 0 calc(var(--size, 2px) * 4) rgba(200, 200, 255, 0.4);
+                }
+
+                @keyframes galaxy-twinkle {
+
+                    0%,
+                    100% {
+                        opacity: 0.2;
+                        transform: scale(0.8);
+                        box-shadow:
+                            0 0 2px rgba(255, 255, 255, 0.3),
+                            0 0 4px rgba(200, 200, 255, 0.2);
+                    }
+
+                    50% {
+                        opacity: 1;
+                        transform: scale(1.2);
+                        box-shadow:
+                            0 0 6px rgba(255, 255, 255, 1),
+                            0 0 12px rgba(200, 200, 255, 0.8),
+                            0 0 20px rgba(167, 139, 250, 0.4);
+                    }
+                }
+
+                .light-particle {
+                    position: absolute;
+                    width: 4px;
+                    height: 4px;
+                    background: rgba(167, 139, 250, 0.6);
+                    border-radius: 50%;
+                    animation: float-up 8s ease-in-out infinite;
+                }
+
+                @keyframes float-up {
+                    0% {
+                        bottom: -10px;
+                        opacity: 0;
+                        transform: translateX(0) scale(1);
+                    }
+
+                    50% {
+                        opacity: 1;
+                    }
+
+                    100% {
+                        bottom: 100%;
+                        opacity: 0;
+                        transform: translateX(20px) scale(0.5);
+                    }
+                }
+
+                @keyframes glow-pulse {
+
+                    0%,
+                    100% {
+                        opacity: 0.5;
+                    }
+
+                    50% {
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes portal-spin {
+                    0% {
+                        transform: rotate(0deg) scale(1);
+                    }
+
+                    100% {
+                        transform: rotate(360deg) scale(1.2);
+                    }
+                }
+
+                .animate-pulse-title {
+                    animation: pulse 3s ease-in-out infinite;
+                }
+
+                .bg-gradient-radial {
+                    background: radial-gradient(circle, white, #a78bfa, #7c3aed);
+                }
+
+                #door-left.door-open {
+                    transform: rotateY(-85deg) !important;
+                    transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                }
+
+                #door-right.door-open {
+                    transform: rotateY(85deg) !important;
+                    transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                }
+
+                /* Enhanced Suction Effect */
+                .vortex-ring {
+                    position: absolute;
+                    width: 0;
+                    height: 0;
+                    border: 3px solid rgba(139, 92, 246, 0.8);
+                    border-radius: 50%;
+                    animation: vortex-expand 1.5s ease-out forwards;
+                }
+
+                .vortex-ring.delay-1 {
+                    animation-delay: 0.2s;
+                    border-color: rgba(167, 139, 250, 0.6);
+                }
+
+                .vortex-ring.delay-2 {
+                    animation-delay: 0.4s;
+                    border-color: rgba(255, 255, 255, 0.5);
+                }
+
+                @keyframes vortex-expand {
+                    0% {
+                        width: 0;
+                        height: 0;
+                        opacity: 1;
+                    }
+
+                    100% {
+                        width: 200vmax;
+                        height: 200vmax;
+                        opacity: 0;
+                    }
+                }
+
+                .vortex-core {
+                    position: absolute;
+                    width: 0;
+                    height: 0;
+                    background: radial-gradient(circle, #ffffff 0%, #a78bfa 30%, #7c3aed 60%, transparent 80%);
+                    border-radius: 50%;
+                    animation: core-expand 1.2s 0.3s ease-in forwards;
+                }
+
+                @keyframes core-expand {
+                    0% {
+                        width: 0;
+                        height: 0;
+                        opacity: 0;
+                    }
+
+                    50% {
+                        opacity: 1;
+                    }
+
+                    100% {
+                        width: 400vmax;
+                        height: 400vmax;
+                        opacity: 1;
+                    }
+                }
+
+                .speed-line {
+                    position: absolute;
+                    top: 0;
+                    width: 2px;
+                    height: 100%;
+                    background: linear-gradient(180deg, transparent 0%, white 50%, transparent 100%);
+                    animation: speed-line-move 0.5s ease-in forwards;
+                }
+
+                @keyframes speed-line-move {
+                    0% {
+                        transform: translateY(-100%) scaleY(0.3);
+                        opacity: 0;
+                    }
+
+                    50% {
+                        opacity: 1;
+                    }
+
+                    100% {
+                        transform: translateY(100%) scaleY(1);
+                        opacity: 0;
+                    }
+                }
+
+                /* Screen Suction */
+                .suction-zoom {
+                    animation: suction-pull 1.5s ease-in forwards;
+                }
+
+                @keyframes suction-pull {
+                    0% {
+                        transform: scale(1) translateZ(0);
+                        filter: blur(0);
+                    }
+
+                    30% {
+                        transform: scale(1.1) translateZ(100px);
+                    }
+
+                    100% {
+                        transform: scale(3) translateZ(500px);
+                        filter: blur(15px);
+                        opacity: 0;
+                    }
+                }
+
+                /* Screen Shake */
+                .screen-shake {
+                    animation: shake 0.3s ease-in-out;
+                }
+
+                @keyframes shake {
+
+                    0%,
+                    100% {
+                        transform: translateX(0);
+                    }
+
+                    20% {
+                        transform: translateX(-5px) rotate(-1deg);
+                    }
+
+                    40% {
+                        transform: translateX(5px) rotate(1deg);
+                    }
+
+                    60% {
+                        transform: translateX(-3px);
+                    }
+
+                    80% {
+                        transform: translateX(3px);
+                    }
+                }
+
+                /* Light Burst */
+                .light-burst-active {
+                    animation: light-burst 1s ease-out forwards;
+                }
+
+                @keyframes light-burst {
+                    0% {
+                        opacity: 0;
+                    }
+
+                    30% {
+                        opacity: 0.3;
+                    }
+
+                    60% {
+                        opacity: 0.8;
+                    }
+
+                    100% {
+                        opacity: 1;
+                    }
+                }
+            </style>
+
+            <script>
+                // 페이지 로드 시 동영상 첫 프레임 표시
+                document.addEventListener('DOMContentLoaded', function () {
+                    const video = document.getElementById('wardrobe-video');
+                    if (video) {
+                        video.currentTime = 0.1; // 첫 프레임 로드
+                    }
+                });
+
+                function openWardrobeAndEnter() {
+                    const wardrobeVideo = document.getElementById('wardrobe-video');
+                    const btn = document.getElementById('open-wardrobe-btn');
+                    const suctionOverlay = document.getElementById('suction-overlay');
+                    const lightBurst = document.getElementById('light-burst');
+                    const speedLines = document.getElementById('speed-lines');
+                    const wardrobe = document.getElementById('wardrobe-container');
+
+                    // Disable button
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.innerHTML = '<span class="material-symbols-outlined text-2xl animate-spin">progress_activity</span>';
+
+                    // Step 1: 동영상 재생
+                    wardrobeVideo.play();
+
+                    // 버튼과 텍스트 숨기기
+                    btn.style.transition = 'opacity 0.5s';
+                    btn.style.opacity = '0';
+                    btn.style.pointerEvents = 'none';
+                    const titleText = document.querySelector('#final-section h2');
+                    const descText = document.querySelector('#final-section p');
+                    if (titleText) {
+                        titleText.style.transition = 'opacity 0.5s';
+                        titleText.style.opacity = '0';
+                    }
+                    if (descText) {
+                        descText.style.transition = 'opacity 0.5s';
+                        descText.style.opacity = '0';
+                    }
+
+                    // 화면 흔들림
+                    document.body.classList.add('screen-shake');
+                    setTimeout(() => {
+                        document.body.classList.remove('screen-shake');
+                    }, 300);
+
+                    // Step 2: 동영상을 scale로 점점 확대 (비율 유지)
+                    // 현재 동영상 크기 기준으로 화면을 채울 스케일 계산
+                    const videoRect = wardrobe.getBoundingClientRect();
+                    const scaleX = window.innerWidth / videoRect.width;
+                    const scaleY = window.innerHeight / videoRect.height;
+                    const targetScale = Math.max(scaleX, scaleY) * 1.1; // 화면 완전히 채우기
+
+                    wardrobe.style.transition = 'transform 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    wardrobe.style.transformOrigin = 'center center';
+                    wardrobe.style.transform = `scale(${targetScale})`;
+                    wardrobe.style.zIndex = '100';
+
+                    // 동영상 끝나면 이벤트
+                    wardrobeVideo.onended = function () {
+                        // 동영상 마지막 프레임에서 정지
+                        wardrobeVideo.pause();
+
+                        // Step 3: 빨려들어가기 시작
+                        wardrobe.style.transition = 'transform 1s cubic-bezier(0.55, 0, 1, 0.45)';
+                        wardrobe.style.transform = 'scale(3)';
+
+                        setTimeout(() => {
+                            document.body.classList.add('screen-shake');
+                            wardrobe.style.transition = 'transform 0.6s cubic-bezier(0.7, 0, 0.84, 0)';
+                            wardrobe.style.transform = 'scale(15)';
+                            wardrobe.style.filter = 'brightness(2.5)';
+                        }, 600);
+
+                        setTimeout(() => {
+                            suctionOverlay.style.opacity = '1';
+                            suctionOverlay.style.pointerEvents = 'auto';
+                            speedLines.style.opacity = '1';
+
+                            const header = document.querySelector('header');
+                            if (header) {
+                                header.style.transition = 'opacity 0.3s ease-out';
+                                header.style.opacity = '0';
+                                header.style.pointerEvents = 'none';
+                            }
+                        }, 800);
+
+                        setTimeout(() => {
+                            lightBurst.classList.add('light-burst-active');
+                        }, 1100);
+
+                        setTimeout(() => {
+                            window.location.href = '/main';
+                        }, 1500);
+                    };
+
+                    // 동영상 로드 실패 시 대체 처리 (동영상 없을 때)
+                    wardrobeVideo.onerror = function () {
+                        console.log('동영상 로드 실패 - 바로 전환');
+                        setTimeout(() => {
+                            window.location.href = '/main';
+                        }, 2000);
+                    };
+                }
+            </script>
+        </main>
+    </div>
+
+    <script th:src="@{/js/main.js}"></script>
+    <script th:src="@{/js/wardrobe.js}"></script>
+</body>
+
+</html>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.report.ReportDao">
+
+    <!-- 신고 등록 -->
+    <insert id="insertReport" parameterType="com.rebirth.my.report.ReportVo">
+        <selectKey keyProperty="id" resultType="Long" order="BEFORE">
+            SELECT S_USER_REPORTS.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO USER_REPORTS (
+            ID, REPORTER_ID, REPORTED_USER_ID, REASON_CATEGORY, IS_PROCESSED, DESCRIPTION, CREATED_AT
+        ) VALUES (
+            #{id}, #{reporterId}, #{reportedUserId}, #{reasonCategory}, 'N', #{description}, SYSTIMESTAMP
+        )
+    </insert>
+
+    <!-- 신고 목록 조회 -->
+    <select id="selectReportList" parameterType="map" resultType="com.rebirth.my.report.ReportVo">
+        SELECT 
+            R.ID, 
+            R.REPORTER_ID, R.REPORTED_USER_ID, 
+            R.REASON_CATEGORY, R.IS_PROCESSED, R.DESCRIPTION, R.CREATED_AT,
+            U1.NAME AS reporterName,
+            U2.NAME AS reportedUserName
+        FROM USER_REPORTS R
+        LEFT JOIN USERS U1 ON R.REPORTER_ID = U1.ID
+        LEFT JOIN USERS U2 ON R.REPORTED_USER_ID = U2.ID
+        ORDER BY R.CREATED_AT DESC
+    </select>
+
+    <!-- 신고 상세 조회 -->
+    <select id="selectReportById" parameterType="Long" resultType="com.rebirth.my.report.ReportVo">
+        SELECT 
+            R.ID, 
+            R.REPORTER_ID, R.REPORTED_USER_ID, 
+            R.REASON_CATEGORY, R.IS_PROCESSED, R.DESCRIPTION, R.CREATED_AT,
+            U1.NAME AS reporterName,
+            U2.NAME AS reportedUserName
+        FROM USER_REPORTS R
+        LEFT JOIN USERS U1 ON R.REPORTER_ID = U1.ID
+        LEFT JOIN USERS U2 ON R.REPORTED_USER_ID = U2.ID
+        WHERE R.ID = #{id}
+    </select>
+    
+    <!-- 상태 업데이트 -->
+    <update id="updateReportStatus" parameterType="map">
+        UPDATE USER_REPORTS
+        SET IS_PROCESSED = #{isProcessed}
+        WHERE ID = #{id}
+    </update>
+    
+    <!-- 제재 내역 등록 -->
+    <insert id="insertReportAction" parameterType="com.rebirth.my.report.ReportActionVo">
+        <selectKey keyProperty="id" resultType="Long" order="BEFORE">
+            SELECT S_REPORT_ACTIONS.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO REPORT_ACTIONS (
+            ID, REPORT_ID, ADMIN_ID, TARGET_USER_ID, ACTION_TYPE, ACTION_REASON, CREATED_AT
+        ) VALUES (
+            #{id}, #{reportId}, #{adminId}, #{targetUserId}, #{actionType}, #{actionReason}, SYSTIMESTAMP
+        )
+    </insert>
+    
+    <!-- 특정 유저 신고 당한 횟수 -->
+    <select id="countReportsByTargetUser" parameterType="Long" resultType="int">
+        SELECT COUNT(*) FROM USER_REPORTS WHERE REPORTED_USER_ID = #{targetUserId}
+    </select>
+    
+    <delete id="deleteReport" parameterType="Long">
+        DELETE FROM USER_REPORTS WHERE ID = #{id}
+    </delete>
+
+</mapper>

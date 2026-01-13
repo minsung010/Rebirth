@@ -1,0 +1,64 @@
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Toggle Switch Animation */
+.toggle-checkbox {
+    transition: transform 0.3s ease-in-out, border-color 0.3s;
+    z-index: 10;
+}
+
+.toggle-checkbox:checked {
+    transform: translateX(100%);
+    border-color: white;
+}
+
+.toggle-checkbox:checked+.toggle-label {
+    background-color: #7c3aed;
+    /* Fallback Primary */
+    transition: background-color 0.3s;
+}
+
+/* Dark Mode specific toggle styles if needed */
+.dark .toggle-checkbox:checked+.toggle-label {
+    background-color: #7c3aed;
+}
+
+/* Ranking Cards */
+.ranking-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ranking-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.1);
+}
+
+.glass-pill {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-pill {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rank-badge {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* --- Profile Decorations Container --- */
+#profileImageContainer {
+    position: relative;
+    padding: 4px;
+    border-radius: 9999px;
+    z-index: 1;
+}
+
+#profileImageContainer img {
+    position: relative;
+    z-index: 2;
+}

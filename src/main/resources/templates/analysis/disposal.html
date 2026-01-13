@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<!-- 추가 스타일: 애니메이션 및 그라데이션 텍스트 -->
+<style>
+    .shimmer {
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 100%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -200% 0;
+        }
+
+        100% {
+            background-position: 200% 0;
+        }
+    }
+</style>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-24 pb-16 px-4">
+        <div class="max-w-4xl mx-auto">
+
+            <!-- Title Section -->
+            <section class="text-center mb-16">
+                <div class="mb-8 relative inline-block">
+                    <div class="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full animate-pulse"></div>
+                    <div
+                        class="relative size-32 mx-auto bg-gradient-to-br from-emerald-100 to-teal-200 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-full flex items-center justify-center shadow-xl mb-6">
+                        <span
+                            class="material-symbols-outlined text-6xl text-emerald-600 dark:text-emerald-400">recycling</span>
+                    </div>
+                </div>
+                <h1 class="text-3xl md:text-5xl font-black mb-6 leading-tight">
+                    <span class="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">자원의 새로운
+                        시작,</span><br>
+                    Rebirth가 함께합니다.
+                </h1>
+                <p class="text-lg text-text-light/70 dark:text-text-dark/70 max-w-2xl mx-auto">
+                    더 이상 입을 수 없는 옷, 버리지 말고 보내주세요.<br>
+                    전문 업사이클링 기업을 통해 <strong>건축 자재, 고형 연료</strong> 등으로 재탄생합니다.
+                </p>
+            </section>
+
+            <!-- 1. 수거 서비스 신청 (Collection Service) -->
+            <section class="mb-16">
+                <div
+                    class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden shadow-2xl">
+                    <!-- Background Pattern -->
+                    <div class="absolute top-0 right-[29%] p-12 opacity-10">
+                        <span class="material-symbols-outlined text-9xl">local_shipping</span>
+                    </div>
+
+                    <div class="relative z-10 grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <div
+                                class="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-sm font-bold mb-4 border border-white/30">
+                                Rebirth 프리미엄 수거
+                            </div>
+                            <h2 class="text-3xl md:text-4xl font-bold mb-4">문 앞까지 찾아가는<br>무료 수거 서비스</h2>
+                            <p class="text-emerald-100 mb-8 leading-relaxed">
+                                번거로운 분리수거함 이동 없이, 집 앞에 두시면 수거해 드립니다.<br>
+                                수거된 의류는 무게에 따라 <strong>Eco Point</strong>로 적립됩니다.
+                            </p>
+                            <br><br>
+
+                            <button onclick="openCollectionModal()"
+                                class="group relative px-8 py-4 bg-white text-emerald-800 font-bold rounded-xl shadow-lg hover:bg-emerald-50 transition-all hover:scale-105 overflow-hidden">
+                                <div
+                                    class="absolute inset-0 shimmer opacity-0 group-hover:opacity-100 transition-opacity">
+                                </div>
+                                <span class="relative flex items-center gap-2">
+                                    수거 신청하기
+                                    <span
+                                        class="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+                                </span>
+                            </button>
+
+                            <!-- Status Check Link -->
+                            <div class="mt-4">
+                                <button onclick="openStatusModal()"
+                                    class="text-emerald-100 hover:text-white text-sm font-medium flex items-center gap-1 transition-colors opacity-80 hover:opacity-100">
+                                    <span class="material-symbols-outlined text-lg">local_shipping</span>
+                                    실시간 수거 현황 확인하기
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Schedule + Points -->
+                        <div class="hidden md:flex flex-col gap-4 mt-12">
+                            <br><br>
+                            <!-- Mock Schedule Info -->
+                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="material-symbols-outlined">calendar_clock</span>
+                                    <span class="font-bold">가장 빠른 수거 가능일</span>
+                                </div>
+                                <div class="text-2xl font-black flex items-center gap-2">
+                                    <span id="collection-date">내일</span> <span
+                                        class="text-base font-normal opacity-80">오전 09:00 ~ 11:00</span>
+                                </div>
+                            </div>
+
+                            <!-- Points Card -->
+                            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                                <div class="flex justify-between items-center mb-4 pb-4 border-b border-white/10">
+                                    <span class="font-bold">내 예상 적립 포인트</span>
+                                    <span class="material-symbols-outlined">monetization_on</span>
+                                </div>
+                                <div class="flex items-end gap-2 mb-2">
+                                    <span class="text-5xl font-black">1,250</span>
+                                    <span class="text-xl font-medium mb-2">P</span>
+                                </div>
+                                <p class="text-sm opacity-70">* 예상 무게 25kg 기준 (50P/kg)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. 자원 순환 소개 (Upcycling Partners Slider) -->
+            <section class="mb-16 relative group/slider">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold flex items-center gap-2">
+                        <span class="material-symbols-outlined text-emerald-500 text-5xl">factory</span>
+                        새 삶을 선택한 내 옷, 수거된 내 옷의 목적지
+                    </h2>
+                    <!-- Slider Controls (Top Right) -->
+                    <div class="flex gap-2">
+                        <button onclick="moveSlider(-1)"
+                            class="size-10 rounded-full border border-border-light dark:border-border-dark flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <button onclick="moveSlider(1)"
+                            class="size-10 rounded-full border border-border-light dark:border-border-dark flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-hidden rounded-3xl">
+                    <div id="partner-track" class="flex transition-transform duration-500 ease-in-out">
+
+                        <!-- Slide 1: Sejin Plus -->
+                        <div class="min-w-full grid md:grid-cols-2 gap-6 p-1">
+                            <!-- Partner Info -->
+                            <div
+                                class="group bg-card-light dark:bg-card-dark rounded-3xl border border-border-light dark:border-border-dark overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                                <div class="h-48 overflow-hidden bg-gray-100 relative shrink-0">
+                                    <div
+                                        class="absolute inset-0 flex items-center justify-center bg-slate-800 text-white">
+                                        <div class="text-center">
+                                            <h3 class="text-3xl font-black tracking-widest uppercase mb-2">SEJIN PLUS
+                                            </h3>
+                                            <p class="text-xs tracking-wider opacity-70">Eco-Friendly Technology</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-8 flex flex-col flex-grow">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h3 class="text-xl font-bold mb-1">세진플러스 (SEJIN PLUS)</h3>
+                                            <p class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">친환경 섬유
+                                                리사이클링 선도 기업</p>
+                                        </div>
+                                        <span class="material-symbols-outlined text-text-light/30">verified</span>
+                                    </div>
+                                    <p class="text-text-light/70 dark:text-text-dark/70 mb-6 flex-grow">
+                                        독자적인 기술로 폐섬유를 업사이클링하여, 친환경 고밀도 섬유 패널 <strong>'플러스넬(Plusnel)'</strong>을 생산합니다.
+                                    </p>
+                                    <a href="https://www.plusnel.com/%EC%83%81%EC%84%B8-%EC%A0%95%EB%B3%B4"
+                                        target="_blank"
+                                        class="inline-flex items-center gap-2 w-full justify-center py-3 rounded-xl bg-background-light dark:bg-gray-800 font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 transition-colors mt-auto">
+                                        세진플러스 소개 보기
+                                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Process Info -->
+                            <div
+                                class="bg-card-light dark:bg-card-dark rounded-3xl border border-border-light dark:border-border-dark p-8 flex flex-col justify-center h-full">
+                                <h3 class="text-xl font-bold mb-6">세진플러스 자원화 프로세스</h3>
+                                <div class="space-y-6">
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 flex items-center justify-center font-bold">
+                                            1</div>
+                                        <div>
+                                            <p class="font-bold mb-1">자원화 (Resource Recovery)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">헌 옷, 현수막 등을
+                                                수거하여 선별합니다.</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 flex items-center justify-center font-bold">
+                                            2</div>
+                                        <div>
+                                            <p class="font-bold mb-1">파쇄 및 이물질 제거</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">원료를 파쇄하고 단추,
+                                                지퍼 등을 제거합니다.</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 flex items-center justify-center font-bold">
+                                            3</div>
+                                        <div>
+                                            <p class="font-bold mb-1">가공 (Processing)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">섬유를 부직포 형태로
+                                                만들고 적층합니다.</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 flex items-center justify-center font-bold">
+                                            4</div>
+                                        <div>
+                                            <p class="font-bold mb-1">성형 및 검수</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">고온 압축하여 고밀도
+                                                패널을 완성합니다.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 2: Hyosung TNC (T2T) -->
+                        <div class="min-w-full grid md:grid-cols-2 gap-6 p-1">
+                            <!-- Partner Info -->
+                            <div
+                                class="group bg-card-light dark:bg-card-dark rounded-3xl border border-border-light dark:border-border-dark overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                                <div class="h-48 overflow-hidden bg-blue-900 relative shrink-0">
+                                    <div
+                                        class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-800 to-indigo-900 text-white">
+                                        <div class="text-center">
+                                            <h3 class="text-3xl font-black tracking-widest uppercase mb-2">HYOSUNG</h3>
+                                            <p class="text-xs tracking-wider opacity-70">Textile to Textile</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-8 flex flex-col flex-grow">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h3 class="text-xl font-bold mb-1">효성티앤씨 (HYOSUNG TNC)</h3>
+                                            <p class="text-sm text-blue-600 dark:text-blue-400 font-medium">T2T(Textile
+                                                to Textile) 혁신 기술</p>
+                                        </div>
+                                        <span class="material-symbols-outlined text-text-light/30">verified</span>
+                                    </div>
+                                    <p class="text-text-light/70 dark:text-text-dark/70 mb-6 flex-grow">
+                                        버려진 옷을 다시 옷으로 만드는 <strong>'T2T(Textile to Textile)'</strong> 기술로, 폐섬유를 고품질 원사로
+                                        되살려 진정한 자원 순환을 실현합니다.
+                                    </p>
+                                    <a href="https://hyosungblog.tistory.com/508103" target="_blank"
+                                        class="inline-flex items-center gap-2 w-full justify-center py-3 rounded-xl bg-background-light dark:bg-gray-800 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 transition-colors mt-auto">
+                                        T2T 스토리 보기
+                                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Process Info -->
+                            <div
+                                class="bg-card-light dark:bg-card-dark rounded-3xl border border-border-light dark:border-border-dark p-8 flex flex-col justify-center h-full">
+                                <h3 class="text-xl font-bold mb-6">T2T 순환 프로세스</h3>
+                                <div class="space-y-6">
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center font-bold">
+                                            1</div>
+                                        <div>
+                                            <p class="font-bold mb-1">수거 (Collection)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                더 이상 입지 않는 폐의류와 섬유 폐기물을 수거합니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center font-bold">
+                                            2</div>
+                                        <div>
+                                            <p class="font-bold mb-1">분해 및 정제</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                섬유를 화학적으로 분해하고 불순물을 제거하여 순수 원료를 추출합니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center font-bold">
+                                            3</div>
+                                        <div>
+                                            <p class="font-bold mb-1">T2T 칩 (Chip)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                추출된 원료로 새 제품과 동일한 품질의 재생 칩을 생산합니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center font-bold">
+                                            4</div>
+                                        <div>
+                                            <p class="font-bold mb-1">재탄생 (Rebirth)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                고품질 원사로 가공되어 새로운 옷과 가방으로 다시 태어납니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 3: JeCLEAN (REFeaT) -->
+                        <div class="min-w-full grid md:grid-cols-2 gap-6 p-1">
+                            <!-- Partner Info -->
+                            <div
+                                class="group bg-card-light dark:bg-card-dark rounded-3xl border border-border-light dark:border-border-dark overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                                <div class="h-48 overflow-hidden bg-amber-600 relative shrink-0">
+                                    <div
+                                        class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-600 to-orange-700 text-white">
+                                        <div class="text-center">
+                                            <h3 class="text-3xl font-black tracking-widest uppercase mb-2">JeCLEAN</h3>
+                                            <p class="text-xs tracking-wider opacity-70">Cotton Upcycling Solution</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-8 flex flex-col flex-grow">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h3 class="text-xl font-bold mb-1">제클린 (JeCLEAN)</h3>
+                                            <p class="text-sm text-amber-600 dark:text-amber-400 font-medium">폐침구·폐타월의
+                                                새로운 가치, REFeaT</p>
+                                        </div>
+                                        <span class="material-symbols-outlined text-text-light/30">verified</span>
+                                    </div>
+                                    <p class="text-text-light/70 dark:text-text-dark/70 mb-6 flex-grow">
+                                        제주의 숙박업소에서 버려지는 침구와 타월을 수거하여, 고품질 재생 면사 <strong>'REFeaT'</strong>로 재탄생시키는
+                                        면(Cotton) 자원 순환 솔루션입니다.
+                                    </p>
+                                    <a href="https://www.jeclean.co.kr/REFeaT" target="_blank"
+                                        class="inline-flex items-center gap-2 w-full justify-center py-3 rounded-xl bg-background-light dark:bg-gray-800 font-bold hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 transition-colors mt-auto">
+                                        REFeaT 소개 보기
+                                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Process Info -->
+                            <div
+                                class="bg-card-light dark:bg-card-dark rounded-3xl border border-border-light dark:border-border-dark p-8 flex flex-col justify-center h-full">
+                                <h3 class="text-xl font-bold mb-6">REFeaT 재생 프로세스</h3>
+                                <div class="space-y-6">
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 flex items-center justify-center font-bold">
+                                            1</div>
+                                        <div>
+                                            <p class="font-bold mb-1">수거 (Collection)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                제주의 호텔/숙박업소에서 사용 후 버려지는 폐린넨과 폐타월을 체계적으로 수거합니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 flex items-center justify-center font-bold">
+                                            2</div>
+                                        <div>
+                                            <p class="font-bold mb-1">원료화 (Raw Material)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                수거된 면 제품을 세척, 살균하고 잘게 분해하여 재생 면 원료(솜) 상태로 만듭니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 flex items-center justify-center font-bold">
+                                            3</div>
+                                        <div>
+                                            <p class="font-bold mb-1">방적 (Spinning)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                재생 원료와 순면을 최적의 비율로 배합하여 고품질 재생 면사(REFeaT)를 생산합니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 flex items-center justify-center font-bold">
+                                            4</div>
+                                        <div>
+                                            <p class="font-bold mb-1">제품화 (Product)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                호텔 수건, 의류, 에코백 등 다시 사용할 수 있는 100% 코튼 친환경 제품을 만듭니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 4: TextileRe -->
+                        <div class="min-w-full grid md:grid-cols-2 gap-6 p-1">
+                            <!-- Partner Info -->
+                            <div
+                                class="group bg-card-light dark:bg-card-dark rounded-3xl border border-border-light dark:border-border-dark overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                                <div class="h-48 overflow-hidden bg-purple-900 relative shrink-0">
+                                    <div
+                                        class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-800 to-violet-900 text-white">
+                                        <div class="text-center">
+                                            <h3 class="text-3xl font-black tracking-widest uppercase mb-2">TextileRe
+                                            </h3>
+                                            <p class="text-xs tracking-wider opacity-70">Advanced Extraction Tech</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-8 flex flex-col flex-grow">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h3 class="text-xl font-bold mb-1">텍스타일리 (TextileRe)</h3>
+                                            <p class="text-sm text-purple-600 dark:text-purple-400 font-medium">섬유 폐기물
+                                                해방을 위한 혁신 기술</p>
+                                        </div>
+                                        <span class="material-symbols-outlined text-text-light/30">verified</span>
+                                    </div>
+                                    <p class="text-text-light/70 dark:text-text-dark/70 mb-6 flex-grow">
+                                        재활용이 어려운 복합 소재 폐의류에서 특정 고분자만을 물리·화학적으로 분리해내는 <strong>'표적 추출 시스템'</strong>으로 섬유의
+                                        무한한 순환을 실현합니다.
+                                    </p>
+                                    <a href="https://www.textilere.com/" target="_blank"
+                                        class="inline-flex items-center gap-2 w-full justify-center py-3 rounded-xl bg-background-light dark:bg-gray-800 font-bold hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-purple-600 transition-colors mt-auto">
+                                        텍스타일리 기술 보기
+                                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Process Info -->
+                            <div
+                                class="bg-card-light dark:bg-card-dark rounded-3xl border border-border-light dark:border-border-dark p-8 flex flex-col justify-center h-full">
+                                <h3 class="text-xl font-bold mb-6">표적 추출 프로세스</h3>
+                                <div class="space-y-6">
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-600 flex items-center justify-center font-bold">
+                                            1</div>
+                                        <div>
+                                            <p class="font-bold mb-1">수거 (Collection)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                소각이나 매립으로 처리되던 복합 소재 폐의류 및 폐섬유를 수거합니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-600 flex items-center justify-center font-bold">
+                                            2</div>
+                                        <div>
+                                            <p class="font-bold mb-1">선별 (Sorting)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                AI 비전 기술 등을 활용하여 재질별로 분류하고 재활용 가능성을 판단합니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-600 flex items-center justify-center font-bold">
+                                            3</div>
+                                        <div>
+                                            <p class="font-bold mb-1">추출 (Extraction)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                독자적인 '고분자 표적 추출' 기술로 폴리에스터 등 특정 소재만 정밀하게 분리해냅니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div
+                                            class="flex-shrink-0 size-8 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-600 flex items-center justify-center font-bold">
+                                            4</div>
+                                        <div>
+                                            <p class="font-bold mb-1">소재화 (Materialization)</p>
+                                            <p class="text-sm text-text-light/60 dark:text-text-dark/60">
+                                                분리된 소재를 고순도 펠릿(Pellet)이나 원료로 가공하여 산업 자재로 공급합니다.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Slider Indicators -->
+                <div class="flex justify-center gap-2 mt-4">
+                    <button onclick="goToSlide(0)"
+                        class="slider-dot size-2 rounded-full bg-emerald-500 transition-all w-8"></button>
+                    <button onclick="goToSlide(1)"
+                        class="slider-dot size-2 rounded-full bg-gray-300 dark:bg-gray-700 transition-all"></button>
+                    <button onclick="goToSlide(2)"
+                        class="slider-dot size-2 rounded-full bg-gray-300 dark:bg-gray-700 transition-all"></button>
+                    <button onclick="goToSlide(3)"
+                        class="slider-dot size-2 rounded-full bg-gray-300 dark:bg-gray-700 transition-all"></button>
+                </div>
+            </section>
+
+            <!-- Bottom Navigation -->
+            <div class="text-center pt-8 border-t border-border-light dark:border-border-dark">
+                <a href="/analysis"
+                    class="text-text-light/60 dark:text-text-dark/60 hover:text-primary transition-colors inline-flex items-center gap-1">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    분석 페이지로 돌아가기
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 수거 신청 모달 (Collection Modal) -->
+    <div id="collection-modal"
+        class="fixed inset-0 z-[100] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-card-dark w-full max-w-md rounded-3xl shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 modal-content">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white text-center relative">
+                <h3 class="text-2xl font-bold">수거 신청하기</h3>
+                <p class="text-emerald-100 text-sm mt-1">예상 무게를 입력하시면 포인트를 계산해드려요!</p>
+                <button onclick="closeCollectionModal()"
+                    class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-8">
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-text-light/70 dark:text-text-dark/70 mb-2">
+                        의류 무게 (kg)
+                    </label>
+                    <div class="relative">
+                        <input type="number" id="weight-input" min="1" placeholder="예: 5"
+                            class="w-full px-4 py-4 text-lg bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-emerald-500 focus:ring-0 transition-all text-center font-bold"
+                            oninput="calculatePoints()">
+                        <span
+                            class="absolute right-4 top-1/2 -translate-y-1/2 text-text-light/40 dark:text-text-dark/40 font-bold">kg</span>
+                    </div>
+                    <p class="text-xs text-right text-emerald-600 mt-2 font-medium">* 1kg당 50P 적립</p>
+                </div>
+
+                <!-- Point Preview -->
+                <div class="bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl p-6 text-center mb-8">
+                    <p class="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-1">예상 적립 포인트</p>
+                    <div class="flex items-center justify-center gap-1 text-emerald-700 dark:text-emerald-300">
+                        <span id="predicted-points" class="text-4xl font-black">0</span>
+                        <span class="text-xl font-bold">P</span>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <button onclick="submitCollection()"
+                    class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    신청 완료하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 수거 현황 모달 (Status Modal) -->
+    <div id="status-modal"
+        class="fixed inset-0 z-[100] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-card-dark w-full max-w-md rounded-3xl shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 status-modal-content relative">
+
+            <button onclick="closeStatusModal()"
+                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 z-10 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+
+            <!-- Header -->
+            <div class="p-6 text-center border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
+                <h3 class="text-xl font-black text-emerald-800 dark:text-emerald-400 mb-1">실시간 수거 현황</h3>
+                <p class="text-xs font-mono text-text-light/50 dark:text-text-dark/50 tracking-wider">ORDER
+                    #20241224-RE88</p>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 pt-8 space-y-8">
+                <!-- Status Animation Area -->
+                <div class="relative py-4 select-none px-2">
+                    <!-- Progress Bar Background -->
+                    <div
+                        class="absolute top-1/2 left-0 w-full h-1.5 bg-gray-100 dark:bg-gray-700 -translate-y-1/2 rounded-full overflow-hidden">
+                    </div>
+
+                    <!-- Active Progress (Animated Width) -->
+                    <div
+                        class="absolute top-1/2 left-0 w-0 h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500 -translate-y-1/2 rounded-full progress-bar-fill transition-all duration-[2500ms] ease-out shadow-[0_0_10px_rgba(16,185,129,0.5)]">
+                    </div>
+
+                    <!-- Truck Icon (Animated Position) -->
+                    <div
+                        class="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 z-10 truck-icon transition-all duration-[2500ms] ease-out group cursor-help">
+                        <div
+                            class="bg-white dark:bg-gray-800 p-1.5 rounded-full border-2 border-emerald-500 shadow-lg relative transform transition-transform group-hover:scale-110">
+                            <span
+                                class="material-symbols-outlined text-emerald-600 text-xl block animate-bounce-slight">local_shipping</span>
+                            <!-- Ping Effect -->
+                            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                <span
+                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                        </div>
+                        <!-- Tooltip -->
+                        <div
+                            class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                            현재 위치
+                        </div>
+                    </div>
+
+                    <!-- Steps Labels -->
+                    <div
+                        class="flex justify-between relative z-0 text-[10px] font-bold text-gray-400 dark:text-gray-600 mt-8">
+                        <div
+                            class="text-emerald-600 dark:text-emerald-400 w-1/4 text-center -ml-6 flex flex-col items-center gap-1">
+                            <span class="size-2 rounded-full bg-emerald-500 block mb-1"></span>
+                            접수완료
+                        </div>
+                        <div
+                            class="text-emerald-600 dark:text-emerald-400 w-1/4 text-center flex flex-col items-center gap-1">
+                            <span class="size-2 rounded-full bg-emerald-500 block mb-1"></span>
+                            기사배정
+                        </div>
+                        <div
+                            class="text-emerald-600 dark:text-emerald-400 w-1/4 text-center translate-x-2 flex flex-col items-center gap-1">
+                            <span class="size-2 rounded-full bg-emerald-500 block mb-1 animate-pulse"></span>
+                            이동중
+                        </div>
+                        <div class="w-1/4 text-center -mr-6 flex flex-col items-center gap-1">
+                            <span class="size-2 rounded-full bg-gray-300 dark:bg-gray-700 block mb-1"></span>
+                            수거완료
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Driver Info Card -->
+                <div
+                    class="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50 rounded-2xl p-4 flex items-center gap-4 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group hover:border-emerald-200 transition-colors">
+                    <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <span class="material-symbols-outlined text-6xl">badge</span>
+                    </div>
+
+                    <div
+                        class="size-14 rounded-full bg-gray-200 overflow-hidden shrink-0 border-2 border-white dark:border-gray-600 shadow-md">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                            class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-grow z-10">
+                        <div class="flex items-center gap-1">
+                            <p class="font-bold text-sm">김민수 기사님</p>
+                            <span
+                                class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">BEST</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-text-light/60 dark:text-text-dark/60 mt-0.5">
+                            <div class="flex items-center text-yellow-500">
+                                <span class="material-symbols-outlined text-[14px] fill-current">star</span>
+                                <span class="font-bold ml-0.5 text-text-light dark:text-text-dark">4.9</span>
+                            </div>
+                            <span class="w-px h-3 bg-gray-300 dark:bg-gray-600"></span>
+                            <span>누적 수거 1,240건</span>
+                        </div>
+                    </div>
+                    <a href="tel:010-1234-5678"
+                        class="size-10 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition-all hover:scale-110 shadow-lg shadow-emerald-500/30 z-10 shrink-0"
+                        title="기사님께 전화하기">
+                        <span class="material-symbols-outlined text-xl">call</span>
+                    </a>
+                </div>
+
+                <!-- Message Box -->
+                <div
+                    class="text-center bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl p-4 border border-emerald-100 dark:border-emerald-900/30">
+                    <p
+                        class="text-lg font-black text-emerald-600 dark:text-emerald-400 mb-1 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined animate-spin-slow">schedule</span>
+                        15분 뒤 도착 예정
+                    </p>
+                    <p class="text-xs text-text-light/60 dark:text-text-dark/60 font-medium">
+                        문 앞에 수거 물품을 미리 준비해 주시면 감사하겠습니다.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Progress Bar Bottom Decoration -->
+            <div class="h-1 bg-gray-100 dark:bg-gray-800 w-full">
+                <div class="h-full bg-emerald-500 animate-progress-indeterminate"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <script>
+        const modal = document.getElementById('collection-modal');
+        const modalContent = modal.querySelector('.modal-content');
+        const weightInput = document.getElementById('weight-input');
+        const pointsDisplay = document.getElementById('predicted-points');
+        const PRICE_PER_KG = 50; // kg당 포인트
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCollectionDate();
+        });
+
+        function updateCollectionDate() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const month = tomorrow.getMonth() + 1;
+            const date = tomorrow.getDate();
+
+            // 날짜 포맷팅: 내일 (M/D)
+            const dateStr = `내일 (${month}/${date})`;
+            const dateEl = document.getElementById('collection-date');
+            if (dateEl) {
+                dateEl.innerText = dateStr;
+            }
+        }
+
+        // 모달 열기
+        function openCollectionModal() {
+            modal.classList.remove('hidden');
+            // 약간의 딜레이 후 애니메이션 적용
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            weightInput.value = ''; // 초기화
+            pointsDisplay.innerText = '0';
+            weightInput.focus();
+        }
+
+        // 모달 닫기
+        function closeCollectionModal() {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        // 포인트 계산
+        function calculatePoints() {
+            const weight = parseFloat(weightInput.value);
+            if (isNaN(weight) || weight < 0) {
+                pointsDisplay.innerText = '0';
+                return;
+            }
+            const points = Math.floor(weight * PRICE_PER_KG);
+            // 숫자 카운팅 애니메이션 효과 (간단하게)
+            pointsDisplay.innerText = points.toLocaleString();
+        }
+
+        // 신청 완료
+        function submitCollection() {
+            const weight = parseFloat(weightInput.value);
+            if (!weight || weight <= 0) {
+                alert('무게를 올바르게 입력해주세요.');
+                weightInput.focus();
+                return;
+            }
+
+            const points = Math.floor(weight * PRICE_PER_KG);
+            const msg = `수거 신청이 완료되었습니다!\n\n 입력 무게: ${weight}kg\n 예상 포인트: ${points.toLocaleString()}P\n\n카카오톡으로 기사님 방문 일정을 안내해 드립니다.`;
+
+            if (confirm('입력하신 정보로 수거를 신청하시겠습니까?')) {
+                alert(msg);
+                closeCollectionModal();
+                openStatusModal(); // 신청 완료 후 현황 모달 열기
+            }
+        }
+
+        // 모달 배경 클릭 시 닫기 (통합 핸들러)
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                closeCollectionModal();
+            }
+            if (event.target == statusModal) {
+                closeStatusModal();
+            }
+        }
+
+        // ===== 현황 모달 (Status Modal) Logic =====
+        const statusModal = document.getElementById('status-modal');
+        const statusModalContent = statusModal.querySelector('.status-modal-content');
+
+        function openStatusModal() {
+            statusModal.classList.remove('hidden');
+            setTimeout(() => {
+                statusModalContent.classList.remove('scale-95', 'opacity-0');
+                statusModalContent.classList.add('scale-100', 'opacity-100');
+
+                // 애니메이션 시작 (트럭 이동 효과)
+                // 약간의 랜덤성을 주어 리얼하게
+                setTimeout(() => {
+                    const progressBar = statusModalContent.querySelector('.progress-bar-fill');
+                    const truckIcon = statusModalContent.querySelector('.truck-icon');
+
+                    // 현재 70% 지점까지 이동
+                    if (progressBar) progressBar.style.width = '72%';
+                    if (truckIcon) truckIcon.style.left = '72%';
+                }, 300);
+
+            }, 10);
+        }
+
+        function closeStatusModal() {
+            statusModalContent.classList.remove('scale-100', 'opacity-100');
+            statusModalContent.classList.add('scale-95', 'opacity-0');
+
+            // 애니메이션 초기화 (닫힐 때)
+            const progressBar = statusModalContent.querySelector('.progress-bar-fill');
+            const truckIcon = statusModalContent.querySelector('.truck-icon');
+            if (progressBar) progressBar.style.width = '0%';
+            if (truckIcon) truckIcon.style.left = '0%';
+
+            setTimeout(() => {
+                statusModal.classList.add('hidden');
+            }, 200);
+        }
+
+        // ===== 파트너 슬라이더 로직 =====
+        let currentSlide = 0;
+        const totalSlides = 4; // 세진플러스, 효성티앤씨, 제클린, 텍스타일리
+        const track = document.getElementById('partner-track');
+
+        function moveSlider(direction) {
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+            updateSlider();
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlider();
+        }
+
+        function updateSlider() {
+            // 슬라이드 이동
+            track.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+            // 인디케이터 업데이트
+            const dots = document.querySelectorAll('.slider-dot');
+            dots.forEach((dot, index) => {
+                if (index === currentSlide) {
+                    dot.classList.remove('bg-gray-300', 'dark:bg-gray-700', 'size-2');
+                    dot.classList.add('bg-emerald-500', 'w-8');
+                } else {
+                    dot.classList.add('bg-gray-300', 'dark:bg-gray-700', 'size-2');
+                    dot.classList.remove('bg-emerald-500', 'w-8');
+                }
+            });
+        }
+
+        // 모달 배경 클릭 시 닫기
+        // (제거됨: window.onclick으로 통합)
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,355 @@
+/* Main CSS File */
+
+/* Google Material Icons Settings */
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Header Animation */
+#main-header {
+    /* transform: translateY(-100%);  Removed default hide */
+    transition: transform 0.4s ease-out;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+#main-header.visible {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* CSS Scroll Snap Architecture */
+
+/* Container */
+.scene-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    /* Full viewport height */
+    overflow-y: scroll;
+    /* Allow vertical scroll */
+    overflow-x: hidden;
+    scroll-snap-type: y mandatory;
+    /* Enable Snapping */
+    scroll-behavior: smooth;
+    z-index: 10;
+}
+
+/* Sections */
+.scene-section {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    /* Full viewport height each */
+    scroll-snap-align: start;
+    /* Snap to top */
+    scroll-snap-stop: always;
+    /* Force stop at each section */
+
+    /* Ensure visibility using flex */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    /* Reset visibility properties */
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: none !important;
+}
+
+/* Hero Section Specifics */
+.scene-section[data-scene="intro"] {
+    position: relative;
+    z-index: 20;
+}
+
+/* Scrollbar Hiding */
+.scene-container {
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+}
+
+.scene-container::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+/* Animations Triggered by IntersectionObserver class */
+.animate-fade-in-up {
+    /* opacity: 0; */
+    /* transform: translateY(20px); */
+    /* transition: opacity 0.8s ease-out, transform 0.8s ease-out; */
+    /* Emergency Fix: Ensure visibility by default */
+    opacity: 1;
+    transform: none;
+    transition: transform 0.8s ease-out;
+    /* Keep transition for hover effects if any */
+}
+
+.animate-fade-in-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Final CTA Section */
+#final-section {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+    scroll-snap-align: start;
+    z-index: 30;
+    /* Ensure on top for interaction */
+}
+
+/* Mask Image Gradient (For Story Bento Grid) */
+.mask-image-gradient {
+    mask-image: linear-gradient(to top, black 50%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to top, black 50%, transparent 100%);
+}
+
+/* --- Rest of file: Mega Menu, etc (Preserved but minimal) --- */
+
+/* Mega Menu Animation */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mega Menu Base */
+.mega-menu-content {
+    visibility: hidden;
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+    transition: visibility 0.2s, opacity 0.2s, transform 0.2s;
+    transition-delay: 0.1s;
+    pointer-events: auto;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    z-index: 1000;
+    min-width: max-content;
+}
+
+/* Mega Menu Visible State */
+.group:hover>.mega-menu-content,
+.group:focus-within>.mega-menu-content,
+.group.mega-menu-open>.mega-menu-content,
+.mega-menu-content:hover,
+#main-header:has(nav:hover)>.mega-menu-content,
+#main-header:has(nav:focus-within)>.mega-menu-content,
+#main-header>.mega-menu-content:hover {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    transition-delay: 0s;
+    pointer-events: auto;
+}
+
+/* Header Visible vs Hidden Mega Menu Position */
+#main-header.visible+main .mega-menu-content {
+    top: 100%;
+}
+
+#main-header+main .mega-menu-content {
+    top: 0;
+}
+
+/* Mega Menu Container */
+.mega-menu-content>div {
+    position: relative;
+    z-index: 1001;
+}
+
+.mega-menu-content>div::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.mega-menu-content::before {
+    content: "";
+    position: absolute;
+    top: -12px;
+    left: 0;
+    right: 0;
+    height: 12px;
+    pointer-events: auto;
+}
+
+/* No Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Gradient Variables */
+:root {
+    --scene-gradient: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(196, 181, 253, 0.2) 100%);
+}
+
+.scene-wrapper {
+    position: relative;
+    isolation: isolate;
+}
+
+.scene-background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: var(--scene-gradient);
+    background-size: 180% 180%;
+    transition: background 0.9s ease;
+}
+
+/* Logo Animation Track */
+.logo-track {
+    display: flex;
+    flex-direction: column;
+    animation: slideLogo 5s infinite cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+@keyframes slideLogo {
+
+    0%,
+    45% {
+        transform: translateY(0);
+    }
+
+    50%,
+    95% {
+        transform: translateY(-2rem);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Header Scrolled State */
+.header-scrolled {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+.dark .header-scrolled {
+    background-color: rgba(42, 38, 63, 0.95);
+}
+
+/* --- Global Profile Decorations --- */
+
+/* Nature Green Pulse */
+.deco-green-pulse::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: #4ade80;
+    border-radius: 50%;
+    z-index: -1;
+    animation: deco-pulse 2s infinite;
+}
+
+/* Royal Gold Glow */
+.deco-gold-royal::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: linear-gradient(45deg, #f59e0b, #fbbf24, #f59e0b);
+    border-radius: 50%;
+    z-index: -1;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+}
+
+.deco-gold-royal::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    border-radius: 50%;
+    z-index: 0;
+    animation: deco-rotate 3s linear infinite;
+}
+
+/* Diamond Sparkle */
+.deco-diamond-sparkle::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: conic-gradient(from 0deg, #60a5fa, #a78bfa, #f472b6, #fb7185, #60a5fa);
+    border-radius: 50%;
+    z-index: -1;
+    animation: deco-rotate 4s linear infinite;
+    filter: blur(2px);
+}
+
+/* Fire Aura */
+.deco-fire-aura::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    background: radial-gradient(circle, #f87171, #ef4444, transparent);
+    border-radius: 50%;
+    z-index: -1;
+    filter: blur(4px);
+    animation: deco-flicker 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes deco-pulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.4;
+    }
+
+    100% {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+}
+
+@keyframes deco-rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes deco-flicker {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+}

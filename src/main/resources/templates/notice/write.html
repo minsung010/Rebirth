@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}">
+    <title th:text="${post == null ? '글쓰기' : '글 수정'} + ' - Re:birth'">글쓰기 - Re:birth</title>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-32 px-4 pb-20">
+        <div class="max-w-3xl mx-auto w-full">
+
+            <!-- Page Header -->
+            <div class="flex items-center gap-4 mb-8 animate-fade-in-up">
+                <a href="/community"
+                    class="size-10 rounded-full bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark flex items-center justify-center hover:border-primary/50 transition-colors text-text-light/60 dark:text-text-dark/60">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <div>
+                    <h2 class="text-3xl font-bold text-text-light dark:text-text-dark"
+                        th:text="${post == null ? '글쓰기' : '글 수정'}">글쓰기</h2>
+                    <p class="text-text-light/60 dark:text-text-dark/60 text-sm mt-1">새로운 소식이나 문의사항을 남겨주세요.</p>
+                </div>
+            </div>
+
+            <!-- Write Form Card -->
+            <div class="bg-card-light dark:bg-card-dark rounded-3xl shadow-xl border border-border-light dark:border-border-dark p-8 md:p-10 animate-fade-in-up"
+                style="animation-delay: 0.1s">
+                <form th:action="${post == null} ? @{/community/save} : @{/community/{id}/update(id=${post.id})}"
+                    method="post" class="flex flex-col gap-6">
+                    <input type="hidden" name="category" th:value="${category}">
+
+                    <!-- Category Badge (Display Only) -->
+                    <div>
+                        <span
+                            class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-2"
+                            th:text="${category == 'NOTICE' ? '공지사항' : (category == 'QNA' ? '문의하기' : category)}">
+                            카테고리
+                        </span>
+
+                        <!-- Secret Post Checkbox (Only for QNA) -->
+                        <div class="inline-flex items-center ml-4" th:if="${category == 'QNA'}">
+                            <label class="flex items-center gap-2 cursor-pointer relative">
+                                <input type="checkbox" name="isSecret" value="Y" th:checked="${post?.isSecret == 'Y'}"
+                                    class="peer sr-only">
+                                <div
+                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                                </div>
+                                <span class="ms-3 text-sm font-medium text-text-light dark:text-text-dark">비밀글 (작성자와
+                                    관리자만 볼 수 있습니다)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Title Input -->
+                    <div>
+                        <label class="block mb-2 font-bold text-text-light dark:text-text-dark">제목</label>
+                        <input type="text" name="title" placeholder="제목을 입력하세요" th:value="${post?.title}"
+                            class="w-full p-4 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all placeholder:text-text-light/30 dark:text-text-dark/30"
+                            required>
+                    </div>
+
+                    <!-- Content Textarea -->
+                    <div>
+                        <label class="block mb-2 font-bold text-text-light dark:text-text-dark">내용</label>
+                        <textarea name="content" rows="12" placeholder="내용을 자유롭게 작성해주세요." th:text="${post?.content}"
+                            class="w-full p-4 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all placeholder:text-text-light/30 dark:text-text-dark/30 resize-none"
+                            required></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end gap-3 mt-4 pt-6 border-t border-border-light dark:border-border-dark">
+                        <a href="/community"
+                            class="px-8 py-3 rounded-xl bg-background-light dark:bg-background-dark text-text-light/70 dark:text-text-dark/70 font-bold border border-border-light dark:border-border-dark hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            취소
+                        </a>
+                        <button type="submit"
+                            class="px-8 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg">send</span>
+                            <span th:text="${post == null ? '등록하기' : '수정하기'}">등록하기</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+</body>
+
+</html>

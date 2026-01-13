@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.auth.AuthDao">
+
+    <insert id="insertUser" parameterType="com.rebirth.my.user.UserVo">
+        <selectKey keyProperty="id" resultType="Long" order="BEFORE">
+            SELECT S_USERS.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO USERS (
+            ID, LOGIN_ID, PASSWORD, NAME, PHONE, EMAIL, ADDRESS, ADDRESS_DETAIL,
+            ROLE, STATUS, EMAIL_VERIF_STATUS, CREATED_AT
+        ) VALUES (
+            #{id}, #{loginId}, #{password}, #{name}, #{phone}, #{email}, #{address}, #{addressDetail},
+            #{role}, #{status}, #{emailVerifStatus}, SYSTIMESTAMP
+        )
+    </insert>
+
+    <select id="selectUserByLoginId" parameterType="String" resultType="com.rebirth.my.user.UserVo">
+        SELECT * FROM USERS WHERE LOGIN_ID = #{loginId}
+    </select>
+    
+    <select id="selectUserByEmail" parameterType="String" resultType="com.rebirth.my.user.UserVo">
+        SELECT * FROM USERS WHERE EMAIL = #{email}
+    </select>
+    
+    <update id="updateEmailVerification" parameterType="map">
+        UPDATE USERS
+        SET EMAIL_VERIF_STATUS = #{status},
+            UPDATED_AT = SYSTIMESTAMP
+        WHERE EMAIL = #{email}
+    </update>
+    
+    <update id="updateWithdrawal" parameterType="map">
+        UPDATE USERS
+        SET WITHDRAWAL_AT = SYSTIMESTAMP,
+            STATUS = 'WITHDRAWAL_PENDING',
+            UPDATED_AT = SYSTIMESTAMP
+        WHERE ID = #{userId}
+    </update>
+    
+    <update id="cancelWithdrawal" parameterType="Long">
+        UPDATE USERS
+        SET WITHDRAWAL_AT = NULL,
+            STATUS = 'ACTIVE',
+            UPDATED_AT = SYSTIMESTAMP
+        WHERE ID = #{userId}
+    </update>
+
+</mapper>

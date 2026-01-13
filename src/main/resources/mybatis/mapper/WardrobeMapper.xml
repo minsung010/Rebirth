@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.wardrobe.WardrobeDao">
+
+    <insert id="insertClothes" parameterType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.insertClothes */
+        <selectKey keyProperty="clothesId" resultType="string" order="BEFORE">
+            SELECT S_CLOTHING_ITEMS.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO CLOTHING_ITEMS (
+            ID, USER_ID, NAME, CATEGORY, BRAND, COLOR, SEASON, 
+            ITEM_SIZE, DETAIL_DESC, CONDITION_GRADE, STATUS, CREATED_AT, PREFERENCE
+        ) VALUES (
+            #{clothesId}, #{userId}, #{name}, #{category}, #{brand}, #{color}, #{season},
+            #{itemSize}, #{detailDesc}, #{conditionGrade}, 'IN_CLOSET', SYSDATE, #{personalNote}
+        )
+    </insert>
+
+    <select id="selectClothesList" parameterType="String" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.selectClothesList */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.IS_FOR_SALE   AS isForSale,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl
+        FROM CLOTHING_ITEMS C
+        WHERE C.USER_ID = #{userId}
+        ORDER BY C.ID DESC
+    </select>
+
+    <select id="selectAvailableClothesList" parameterType="String" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.selectAvailableClothesList */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.IS_FOR_SALE   AS isForSale,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl
+        FROM CLOTHING_ITEMS C
+        WHERE C.USER_ID = #{userId}
+          AND C.STATUS = 'IN_CLOSET'
+          AND NVL(C.IS_FOR_SALE, 'N') = 'N'
+        ORDER BY C.ID DESC
+    </select>
+
+    <select id="selectClothesListByIds" parameterType="java.util.List" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.selectClothesListByIds */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl
+        FROM CLOTHING_ITEMS C
+        WHERE C.ID IN
+        <foreach item="id" collection="list" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY C.ID DESC
+    </select>
+
+    <select id="selectAllClothes" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.selectAllClothes */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl
+        FROM CLOTHING_ITEMS C
+        ORDER BY C.ID DESC
+    </select>
+
+    <select id="searchClothesByKeyword" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.searchClothesByKeyword */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl
+        FROM CLOTHING_ITEMS C
+        WHERE C.USER_ID = #{arg0}
+          AND (
+               LOWER(C.NAME) LIKE '%' || LOWER(#{arg1}) || '%'
+            OR LOWER(C.BRAND) LIKE '%' || LOWER(#{arg1}) || '%'
+            OR LOWER(C.CATEGORY) LIKE '%' || LOWER(#{arg1}) || '%'
+            OR LOWER(C.COLOR) LIKE '%' || LOWER(#{arg1}) || '%'
+          )
+        ORDER BY C.ID DESC
+    </select>
+
+    <select id="searchAvailableClothesByKeyword" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.searchAvailableClothesByKeyword */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl
+        FROM CLOTHING_ITEMS C
+        WHERE C.USER_ID = #{arg0}
+          AND C.STATUS = 'IN_CLOSET'
+          AND NVL(C.IS_FOR_SALE, 'N') = 'N'
+          AND (
+               LOWER(C.NAME) LIKE '%' || LOWER(#{arg1}) || '%'
+            OR LOWER(C.BRAND) LIKE '%' || LOWER(#{arg1}) || '%'
+            OR LOWER(C.CATEGORY) LIKE '%' || LOWER(#{arg1}) || '%'
+            OR LOWER(C.COLOR) LIKE '%' || LOWER(#{arg1}) || '%'
+          )
+        ORDER BY C.ID DESC
+    </select>
+
+    <!-- 카테고리별 조회 -->
+    <!-- 카테고리별 조회 -->
+    <select id="selectClothesListByCategory" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.selectClothesListByCategory */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl
+        FROM CLOTHING_ITEMS C
+        WHERE C.USER_ID = #{userId}
+          AND C.CATEGORY = #{category}
+        ORDER BY C.ID DESC
+    </select>
+
+    <select id="selectAvailableClothesListByCategory" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.selectAvailableClothesListByCategory */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl
+        FROM CLOTHING_ITEMS C
+        WHERE C.USER_ID = #{userId}
+          AND C.CATEGORY = #{category}
+          AND C.STATUS = 'IN_CLOSET'
+          AND NVL(C.IS_FOR_SALE, 'N') = 'N'
+        ORDER BY C.ID DESC
+    </select>
+
+    <!-- 계절별 조회 -->
+    <!-- 계절별 조회 -->
+    <select id="selectClothesListBySeason" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.selectClothesListBySeason */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl
+        FROM CLOTHING_ITEMS C
+        WHERE C.USER_ID = #{userId}
+          AND C.SEASON LIKE '%' || #{season} || '%'
+        ORDER BY C.ID DESC
+    </select>
+
+    <select id="selectAvailableClothesListBySeason" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.selectAvailableClothesListBySeason */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl
+        FROM CLOTHING_ITEMS C
+        WHERE C.USER_ID = #{userId}
+          AND C.SEASON LIKE '%' || #{season} || '%'
+          AND C.STATUS = 'IN_CLOSET'
+          AND NVL(C.IS_FOR_SALE, 'N') = 'N'
+        ORDER BY C.ID DESC
+    </select>
+
+    <!-- 의류 삭제 (본인 확인) -->
+    <delete id="deleteClothes">
+        /* WardrobeDao.deleteClothes */
+        DELETE FROM CLOTHING_ITEMS
+        WHERE ID = #{clothesId}
+          AND USER_ID = #{userId}
+    </delete>
+
+    <!-- 의류 이미지 저장 -->
+    <insert id="insertClothingImage">
+        /* WardrobeDao.insertClothingImage */
+        INSERT INTO CLOTHING_IMAGES (
+            CLOTHING_ITEM_ID,
+            IMAGE_URL,
+            IS_MAIN,
+            CREATED_AT
+        ) VALUES (
+            #{clothesId},
+            #{imageUrl},
+            'Y',
+            SYSTIMESTAMP
+        )
+    </insert>
+
+    <select id="selectClothesById" resultType="com.rebirth.my.wardrobe.WardrobeVo">
+        /* WardrobeDao.selectClothesById */
+        SELECT
+            C.ID            AS clothesId,
+            C.USER_ID       AS userId,
+            C.NAME          AS name,
+            C.CATEGORY      AS category,
+            C.BRAND         AS brand,
+            C.COLOR         AS color,
+            C.SEASON        AS season,
+            C.ITEM_SIZE     AS itemSize,
+            C.DETAIL_DESC   AS detailDesc,
+            C.CONDITION_GRADE AS conditionGrade,
+            C.STATUS        AS status,
+            C.ACQUIRED_AT   AS purchaseDate,
+            C.PREFERENCE AS personalNote,
+            (SELECT IMAGE_URL FROM (SELECT IMAGE_URL FROM CLOTHING_IMAGES WHERE CLOTHING_ITEM_ID = C.ID ORDER BY CASE WHEN IS_MAIN = 'Y' THEN 0 ELSE 1 END, CREATED_AT ASC) WHERE ROWNUM = 1) AS imageUrl,
+            (SELECT CC.CODE_NAME FROM CLOTHING_MATERIALS CM 
+             JOIN COMMON_CODES CC ON CM.MATERIAL_CODE = CC.CODE_ID 
+             WHERE CM.CLOTHING_ITEM_ID = C.ID AND ROWNUM = 1) AS material,
+            (SELECT CM.PERCENTAGE FROM CLOTHING_MATERIALS CM 
+             WHERE CM.CLOTHING_ITEM_ID = C.ID AND ROWNUM = 1) AS materialPercentage
+        FROM CLOTHING_ITEMS C
+        WHERE C.ID = #{clothesId}
+          AND C.USER_ID = #{userId}
+    </select>
+
+    <!-- 의류 소재 저장 -->
+    <insert id="insertClothingMaterial">
+        /* WardrobeDao.insertClothingMaterial */
+        INSERT INTO CLOTHING_MATERIALS (
+            ID,
+            CLOTHING_ITEM_ID,
+            PART_CODE,
+            MATERIAL_CODE,
+            PERCENTAGE
+        ) VALUES (
+            S_CLOTHING_MATERIALS.NEXTVAL,
+            #{clothesId},
+            'PART_OUT',
+            #{materialCode, jdbcType=VARCHAR},
+            #{materialPercentage, jdbcType=NUMERIC}
+        )
+    </insert>
+
+    <!-- 소재명으로 코드 조회 -->
+    <select id="getMaterialCode" parameterType="string" resultType="string">
+        SELECT CODE_ID FROM COMMON_CODES 
+        WHERE GRP_CODE = 'MATERIAL' 
+        AND (CODE_NAME LIKE '%' || #{material} || '%' OR #{material} LIKE '%' || CODE_NAME || '%')
+        AND ROWNUM = 1
+    </select>
+
+</mapper>
+

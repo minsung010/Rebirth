@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}">
+</head>
+
+<body
+    class="font-display bg-[#f9fbfc] dark:bg-background-dark text-[#1e1e23] dark:text-text-dark min-h-screen flex flex-col">
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+
+    <main class="flex-grow pt-32 px-4 pb-12">
+        <div class="max-w-[1280px] mx-auto w-full flex flex-col md:flex-row gap-8">
+
+            <!-- Left Sidebar -->
+            <aside class="w-full md:w-[250px] flex-shrink-0">
+                <!-- Profile Section -->
+                <div
+                    class="bg-white dark:bg-card-dark rounded-xl border border-[#e4e5eb] dark:border-border-dark p-6 text-center mb-4 shadow-sm">
+                    <div id="profileImageContainer" class="relative inline-block mb-4 cursor-pointer group"
+                        th:classappend="${user.activeDecoration}">
+                        <img th:src="${user.avatarUrl != null ? user.avatarUrl : 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.userName}"
+                            alt="Profile"
+                            class="size-24 rounded-full border border-gray-100 dark:border-border-dark shadow-sm mx-auto object-cover"
+                            th:data-name="${user.userName}"
+                            onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(this.getAttribute('data-name')) + '&background=random';">
+                        <button
+                            class="absolute bottom-0 right-0 bg-white dark:bg-card-dark rounded-full p-1 border border-gray-200 dark:border-border-dark shadow-sm group-hover:bg-gray-50 dark:group-hover:bg-background-dark transition-colors">
+                            <span
+                                class="material-symbols-outlined text-gray-600 dark:text-text-dark text-sm">photo_camera</span>
+                        </button>
+                    </div>
+                    <h2 class="text-xl font-bold text-[#1e1e23] dark:text-text-dark mb-1" th:text="${user.userName}">
+                        김리버스</h2>
+                    <p class="text-sm text-[#8c8c8c] dark:text-text-dark/60 mb-4" th:text="${user.userId}">@rebirth_kim
+                    </p>
+                    <div class="flex justify-center gap-2">
+                        <a href="/mypage/edit"
+                            class="text-xs border border-[#e4e5eb] dark:border-border-dark px-3 py-1.5 rounded text-[#747783] dark:text-text-dark/80 hover:bg-gray-50 dark:hover:bg-background-dark">프로필
+                            수정</a>
+                    </div>
+
+                    <!-- Hidden Form for Image Upload -->
+                    <form id="profileUploadForm" action="/mypage/updateProfileImage" method="post"
+                        enctype="multipart/form-data" class="hidden">
+                        <input type="file" id="fileInput" name="profileImageFile" accept="image/*">
+                        <input type="hidden" name="userId" th:value="${user.userId}">
+                    </form>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav
+                    class="bg-white dark:bg-card-dark rounded-xl border border-[#e4e5eb] dark:border-border-dark p-4 shadow-sm">
+                    <ul class="space-y-1">
+                        <li>
+                            <button onclick="switchTab('dashboard')" id="nav-dashboard"
+                                class="nav-item w-full text-left px-4 py-3 text-[#303038] dark:text-text-dark hover:bg-gray-50 dark:hover:bg-background-dark rounded-lg transition-colors font-bold active">
+                                대시보드
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="switchTab('activity')" id="nav-activity"
+                                class="nav-item w-full text-left px-4 py-3 text-[#303038] dark:text-text-dark hover:bg-gray-50 dark:hover:bg-background-dark rounded-lg transition-colors">
+                                활동 내역
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="switchTab('wishlist')" id="nav-wishlist"
+                                class="nav-item w-full text-left px-4 py-3 text-[#303038] dark:text-text-dark hover:bg-gray-50 dark:hover:bg-background-dark rounded-lg transition-colors">
+                                관심 상품
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="switchTab('settings')" id="nav-settings"
+                                class="nav-item w-full text-left px-4 py-3 text-[#303038] dark:text-text-dark hover:bg-gray-50 dark:hover:bg-background-dark rounded-lg transition-colors">
+                                설정
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <!-- Right Content Area -->
+            <div class="flex-1 min-w-0">
+
+                <!-- ====== Dashboard ====== -->
+                <div id="content-dashboard" class="space-y-6">
+
+                    <!-- Withdrawal Pending Notice -->
+                    <div th:if="${user.status == 'PENDING_WITHDRAWAL'}"
+                        class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-center justify-between animate-pulse">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-red-500">warning</span>
+                            <div>
+                                <p class="text-red-700 dark:text-red-400 font-bold text-sm">회원 탈퇴가 신청된 상태입니다.</p>
+                                <p class="text-red-600 dark:text-red-400/80 text-xs">
+                                    <span
+                                        th:text="${#temporals.format(user.withdrawalAt, 'yyyy-MM-dd HH:mm')}">2023-12-31</span>에
+                                    계정이 영구 삭제됩니다.
+                                </p>
+                            </div>
+                        </div>
+                        <form action="/mypage/withdraw/cancel" method="post">
+                            <button type="submit"
+                                class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors">
+                                탈퇴 취소하기
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Eco Points Banner -->
+                    <div
+                        class="bg-gradient-to-r from-primary to-secondary rounded-xl p-8 text-white shadow-md relative overflow-hidden">
+                        <div class="relative z-10">
+                            <p class="text-white/90 font-medium mb-2">나의 에코 포인트</p>
+                            <div class="flex items-baseline gap-2">
+                                <h2 class="text-5xl font-extrabold"
+                                    th:text="${#numbers.formatInteger(user.ecoPoint, 0, 'COMMA')}">2,450</h2>
+                                <span class="text-xl">P</span>
+                            </div>
+                            <button onclick="openPointShop()"
+                                class="mt-6 bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 py-2 rounded-full text-sm font-bold transition-colors flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">shopping_bag</span>
+                                포인트 사용하기
+                            </button>
+                        </div>
+                        <span
+                            class="material-symbols-outlined absolute -right-4 -bottom-8 text-[180px] text-white/10">eco</span>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div
+                            class="bg-white dark:bg-card-dark p-6 rounded-xl border border-[#e4e5eb] dark:border-border-dark shadow-sm text-center">
+                            <div
+                                class="size-12 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-4">
+                                <span class="material-symbols-outlined text-blue-500">water_drop</span>
+                            </div>
+                            <p class="text-[#8c8c8c] dark:text-text-dark/60 text-sm mb-1">물 절약</p>
+                            <p class="text-xl font-bold text-[#1e1e23] dark:text-text-dark"
+                                th:text="${user.formattedTotalWater != null ? user.formattedTotalWater : '0'} + 'L'">
+                                2,700L</p>
+                        </div>
+                        <div
+                            class="bg-white dark:bg-card-dark p-6 rounded-xl border border-[#e4e5eb] dark:border-border-dark shadow-sm text-center">
+                            <div
+                                class="size-12 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center mx-auto mb-4">
+                                <span class="material-symbols-outlined text-green-500">co2</span>
+                            </div>
+                            <p class="text-[#8c8c8c] dark:text-text-dark/60 text-sm mb-1">탄소 감축</p>
+                            <p class="text-xl font-bold text-[#1e1e23] dark:text-text-dark"
+                                th:text="${user.formattedTotalCarbon != null ? user.formattedTotalCarbon : '0'} + 'kg'">
+                                12.5kg</p>
+                        </div>
+                        <div
+                            class="bg-white dark:bg-card-dark p-6 rounded-xl border border-[#e4e5eb] dark:border-border-dark shadow-sm text-center">
+                            <div
+                                class="size-12 rounded-full bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center mx-auto mb-4">
+                                <span class="material-symbols-outlined text-yellow-500">bolt</span>
+                            </div>
+                            <p class="text-[#8c8c8c] dark:text-text-dark/60 text-sm mb-1">에너지 절약</p>
+                            <p class="text-xl font-bold text-[#1e1e23] dark:text-text-dark"
+                                th:text="${user.formattedTotalEnergy != null ? user.formattedTotalEnergy : '0'} + 'kWh'">
+                                45kWh</p>
+                        </div>
+                    </div>
+
+                    <!-- Daily Eco Mission -->
+                    <div
+                        class="bg-white dark:bg-card-dark rounded-xl border border-[#e4e5eb] dark:border-border-dark p-6 shadow-sm">
+                        <h3 class="font-bold text-lg text-[#1e1e23] dark:text-text-dark mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">checklist</span>
+                            오늘의 에코 미션
+                        </h3>
+                        <div class="space-y-3">
+                            <label th:each="task : ${ecoTasks}" th:data-task-id="${task.id}"
+                                th:data-completed="${task.checked}"
+                                class="flex items-center gap-3 p-3 rounded-xl border border-transparent hover:bg-gray-50 dark:hover:bg-background-dark cursor-pointer transition-colors group">
+
+                                <!-- Checked State -->
+                                <div th:if="${task.checked}"
+                                    class="mission-checkbox size-6 rounded-full border-2 border-primary bg-primary flex items-center justify-center transition-colors flex-shrink-0">
+                                    <span class="material-symbols-outlined text-white text-sm">check</span>
+                                </div>
+
+                                <!-- Unchecked State -->
+                                <div th:unless="${task.checked}"
+                                    class="mission-checkbox size-6 rounded-full border-2 border-[#e4e5eb] dark:border-border-dark group-hover:border-primary flex items-center justify-center transition-colors flex-shrink-0">
+                                    <div
+                                        class="size-3 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                                    </div>
+                                </div>
+
+                                <span class="mission-text text-sm font-medium flex-1"
+                                    th:classappend="${task.checked} ? 'text-gray-400 dark:text-text-dark/40 line-through' : 'text-[#1e1e23] dark:text-text-dark'"
+                                    th:text="${task.title}">텀블러 사용하기</span>
+                            </label>
+
+                            <!-- Empty State if no tasks -->
+                            <div th:if="${#lists.isEmpty(ecoTasks)}"
+                                class="text-center py-4 text-gray-400 dark:text-text-dark/40 text-sm">
+                                등록된 미션이 없습니다.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Badges Section -->
+                    <div
+                        class="bg-white dark:bg-card-dark rounded-xl border border-[#e4e5eb] dark:border-border-dark p-6 shadow-sm">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-lg text-[#1e1e23] dark:text-text-dark">나의 뱃지 컬렉션</h3>
+                            <span class="text-sm text-[#8c8c8c] dark:text-text-dark/60">
+                                <span class="text-primary font-bold" th:text="${user.badgeCount}">5</span> /
+                                <span th:text="${user.totalBadges}">12</span>
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-x-4 gap-y-8">
+                            <div th:each="badge : ${user.badges}"
+                                class="group relative flex flex-col items-center gap-3 min-w-[80px]">
+
+                                <!-- Premium Custom Tooltip (Decoupled Opacity & Solid Background) -->
+                                <div
+                                    class="absolute bottom-full mb-3 hidden group-hover:flex flex-col items-center z-50 animate-in fade-in zoom-in duration-200">
+                                    <div
+                                        class="bg-[#1e1e23] dark:bg-zinc-800 text-white text-[11px] px-3 py-2 rounded-lg shadow-2xl border border-white/10 w-max max-w-[160px] text-center leading-relaxed">
+                                        <p th:text="${badge.description}"
+                                            class="font-medium whitespace-normal break-keep">획득 조건 설명</p>
+                                    </div>
+                                    <div
+                                        class="w-2 h-2 bg-[#1e1e23] dark:bg-zinc-800 rotate-45 -mt-1 border-r border-b border-white/10">
+                                    </div>
+                                </div>
+
+                                <!-- Badge Icon & Name (Wrapped for separate opacity control) -->
+                                <div class="flex flex-col items-center gap-3 transition-all duration-200"
+                                    th:classappend="${!badge.acquired} ? 'opacity-40 grayscale'">
+                                    <div class="relative cursor-help">
+                                        <img th:src="${badge.iconUrl != null ? badge.iconUrl : 'https://cdn-icons-png.flaticon.com/512/616/616490.png'}"
+                                            class="size-16 drop-shadow-sm group-hover:scale-110 transition-transform duration-200"
+                                            alt="Badge">
+                                        <div th:if="${!badge.acquired}"
+                                            class="absolute inset-0 flex items-center justify-center bg-gray-100/30 rounded-full">
+                                            <span class="material-symbols-outlined text-gray-500/80">lock</span>
+                                        </div>
+                                    </div>
+                                    <span
+                                        class="text-xs font-medium text-[#1e1e23] dark:text-text-dark text-center group-hover:text-primary transition-colors"
+                                        th:text="${badge.name}">뱃지명</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- END Dashboard -->
+
+                <!-- ====== Activity ====== -->
+                <div id="content-activity"
+                    class="hidden bg-white dark:bg-card-dark rounded-xl border border-[#e4e5eb] dark:border-border-dark p-4 md:p-8 shadow-sm min-h-[500px]">
+                    <div
+                        class="flex justify-between items-center mb-6 pb-4 border-b border-[#e4e5eb] dark:border-border-dark">
+                        <h3 class="text-xl font-bold text-[#1e1e23] dark:text-text-dark">활동 랭킹</h3>
+                        <a href="/ranking"
+                            class="flex items-center gap-1 text-sm font-bold text-primary hover:text-primary-dark transition-colors bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg">
+                            <span class="material-symbols-outlined text-sm">leaderboard</span>
+                            전체 랭킹 보기
+                        </a>
+                    </div>
+
+                    <!-- My Ranking Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                        <!-- Eco Point Rank -->
+                        <div
+                            class="ranking-card relative overflow-hidden bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] rounded-2xl p-6 text-white">
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <span class="material-symbols-outlined text-white/80">workspace_premium</span>
+                                    <span class="text-xs font-bold tracking-wider text-white/70 uppercase">에코포인트
+                                        순위</span>
+                                </div>
+                                <div class="flex items-baseline gap-1">
+                                    <span class="text-4xl font-black" th:text="${user.ecoPointRank}">1</span>
+                                    <span class="text-lg font-bold">위</span>
+                                    <span class="ml-auto text-xs font-bold text-white/60"
+                                        th:text="${#numbers.formatInteger(user.ecoPoint, 0, 'COMMA')} + ' P'">2,530
+                                        P</span>
+                                </div>
+                                <div class="mt-4 flex items-center gap-2">
+                                    <div class="glass-pill px-3 py-1 rounded-full text-[11px] font-bold">
+                                        상위 <span
+                                            th:text="${T(java.lang.Math).round(user.ecoPointRank * 100.0 / user.totalUsers)}">5</span>%
+                                    </div>
+                                    <span class="text-[11px] text-white/60"
+                                        th:text="'전체 ' + ${user.totalUsers} + '명'">전체 1,234명</span>
+                                </div>
+                            </div>
+                            <span
+                                class="material-symbols-outlined absolute -right-4 -bottom-4 text-9xl text-white/10 rotate-12">local_fire_department</span>
+                        </div>
+
+                        <!-- Donation Rank -->
+                        <div
+                            class="ranking-card relative overflow-hidden bg-gradient-to-br from-[#10b981] to-[#059669] rounded-2xl p-6 text-white">
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <span class="material-symbols-outlined text-white/80">volunteer_activism</span>
+                                    <span class="text-xs font-bold tracking-wider text-white/70 uppercase">기부/수거
+                                        순위</span>
+                                </div>
+                                <div class="flex items-baseline gap-1">
+                                    <span class="text-4xl font-black" th:text="${user.donationRank}">5</span>
+                                    <span class="text-lg font-bold">위</span>
+                                    <span class="ml-auto text-xs font-bold text-white/60"
+                                        th:text="${user.donationCount} + ' 회'">5 회</span>
+                                </div>
+                                <div class="mt-4 flex items-center gap-2">
+                                    <div class="glass-pill px-3 py-1 rounded-full text-[11px] font-bold">
+                                        상위 <span
+                                            th:text="${T(java.lang.Math).round(user.donationRank * 100.0 / user.totalUsers)}">12</span>%
+                                    </div>
+                                    <span class="text-[11px] text-white/60"
+                                        th:text="'전체 ' + ${user.totalUsers} + '명'">전체 1,234명</span>
+                                </div>
+                            </div>
+                            <span
+                                class="material-symbols-outlined absolute -right-4 -bottom-4 text-9xl text-white/10 rotate-12">redeem</span>
+                        </div>
+
+                        <!-- Sales Rank -->
+                        <div
+                            class="ranking-card relative overflow-hidden bg-gradient-to-br from-[#3b82f6] to-[#2563eb] rounded-2xl p-6 text-white">
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <span class="material-symbols-outlined text-white/80">trending_up</span>
+                                    <span class="text-xs font-bold tracking-wider text-white/70 uppercase">판매 순위</span>
+                                </div>
+                                <div class="flex items-baseline gap-1">
+                                    <span class="text-4xl font-black" th:text="${user.salesRank}">12</span>
+                                    <span class="text-lg font-bold">위</span>
+                                    <span class="ml-auto text-xs font-bold text-white/60"
+                                        th:text="${user.salesCount} + ' 회'">12 회</span>
+                                </div>
+                                <div class="mt-4 flex items-center gap-2">
+                                    <div class="glass-pill px-3 py-1 rounded-full text-[11px] font-bold">
+                                        상위 <span
+                                            th:text="${T(java.lang.Math).round(user.salesRank * 100.0 / user.totalUsers)}">25</span>%
+                                    </div>
+                                    <span class="text-[11px] text-white/60"
+                                        th:text="'전체 ' + ${user.totalUsers} + '명'">전체 1,234명</span>
+                                </div>
+                            </div>
+                            <span
+                                class="material-symbols-outlined absolute -right-4 -bottom-4 text-9xl text-white/10 rotate-12">sell</span>
+                        </div>
+                    </div>
+
+                    <h4
+                        class="text-xl font-bold mb-6 pb-4 border-b border-[#e4e5eb] dark:border-border-dark text-[#1e1e23] dark:text-text-dark">
+                        활동 타임라인
+                    </h4>
+
+                    <!-- Empty State -->
+                    <div th:if="${#lists.isEmpty(user.activityHistory)}" class="text-center py-20">
+                        <span
+                            class="material-symbols-outlined text-6xl text-gray-200 dark:text-text-dark/20 mb-4">history</span>
+                        <p class="text-gray-400 dark:text-text-dark/40">최근 활동 내역이 없습니다.</p>
+                    </div>
+
+                    <!-- Activity Timeline -->
+                    <div th:unless="${#lists.isEmpty(user.activityHistory)}" class="space-y-4">
+                        <div th:each="act : ${user.activityHistory}"
+                            class="flex items-start gap-4 p-4 rounded-xl border border-[#e4e5eb] dark:border-border-dark hover:bg-gray-50 dark:hover:bg-background-dark transition-colors group">
+                            <!-- Activity Icon -->
+                            <div class="flex-shrink-0 size-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                                th:classappend="${act.actType == 'SALE' ? 'bg-blue-50 text-blue-500' : 
+                                               act.actType == 'PURCHASE' ? 'bg-purple-50 text-purple-500' : 
+                                               act.actType == 'BADGE' ? 'bg-yellow-50 text-yellow-500' : 
+                                               act.actType == 'DONATION' ? 'bg-green-50 text-green-500' : 
+                                               act.actType == 'MISSION' ? 'bg-primary/10 text-primary' : 'bg-gray-50 text-gray-500'}">
+                                <span class="material-symbols-outlined" th:text="${act.actType == 'SALE' ? 'sell' : 
+                                             act.actType == 'PURCHASE' ? 'shopping_bag' : 
+                                             act.actType == 'BADGE' ? 'military_tech' : 
+                                             act.actType == 'DONATION' ? 'volunteer_activism' : 
+                                             act.actType == 'MISSION' ? 'eco' : 'event_note'}"></span>
+                            </div>
+
+                            <!-- Activity Content -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h4 class="font-bold text-[#1e1e23] dark:text-text-dark truncate"
+                                        th:text="${act.actTitle}">활동 제목</h4>
+                                    <span
+                                        class="text-[11px] font-medium text-[#8c8c8c] dark:text-text-dark/40 whitespace-nowrap"
+                                        th:text="${#temporals.format(act.actDate, 'yyyy.MM.dd HH:mm')}">2023.12.22
+                                        15:30</span>
+                                </div>
+                                <p class="text-sm text-[#747783] dark:text-text-dark/60" th:text="${act.actDetail}">활동
+                                    상세
+                                    설명 내용이 들어갑니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ====== Wishlist ====== -->
+                <div id="content-wishlist"
+                    class="hidden bg-white dark:bg-card-dark rounded-xl border border-[#e4e5eb] dark:border-border-dark p-4 md:p-8 shadow-sm min-h-[500px]">
+                    <h3
+                        class="text-xl font-bold mb-6 pb-4 border-b border-[#e4e5eb] dark:border-border-dark text-[#1e1e23] dark:text-text-dark">
+                        관심 상품</h3>
+
+                    <!-- Empty State -->
+                    <div th:if="${#lists.isEmpty(user.wishlist)}" class="text-center py-20">
+                        <span
+                            class="material-symbols-outlined text-6xl text-gray-200 dark:text-text-dark/20 mb-4">favorite_border</span>
+                        <p class="text-gray-400 dark:text-text-dark/40">관심 등록한 상품이 없습니다.</p>
+                    </div>
+
+                    <!-- Wishlist Grid -->
+                    <div th:unless="${#lists.isEmpty(user.wishlist)}"
+                        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <a th:each="item : ${user.wishlist}" th:href="@{'/market/detail/' + ${item.id}}"
+                            class="group flex flex-col bg-white dark:bg-card-dark border border-[#e4e5eb] dark:border-border-dark rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                            <!-- Image Container -->
+                            <div class="relative aspect-square overflow-hidden bg-gray-50 dark:bg-background-dark">
+                                <img th:src="${item.imageUrl != null ? item.imageUrl : '/images/common/no-image.png'}"
+                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    alt="상품 이미지">
+                                <!-- Badge/Tag (Optional) -->
+                                <div class="absolute top-2 left-2 px-2 py-1 bg-white/90 backdrop-blur-sm rounded text-[10px] font-bold text-[#1e1e23] shadow-sm"
+                                    th:text="${item.category}">카테고리</div>
+                            </div>
+                            <!-- Content Container -->
+                            <div class="p-3">
+                                <h4 class="text-sm font-medium text-[#1e1e23] dark:text-text-dark mb-1 truncate"
+                                    th:text="${item.name}">상품명</h4>
+                                <p class="text-base font-bold text-primary"
+                                    th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')} + '원'">15,000원</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- ====== Settings ====== -->
+                <div id="content-settings"
+                    class="hidden bg-white dark:bg-card-dark rounded-xl border border-[#e4e5eb] dark:border-border-dark p-4 md:p-8 shadow-sm min-h-[500px]">
+                    <h3
+                        class="text-xl font-bold mb-6 pb-4 border-b border-[#e4e5eb] dark:border-border-dark text-[#1e1e23] dark:text-text-dark">
+                        설정</h3>
+                    <div class="space-y-4 max-w-xl">
+                        <!-- Marketing Toggle -->
+                        <div
+                            class="flex items-center justify-between p-4 border border-[#e4e5eb] dark:border-border-dark rounded-lg gap-4">
+                            <div class="min-w-0">
+                                <p class="font-bold text-[#1e1e23] dark:text-text-dark truncate">
+                                    마케팅 정보 수신 동의</p>
+                                <p class="text-xs text-[#8c8c8c] dark:text-text-dark/60 truncate">
+                                    이벤트 및 혜택 소식을 받습니다.</p>
+                            </div>
+                            <div class="relative inline-block w-12 flex-shrink-0 align-middle select-none">
+                                <input type="checkbox" name="toggle" id="toggle-marketing"
+                                    class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" />
+                                <label for="toggle-marketing"
+                                    class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"></label>
+                            </div>
+                        </div>
+
+                        <!-- Dark Mode Toggle -->
+                        <div
+                            class="flex items-center justify-between p-4 border border-[#e4e5eb] dark:border-border-dark rounded-lg gap-4">
+                            <div class="min-w-0">
+                                <p class="font-bold text-[#1e1e23] dark:text-text-dark truncate">
+                                    다크 모드</p>
+                                <p class="text-xs text-[#8c8c8c] dark:text-text-dark/60 truncate">
+                                    홈페이지 테마를 어둡게 변경합니다.</p>
+                            </div>
+                            <div class="relative inline-block w-12 flex-shrink-0 align-middle select-none">
+                                <input type="checkbox" id="toggle-dark"
+                                    class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" />
+                                <label for="toggle-dark"
+                                    class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"></label>
+                            </div>
+                        </div>
+
+                        <!-- Last Login Info -->
+                        <div
+                            class="flex items-center justify-between p-4 border border-[#e4e5eb] dark:border-border-dark rounded-lg">
+                            <div>
+                                <p class="font-bold text-[#1e1e23] dark:text-text-dark">
+                                    이전 로그인 정보</p>
+                                <p class="text-xs text-[#8c8c8c] dark:text-text-dark/60">
+                                    현재 접속 전 마지막으로 성공한 로그인 시간입니다.</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-bold text-primary"
+                                    th:text="${user.previousLoginAt != null ? #temporals.format(user.previousLoginAt, 'yyyy-MM-dd HH:mm:ss') : '정보 없음'}">
+                                    2023-10-27 14:30:00
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Delete Account -->
+                        <div
+                            class="flex items-center justify-between p-4 border border-[#e4e5eb] dark:border-border-dark rounded-lg">
+                            <div>
+                                <p class="font-bold text-[#1e1e23] dark:text-text-dark">
+                                    회원 탈퇴</p>
+                                <p class="text-xs text-[#8c8c8c] dark:text-text-dark/60">
+                                    모든 정보를 삭제하고 탈퇴합니다.</p>
+                            </div>
+                            <a href="/mypage/withdraw" th:if="${user.status != 'PENDING_WITHDRAWAL'}"
+                                class="text-sm text-red-500 font-bold hover:underline">탈퇴하기</a>
+                            <span th:if="${user.status == 'PENDING_WITHDRAWAL'}"
+                                class="text-sm text-gray-400 font-bold">탈퇴 진행 중</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- END Right Content -->
+
+        </div>
+    </main>
+
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <!-- Point Shop Modal -->
+    <div id="pointShopModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closePointShop()"></div>
+        <!-- Modal Content -->
+        <div
+            class="relative bg-white dark:bg-card-dark rounded-3xl border border-[#e4e5eb] dark:border-border-dark shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <!-- Header -->
+            <div
+                class="p-6 border-b border-[#e4e5eb] dark:border-border-dark flex justify-between items-center bg-gray-50/50 dark:bg-background-dark/50">
+                <div>
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">storefront</span>
+                        포인트 상점
+                    </h3>
+                    <p class="text-xs text-gray-500 dark:text-text-dark/60 mt-1">포인트를 사용하여 프로필을 꾸며보세요!</p>
+                </div>
+                <button onclick="closePointShop()"
+                    class="size-10 rounded-full hover:bg-gray-100 dark:hover:bg-background-dark flex items-center justify-center transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6">
+                <!-- My Current Points -->
+                <div class="bg-primary/10 rounded-2xl p-4 flex justify-between items-center mb-6">
+                    <span class="text-sm font-bold text-primary">보유중인 에코포인트</span>
+                    <div class="flex items-baseline gap-1">
+                        <span id="shopMyPoints" class="text-xl font-black text-primary"
+                            th:text="${#numbers.formatInteger(user.ecoPoint, 0, 'COMMA')}">2,450</span>
+                        <span class="text-xs font-bold text-primary">P</span>
+                    </div>
+                </div>
+
+                <!-- Items Grid -->
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Item 1 -->
+                    <div
+                        class="group p-4 rounded-2xl border border-[#e4e5eb] dark:border-border-dark hover:border-primary/50 hover:bg-primary/5 transition-all text-center">
+                        <div
+                            class="size-20 bg-green-50 dark:bg-green-900/20 rounded-full mx-auto mb-3 flex items-center justify-center relative deco-green-pulse">
+                            <span class="material-symbols-outlined text-green-500 text-3xl">eco</span>
+                        </div>
+                        <h4 class="font-bold text-sm mb-1">그린 펄스</h4>
+                        <p class="text-[11px] text-gray-500 mb-3">싱그러운 초록빛 맥박 효과</p>
+
+                        <button th:if="${user.activeDecoration == 'deco-green-pulse'}" disabled
+                            class="w-full bg-gray-200 dark:bg-gray-700 text-gray-500 text-xs font-bold py-2 rounded-xl flex items-center justify-center gap-2">
+                            사용 중 <span class="material-symbols-outlined text-xs">check</span>
+                        </button>
+                        <button
+                            th:if="${user.activeDecoration != 'deco-green-pulse' and ownedItems.contains('deco-green-pulse')}"
+                            onclick="buyDecoration('deco-green-pulse', 0, true)"
+                            class="w-full bg-primary/20 text-primary text-xs font-bold py-2 rounded-xl hover:bg-primary/30 transition-colors flex items-center justify-center gap-2">
+                            장착하기 <span class="material-symbols-outlined text-xs">checkroom</span>
+                        </button>
+                        <button th:if="${!ownedItems.contains('deco-green-pulse')}"
+                            onclick="buyDecoration('deco-green-pulse', 500, false)"
+                            class="w-full bg-primary text-white text-xs font-bold py-2 rounded-xl hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
+                            500 P <span class="material-symbols-outlined text-xs">shopping_cart</span>
+                        </button>
+                    </div>
+
+                    <!-- Item 2 -->
+                    <div
+                        class="group p-4 rounded-2xl border border-[#e4e5eb] dark:border-border-dark hover:border-yellow-500/50 hover:bg-yellow-500/5 transition-all text-center">
+                        <div
+                            class="size-20 bg-yellow-50 dark:bg-yellow-900/20 rounded-full mx-auto mb-3 flex items-center justify-center relative deco-gold-royal">
+                            <span class="material-symbols-outlined text-yellow-600 text-3xl">workspace_premium</span>
+                        </div>
+                        <h4 class="font-bold text-sm mb-1">로얄 골드</h4>
+                        <p class="text-[11px] text-gray-500 mb-3">빛나는 황금빛 왕실 후광 효과</p>
+
+                        <button th:if="${user.activeDecoration == 'deco-gold-royal'}" disabled
+                            class="w-full bg-gray-200 dark:bg-gray-700 text-gray-500 text-xs font-bold py-2 rounded-xl flex items-center justify-center gap-2">
+                            사용 중 <span class="material-symbols-outlined text-xs">check</span>
+                        </button>
+                        <button
+                            th:if="${user.activeDecoration != 'deco-gold-royal' and ownedItems.contains('deco-gold-royal')}"
+                            onclick="buyDecoration('deco-gold-royal', 0, true)"
+                            class="w-full bg-yellow-500/20 text-yellow-700 text-xs font-bold py-2 rounded-xl hover:bg-yellow-500/30 transition-colors flex items-center justify-center gap-2">
+                            장착하기 <span class="material-symbols-outlined text-xs">checkroom</span>
+                        </button>
+                        <button th:if="${!ownedItems.contains('deco-gold-royal')}"
+                            onclick="buyDecoration('deco-gold-royal', 1000, false)"
+                            class="w-full bg-[#f59e0b] text-white text-xs font-bold py-2 rounded-xl hover:bg-yellow-600 transition-colors flex items-center justify-center gap-2">
+                            1,000 P <span class="material-symbols-outlined text-xs">shopping_cart</span>
+                        </button>
+                    </div>
+
+                    <!-- Item 3 -->
+                    <div
+                        class="group p-4 rounded-2xl border border-[#e4e5eb] dark:border-border-dark hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-center">
+                        <div
+                            class="size-20 bg-blue-50 dark:bg-blue-900/20 rounded-full mx-auto mb-3 flex items-center justify-center relative deco-diamond-sparkle">
+                            <span class="material-symbols-outlined text-blue-500 text-3xl">diamond</span>
+                        </div>
+                        <h4 class="font-bold text-sm mb-1">다이아몬드 스파클</h4>
+                        <p class="text-[11px] text-gray-500 mb-3">화려하게 반짝이는 보석 효과</p>
+
+                        <button th:if="${user.activeDecoration == 'deco-diamond-sparkle'}" disabled
+                            class="w-full bg-gray-200 dark:bg-gray-700 text-gray-500 text-xs font-bold py-2 rounded-xl flex items-center justify-center gap-2">
+                            사용 중 <span class="material-symbols-outlined text-xs">check</span>
+                        </button>
+                        <button
+                            th:if="${user.activeDecoration != 'deco-diamond-sparkle' and ownedItems.contains('deco-diamond-sparkle')}"
+                            onclick="buyDecoration('deco-diamond-sparkle', 0, true)"
+                            class="w-full bg-blue-500/20 text-blue-700 text-xs font-bold py-2 rounded-xl hover:bg-blue-500/30 transition-colors flex items-center justify-center gap-2">
+                            장착하기 <span class="material-symbols-outlined text-xs">checkroom</span>
+                        </button>
+                        <button th:if="${!ownedItems.contains('deco-diamond-sparkle')}"
+                            onclick="buyDecoration('deco-diamond-sparkle', 2000, false)"
+                            class="w-full bg-blue-500 text-white text-xs font-bold py-2 rounded-xl hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                            2,000 P <span class="material-symbols-outlined text-xs">shopping_cart</span>
+                        </button>
+                    </div>
+
+                    <!-- Item 4 -->
+                    <div
+                        class="group p-4 rounded-2xl border border-[#e4e5eb] dark:border-border-dark hover:border-red-500/50 hover:bg-red-500/5 transition-all text-center">
+                        <div
+                            class="size-20 bg-red-50 dark:bg-red-900/20 rounded-full mx-auto mb-3 flex items-center justify-center relative deco-fire-aura">
+                            <span class="material-symbols-outlined text-red-500 text-3xl">local_fire_department</span>
+                        </div>
+                        <h4 class="font-bold text-sm mb-1">파이어 오라</h4>
+                        <p class="text-[11px] text-gray-500 mb-3">열정을 상징하는 붉은 불꽃 효과</p>
+
+                        <button th:if="${user.activeDecoration == 'deco-fire-aura'}" disabled
+                            class="w-full bg-gray-200 dark:bg-gray-700 text-gray-500 text-xs font-bold py-2 rounded-xl flex items-center justify-center gap-2">
+                            사용 중 <span class="material-symbols-outlined text-xs">check</span>
+                        </button>
+                        <button
+                            th:if="${user.activeDecoration != 'deco-fire-aura' and ownedItems.contains('deco-fire-aura')}"
+                            onclick="buyDecoration('deco-fire-aura', 0, true)"
+                            class="w-full bg-red-500/20 text-red-700 text-xs font-bold py-2 rounded-xl hover:bg-red-500/30 transition-colors flex items-center justify-center gap-2">
+                            장착하기 <span class="material-symbols-outlined text-xs">checkroom</span>
+                        </button>
+                        <button th:if="${!ownedItems.contains('deco-fire-aura')}"
+                            onclick="buyDecoration('deco-fire-aura', 1500, false)"
+                            class="w-full bg-red-500 text-white text-xs font-bold py-2 rounded-xl hover:bg-red-600 transition-colors flex items-center justify-center gap-2">
+                            1,500 P <span class="material-symbols-outlined text-xs">shopping_cart</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reset Option -->
+                <button onclick="buyDecoration('', 0)"
+                    class="w-full py-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-text-dark font-medium underline">
+                    초기화 (무료)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/mypage.js}" defer></script>
+    <script>
+        function openPointShop() {
+            document.getElementById('pointShopModal').style.display = 'flex';
+        }
+        function closePointShop() {
+            document.getElementById('pointShopModal').style.display = 'none';
+        }
+
+        async function buyDecoration(itemCode, price, isOwned) {
+            let confirmMsg = "";
+            if (itemCode === '') {
+                confirmMsg = "효과를 초기화하시겠습니까?";
+            } else if (isOwned) {
+                confirmMsg = "소유 중인 아이템입니다. 장착하시겠습니까?";
+            } else {
+                confirmMsg = `이 아이템을 ${price}P에 구매하시겠습니까?`;
+            }
+
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const response = await fetch('/mypage/shop/buy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        // Spring Security CSRF
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content
+                    },
+                    body: `itemCode=${itemCode}&price=${price}`
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    location.reload(); // UI 동기화를 위해 새로고침 (소유권 반영 등)
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error('Purchase failed:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+
+</html>

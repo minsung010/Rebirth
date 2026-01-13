@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.mapper.OAuthAccountMapper">
+
+    <insert id="save" parameterType="com.rebirth.my.domain.OAuthAccount">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT S_OAUTH_ACCOUNTS.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO OAUTH_ACCOUNTS (
+            ID, USER_ID, PROVIDER, PROVIDER_USER_ID, LINKED_AT
+        ) VALUES (
+            #{id}, #{userId}, #{provider}, #{providerUserId}, SYSTIMESTAMP
+        )
+    </insert>
+
+    <select id="findByProviderAndProviderUserId" resultType="com.rebirth.my.domain.OAuthAccount">
+        SELECT * FROM OAUTH_ACCOUNTS
+        WHERE PROVIDER = #{provider} AND PROVIDER_USER_ID = #{providerUserId}
+    </select>
+
+    <select id="findByUserId" resultType="com.rebirth.my.domain.OAuthAccount">
+        SELECT * FROM OAUTH_ACCOUNTS
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <update id="updateUserId">
+        UPDATE OAUTH_ACCOUNTS
+        SET USER_ID = #{newUserId}
+        WHERE USER_ID = #{oldUserId}
+    </update>
+
+</mapper>

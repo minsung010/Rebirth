@@ -1,0 +1,297 @@
+<div th:fragment="chatbotWidgetFragment">
+    <!-- Chatbot Widget Container -->
+    <div id="chatbot-widget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
+
+        <!-- Chat Window (Initially Hidden) - pointer-events-auto when open -->
+        <div id="chatbot-window"
+            class="mb-4 w-[350px] h-[500px] bg-white dark:bg-[#1a1625] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right scale-0 opacity-0 relative pointer-events-none">
+
+            <!-- Header -->
+            <div class="px-5 py-4 bg-primary text-white flex justify-between items-center shadow-md shrink-0">
+                <div class="flex items-center gap-2">
+                    <img src="/img/bot_icon.jpg" alt="AI"
+                        class="size-8 rounded-full object-cover border border-white/20">
+                    <div>
+                        <h3 class="font-bold text-sm">Re:birth AI</h3>
+                        <p class="text-[10px] opacity-80 flex items-center gap-1">
+                            <span class="block size-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                            Online
+                        </p>
+                    </div>
+                </div>
+                <!-- Controls -->
+                <div class="flex items-center gap-1">
+                    <button onclick="toggleChatbot()" class="p-1 hover:bg-white/20 rounded-full transition-colors">
+                        <span class="material-symbols-outlined text-lg">close</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="widget-messages"
+                class="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-[#0f0f12] scroll-smooth text-sm">
+                <!-- Welcome Message -->
+                <div class="flex items-start gap-2">
+                    <div
+                        class="size-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 overflow-hidden border border-gray-100 dark:border-white/10">
+                        <img src="/img/bot_icon.jpg" alt="AI" class="w-full h-full object-cover">
+                    </div>
+                    <div
+                        class="p-3 bg-white dark:bg-white/5 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] text-text-light dark:text-gray-200">
+                        안녕하세요! 지구를 위한 코디네이터, Re:birth AI입니다. <br>궁금한 점이 있거나 스타일 추천이 필요하신가요?
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-3 bg-white dark:bg-[#1a1625] border-t border-gray-100 dark:border-white/5 shrink-0">
+                <div id="widget-form" class="relative flex items-center gap-2">
+                    <input type="text" id="widget-input" placeholder="메시지를 입력하세요..."
+                        class="w-full bg-gray-100 dark:bg-white/90 border-none rounded-full px-4 py-2.5 pr-12 text-sm focus:ring-1 focus:ring-primary outline-none text-black placeholder-gray-500 transition-shadow"
+                        autocomplete="off">
+                    <button type="button" onclick="sendWidgetMessage()"
+                        class="absolute right-1 p-1.5 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span class="material-symbols-outlined text-base">send</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Overlay (Hidden by default) -->
+            <div id="widget-loading"
+                class="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-10 hidden">
+                <div class="flex gap-1">
+                    <span class="size-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0s"></span>
+                    <span class="size-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                    <span class="size-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toggle Button (FAB) - Robot with Yellow Eyes on Hover -->
+        <button id="chatbot-trigger" onclick="toggleChatbot()"
+            class="group relative size-16 rounded-full shadow-[0_4px_20px_rgba(124,58,237,0.4)] flex items-center justify-center hover:scale-110 transition-all duration-300 z-50 overflow-hidden bg-white dark:bg-gray-800 border-2 border-primary/30 pointer-events-auto">
+            <!-- Robot Image - Normal State -->
+            <img src="/img/bot_fab.jpg" alt="AI"
+                class="absolute w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
+                id="icon-open">
+            <!-- Robot Image - Hover State (Yellow Eyes) -->
+            <img src="/img/bot_fab_hover.png" alt="AI Hover"
+                class="absolute w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                id="icon-hover">
+            <!-- Close Icon (When Chat is Open) -->
+            <span
+                class="material-symbols-outlined text-3xl text-primary transition-all duration-300 absolute scale-0 opacity-0"
+                id="icon-close">keyboard_arrow_down</span>
+
+            <!-- Notification Badge -->
+            <span
+                class="absolute -top-1 -right-1 size-4 bg-red-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse"></span>
+
+            <!-- Glow Effect on Hover -->
+            <div
+                class="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-tr from-yellow-400/20 to-yellow-500/20 pointer-events-none">
+            </div>
+        </button>
+
+    </div>
+
+    <!-- Chatbot Script -->
+    <script th:inline="none">
+        // DOM 요소 참조 (나중에 초기화)
+        let widgetWindow, widgetTrigger, iconOpen, iconClose, widgetInput, widgetMessages;
+        let isOpen = false;
+
+        // 채팅 히스토리 저장 키
+        const CHAT_HISTORY_KEY = 'rebirth_chatbot_history';
+
+        // DOM 요소 초기화 함수
+        function initWidgetElements() {
+            widgetWindow = document.getElementById('chatbot-window');
+            widgetTrigger = document.getElementById('chatbot-trigger');
+            iconOpen = document.getElementById('icon-open');
+            iconClose = document.getElementById('icon-close');
+            widgetInput = document.getElementById('widget-input');
+            widgetMessages = document.getElementById('widget-messages');
+        }
+
+        // 페이지 로드 시 저장된 채팅 내용 복원
+        function restoreChatHistory() {
+            const saved = sessionStorage.getItem(CHAT_HISTORY_KEY);
+            if (saved) {
+                try {
+                    const history = JSON.parse(saved);
+                    history.forEach(msg => {
+                        appendMessageWithoutSave(msg.text, msg.sender);
+                    });
+                } catch (e) {
+                    console.error('채팅 히스토리 복원 실패:', e);
+                }
+            }
+        }
+
+        // 채팅 히스토리 저장
+        function saveChatHistory(text, sender) {
+            let history = [];
+            const saved = sessionStorage.getItem(CHAT_HISTORY_KEY);
+            if (saved) {
+                try {
+                    history = JSON.parse(saved);
+                } catch (e) { }
+            }
+            history.push({ text, sender, timestamp: Date.now() });
+            // 최대 50개 메시지만 저장
+            if (history.length > 50) {
+                history = history.slice(-50);
+            }
+            sessionStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
+        }
+
+        // 채팅 히스토리 삭제 (로그아웃 시 호출)
+        function clearChatHistory() {
+            sessionStorage.removeItem(CHAT_HISTORY_KEY);
+            // 웰컴 메시지만 남기고 삭제
+            const welcomeMsg = widgetMessages.querySelector('.flex.items-start');
+            widgetMessages.innerHTML = '';
+            if (welcomeMsg) {
+                widgetMessages.appendChild(welcomeMsg.cloneNode(true));
+            }
+        }
+
+        // 로그아웃 시 채팅 삭제 (전역 함수로 노출)
+        window.clearChatbotHistory = clearChatHistory;
+
+        function toggleChatbot() {
+            // DOM 요소가 없으면 초기화
+            if (!widgetWindow) initWidgetElements();
+
+            isOpen = !isOpen;
+            if (isOpen) {
+                // Open
+                widgetWindow.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
+                widgetWindow.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
+
+                // Icon Animation
+                iconOpen.classList.add('scale-0', 'opacity-0', 'rotate-90');
+                iconClose.classList.remove('scale-0', 'opacity-0', 'rotate-90');
+
+                // Focus
+                setTimeout(() => widgetInput.focus(), 300);
+            } else {
+                // Close
+                widgetWindow.classList.remove('scale-100', 'opacity-100', 'pointer-events-auto');
+                widgetWindow.classList.add('scale-0', 'opacity-0', 'pointer-events-none');
+
+                // Icon Animation
+                iconOpen.classList.remove('scale-0', 'opacity-0', 'rotate-90');
+                iconClose.classList.add('scale-0', 'opacity-0', 'rotate-90');
+            }
+        }
+
+        async function sendWidgetMessage() {
+            // DOM 요소가 없으면 다시 가져오기
+            if (!widgetInput) {
+                widgetInput = document.getElementById('widget-input');
+            }
+            if (!widgetInput) {
+                console.error('[위젯] widget-input 요소를 찾을 수 없습니다.');
+                return;
+            }
+
+            const message = widgetInput.value.trim();
+            if (!message) return;
+
+            // 1. User Message (즉시 표시)
+            appendMessage(message, 'user');
+            widgetInput.value = '';
+            widgetInput.focus();
+
+            try {
+                // 2. API Call
+                const response = await fetch('/chat/api/message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ 'message': message })
+                });
+
+                if (!response.ok) throw new Error('Network response was not ok');
+
+                const data = await response.text();
+
+                // Check if login required
+                if (data.includes('PC: 로그인이 필요합니다')) {
+                    appendMessage("서비스 이용을 위해 로그인이 필요합니다! <br><a href='/auth/login' class='underline font-bold text-primary'>로그인 하러가기</a>", 'bot');
+                } else {
+                    appendMessage(data, 'bot');
+                }
+
+            } catch (error) {
+                console.error("Chatbot Error:", error);
+                appendMessage("죄송합니다. 오류가 발생했습니다.", 'bot');
+            }
+        }
+
+        // 메시지 추가 (저장 포함)
+        function appendMessage(text, sender) {
+            appendMessageWithoutSave(text, sender);
+            saveChatHistory(text, sender);
+        }
+
+        // 메시지 추가 (저장 없이 - 복원용)
+        function appendMessageWithoutSave(text, sender) {
+            // DOM 요소가 없으면 다시 가져오기
+            if (!widgetMessages) {
+                widgetMessages = document.getElementById('widget-messages');
+            }
+            if (!widgetMessages) {
+                console.error('[위젯] widget-messages 요소를 찾을 수 없습니다.');
+                return;
+            }
+
+            const isUser = sender === 'user';
+
+            // Simple Markdown Parser
+            const parseMarkdown = (txt) => {
+                return txt
+                    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary underline font-bold">$1</a>')
+                    .replace(/\n/g, '<br>');
+            };
+
+            const content = isUser ? text.replace(/\n/g, '<br>') : parseMarkdown(text);
+
+            const html = `
+                <div class="flex items-start gap-2 ${isUser ? 'flex-row-reverse' : ''}">
+                    ${!isUser ? `
+                    <div class="size-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 overflow-hidden border border-gray-100 dark:border-white/10">
+                        <img src="/img/bot_icon.jpg" alt="AI" class="w-full h-full object-cover">
+                    </div>` : ''}
+                    
+                    <div class="p-3 rounded-2xl ${isUser ? 'bg-primary text-white rounded-tr-none' : 'bg-white dark:bg-white/5 text-text-light dark:text-gray-200 rounded-tl-none border border-gray-100 dark:border-white/5'} shadow-sm max-w-[85%] text-sm leading-relaxed">
+                        ${content}
+                    </div>
+                </div>
+            `;
+            widgetMessages.insertAdjacentHTML('beforeend', html);
+            widgetMessages.scrollTop = widgetMessages.scrollHeight;
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function () {
+            // DOM 요소 초기화 (필수!)
+            initWidgetElements();
+
+            // 히스토리 복원
+            restoreChatHistory();
+
+            // 엔터키 이벤트 연결
+            if (widgetInput) {
+                widgetInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        sendWidgetMessage();
+                    }
+                });
+            }
+        });
+    </script>
+</div>

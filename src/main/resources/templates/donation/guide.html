@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark overflow-x-hidden">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <main class="pt-24 min-h-screen px-4 max-w-4xl mx-auto pb-20">
+        <!-- Hero Section -->
+        <div class="text-center mb-16 relative">
+            <h1 class="text-4xl md:text-5xl font-black mb-6 text-primary tracking-tight">
+                나눔으로 실천하는<br>자원 순환의 기적
+            </h1>
+            <p class="text-xl text-text-light/70 dark:text-text-dark/70 max-w-2xl mx-auto leading-relaxed">
+                당신의 옷장에서 잠자고 있는 옷들이<br>
+                누군가에게는 소중한 선물이 될 수 있습니다.
+            </p>
+        </div>
+
+        <!-- Guide Steps -->
+        <div
+            class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-800">
+            <!-- Step 1 -->
+            <div class="text-center px-4 pt-8 md:pt-0">
+                <div
+                    class="size-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary">
+                    <span class="material-symbols-outlined text-4xl">checkroom</span>
+                </div>
+                <h3 class="text-xl font-bold mb-3">1. 옷 정리하기</h3>
+                <p class="text-sm text-gray-500">입지 않는 옷들을 모아주세요.<br>깨끗하게 세탁해주시면 더 좋습니다.</p>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="text-center px-4 pt-8 md:pt-0">
+                <div
+                    class="size-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary">
+                    <span class="material-symbols-outlined text-4xl">location_on</span>
+                </div>
+                <h3 class="text-xl font-bold mb-3">2. 기부처 방문/발송</h3>
+                <p class="text-sm text-gray-500">가까운 아름다운가게, 굿윌스토어<br>에 기부해주세요.</p>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="text-center px-4 pt-8 md:pt-0">
+                <div
+                    class="size-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary">
+                    <span class="material-symbols-outlined text-4xl">edit_note</span>
+                </div>
+                <h3 class="text-xl font-bold mb-3">3. 활동 기록하기</h3>
+                <p class="text-sm text-gray-500">Re:birth에 기부 내역을 기록하면<br>자원 순환 데이터가 쌓입니다.</p>
+            </div>
+        </div>
+
+        <!-- Location Search Section -->
+        <div class="bg-gray-50 dark:bg-white/5 rounded-3xl p-10 mb-20">
+            <div class="text-center mb-8">
+                <h3 class="font-bold text-2xl mb-4 text-black dark:text-white">내 주변 기부처 찾기</h3>
+                <div class="w-full h-[2px] bg-[#6B5CE7]"></div>
+            </div>
+
+            <!-- Map Container -->
+            <div id="map" class="w-full h-[500px] rounded-2xl shadow-md mb-8 relative z-0"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Beautiful Store -->
+                <div class="bg-white dark:bg-card-dark p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-center group cursor-pointer"
+                    onclick="filterMap('beautiful')">
+                    <div
+                        class="size-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="material-symbols-outlined text-2xl">store</span>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">아름다운가게</h4>
+                    <p class="text-sm text-gray-400 mb-4 h-6">지도에 초록색 마커로 표시됩니다.</p>
+                    <a href="https://www.beautifulstore.org/" target="_blank" onclick="event.stopPropagation();"
+                        class="inline-flex items-center justify-center gap-2 w-full py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 font-bold rounded-xl hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors mt-2">
+                        <span class="material-symbols-outlined text-sm">store</span>
+                        홈페이지
+                    </a>
+                </div>
+
+                <!-- Goodwill Store -->
+                <div class="bg-white dark:bg-card-dark p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-center group cursor-pointer"
+                    onclick="filterMap('goodwill')">
+                    <div
+                        class="size-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="material-symbols-outlined text-2xl">volunteer_activism</span>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">굿윌스토어</h4>
+                    <p class="text-sm text-gray-400 mb-4 h-6">지도에 파란색 마커로 표시됩니다.</p>
+                    <a href="https://www.goodwillstore.org/" target="_blank" onclick="event.stopPropagation();"
+                        class="inline-flex items-center justify-center gap-2 w-full py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-bold rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors mt-2">
+                        <span class="material-symbols-outlined text-sm">volunteer_activism</span>
+                        홈페이지
+                    </a>
+                </div>
+
+                <!-- Collection Box (Icon Only) -->
+
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="text-center">
+            <a href="/donation/record"
+                class="inline-flex items-center gap-3 px-10 py-5 bg-primary text-white text-xl font-bold rounded-full shadow-xl shadow-primary/30 hover:scale-105 transition-all">
+                기부 활동 기록하러 가기
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+            <p class="mt-4 text-sm text-gray-400">이미 기부를 완료하셨나요? 기록을 남겨보세요.</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <!-- PapaParse for CSV Parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Kakao Map SDK -->
+    <script type="text/javascript"
+        th:src="@{'//dapi.kakao.com/v2/maps/sdk.js?appkey=' + ${kakaoMapsAppKey} + '&libraries=services,clusterer'}"></script>
+
+    <script th:inline="javascript">
+        var userAddress = /*[[${userAddress}]]*/ null;
+
+        var mapContainer = document.getElementById('map'),
+            mapOption = {
+                center: new kakao.maps.LatLng(36.5, 127.5), // 전국이 보이도록 중심 설정
+                level: 12 // 전국 뷰 레벨
+            };
+
+        var map = new kakao.maps.Map(mapContainer, mapOption);
+
+        // 사용자 주소가 있다면 해당 위치로 지도 중심 이동
+        if (userAddress) {
+            var geocoder = new kakao.maps.services.Geocoder();
+            geocoder.addressSearch(userAddress, function (result, status) {
+                if (status === kakao.maps.services.Status.OK) {
+                    var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                    map.setCenter(coords);
+                    map.setLevel(7); // 내 주변이 잘 보이도록 줌 레벨 조정
+                }
+            });
+        }
+
+        // 마커 클러스터러 생성
+        var clusterer = new kakao.maps.MarkerClusterer({
+            map: map,
+            averageCenter: true,
+            minLevel: 10
+        });
+
+        var markers = [];
+        var infowindows = [];
+
+        function closeAllInfowindows() {
+            for (var i = 0; i < infowindows.length; i++) {
+                infowindows[i].close();
+            }
+            infowindows = [];
+        }
+
+        // 1. Load Beautiful Store (JSON)
+        fetch('/data/beautiful_store.json')
+            .then(response => response.json())
+            .then(data => {
+                var beautifulMarkers = data
+                    .filter(item => item.loc_location && item.loc_location.includes('|'))
+                    .map(item => {
+                        var parts = item.loc_location.split('|');
+                        var lat = parseFloat(parts[0]);
+                        var lng = parseFloat(parts[1]);
+
+                        var marker = new kakao.maps.Marker({
+                            position: new kakao.maps.LatLng(lat, lng),
+                            title: item.storename
+                        });
+
+                        var iwContent = '<div style="padding:5px; width:200px; text-align:center; font-size:14px;">' +
+                            '<b style="color:#009e25;">[아름다운가게]</b><br>' + item.storename +
+                            '</div>';
+                        var infowindow = new kakao.maps.InfoWindow({
+                            content: iwContent,
+                            removable: true
+                        });
+
+                        kakao.maps.event.addListener(marker, 'click', function () {
+                            closeAllInfowindows();
+                            infowindow.open(map, marker);
+                            infowindows.push(infowindow);
+                        });
+
+                        marker.category = 'beautiful';
+                        return marker;
+                    });
+
+                clusterer.addMarkers(beautifulMarkers);
+                markers = markers.concat(beautifulMarkers);
+            })
+            .catch(error => console.error('Error loading JSON:', error));
+
+        // 2. Load Goodwill Store (CSV)
+        fetch('/data/goodwill_store.csv')
+            .then(response => response.text())
+            .then(csvText => {
+                Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function (results) {
+                        var goodwillMarkers = results.data
+                            .filter(row => row.lat && row.lng)
+                            .map(row => {
+                                var lat = parseFloat(row.lat);
+                                var lng = parseFloat(row.lng);
+
+                                var imageSrc = "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png";
+                                var imageSize = new kakao.maps.Size(24, 35);
+                                var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
+
+                                var marker = new kakao.maps.Marker({
+                                    position: new kakao.maps.LatLng(lat, lng),
+                                    title: row.name,
+                                    image: markerImage
+                                });
+
+                                var iwContent = '<div style="padding:5px; width:200px; text-align:center; font-size:14px;">' +
+                                    '<b style="color:#0057b7;">[굿윌스토어]</b><br>' + row.name +
+                                    '</div>';
+                                var infowindow = new kakao.maps.InfoWindow({
+                                    content: iwContent,
+                                    removable: true
+                                });
+
+                                kakao.maps.event.addListener(marker, 'click', function () {
+                                    closeAllInfowindows();
+                                    infowindow.open(map, marker);
+                                    infowindows.push(infowindow);
+                                });
+
+                                marker.category = 'goodwill';
+                                return marker;
+                            });
+
+                        clusterer.addMarkers(goodwillMarkers);
+                        markers = markers.concat(goodwillMarkers);
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading CSV:', error));
+
+        // 지도 필터링 함수
+        function filterMap(type) {
+            clusterer.clear();
+
+            var filteredMarkers = [];
+            if (type === 'all') {
+                filteredMarkers = markers;
+            } else {
+                filteredMarkers = markers.filter(m => m.category === type);
+            }
+
+            clusterer.addMarkers(filteredMarkers);
+
+            if (filteredMarkers.length > 0) {
+                var bounds = new kakao.maps.LatLngBounds();
+                for (var i = 0; i < filteredMarkers.length; i++) {
+                    bounds.extend(filteredMarkers[i].getPosition());
+                }
+                map.setBounds(bounds);
+            }
+        }
+    </script>
+</body>
+
+</html>

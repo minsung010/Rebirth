@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark flex flex-col min-h-screen">
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-20 flex flex-col">
+        <div class="w-full max-w-3xl mx-auto p-4 md:p-6 flex flex-col flex-grow">
+
+            <!-- Chat List (Full Width) -->
+            <div
+                class="flex flex-col flex-grow min-h-[700px] bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden relative">
+                <div
+                    class="p-4 border-b border-border-light dark:border-border-dark flex flex-col gap-3 bg-gray-50/50 dark:bg-gray-800/10">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">forum</span>
+                            메시지
+                        </h2>
+                        <button onclick="openSearchModal()"
+                            class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-bold">
+                            <span class="material-symbols-outlined text-lg">person_add</span> 새 대화
+                        </button>
+                    </div>
+
+                    <!-- User Search Input (Replaced Message Search) -->
+                    <div class="relative w-full">
+                        <span
+                            class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-sm">person_search</span>
+                        <input type="text" id="mainUserSearchInput" placeholder="사용자 검색 (이름, 이메일)..."
+                            class="w-full pl-9 pr-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:outline-none focus:border-primary text-sm transition-all">
+                    </div>
+                </div>
+
+                <div id="chatRoomList" class="flex-grow overflow-y-auto p-2 space-y-1 relative">
+                    <!-- Chat Items will be loaded here -->
+                    <div class="text-center py-10 opacity-50">
+                        <span class="material-symbols-outlined text-4xl mb-2">chat_bubble_outline</span>
+                        <p class="text-sm">진행 중인 대화가 없습니다.</p>
+                    </div>
+                </div>
+
+                <!-- Floating Action Button (FAB) - Removed in favor of top button -->
+            </div>
+        </div>
+    </main>
+    </div>
+    </div>
+    </div>
+    </main>
+
+    <!-- User Search Modal (Optional, kept for "New Chat" button compatibility if needed, but logic is shared) -->
+    <div id="searchModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSearchModal()"></div>
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
+            <div
+                class="bg-card-light dark:bg-card-dark rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[80vh]">
+                <div class="p-4 border-b border-border-light dark:border-border-dark flex justify-between items-center">
+                    <h3 class="font-bold text-lg">새로운 채팅</h3>
+                    <button onclick="closeSearchModal()"
+                        class="material-symbols-outlined text-text-light/50 hover:text-text-light dark:text-text-dark">close</button>
+                </div>
+                <div class="p-4">
+                    <div class="relative">
+                        <span
+                            class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-text-light/50 dark:text-text-dark/50">search</span>
+                        <input type="text" id="modalUserSearchInput" placeholder="사용자 이름 또는 ID 검색..."
+                            class="w-full pl-10 pr-4 py-3 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:outline-none focus:border-primary transition-colors">
+                    </div>
+                </div>
+                <div id="modalUserSearchResults" class="flex-grow overflow-y-auto p-2 space-y-1 min-h-[200px]">
+                    <!-- Search Results -->
+                    <div class="text-center text-sm opacity-50 py-8">검색어를 입력하세요</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <!-- SockJS & STOMP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script th:inline="javascript">
+        const searchModal = document.getElementById('searchModal');
+        const modalUserSearchInput = document.getElementById('modalUserSearchInput');
+        const modalUserSearchResults = document.getElementById('modalUserSearchResults');
+
+        const mainUserSearchInput = document.getElementById('mainUserSearchInput');
+
+        const chatRoomList = document.getElementById('chatRoomList');
+        const myUserId = /*[[${userId}]]*/ null;
+
+        // WebSocket Globals
+        let stompClient = null;
+        let subscribedRooms = new Set();
+        let myRooms = [];
+        let processedMessages = new Set(); // De-duplication set
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadChatRoomsAndConnect();
+        });
+
+        function loadChatRoomsAndConnect() {
+            fetch('/chat/api/rooms')
+                .then(res => res.json())
+                .then(rooms => {
+                    myRooms = rooms;
+                    renderChatRooms(rooms);
+                    connectWebSocket();
+                })
+                .catch(err => console.error('Error loading rooms:', err));
+        }
+
+        function renderChatRooms(rooms) {
+            if (rooms.length > 0) chatRoomList.innerHTML = '';
+            else {
+                chatRoomList.innerHTML = `
+                    <div class="text-center py-10 opacity-50">
+                        <span class="material-symbols-outlined text-4xl mb-2">chat_bubble_outline</span>
+                        <p class="text-sm">진행 중인 대화가 없습니다.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            rooms.forEach(room => {
+                const el = createRoomElement(room);
+                chatRoomList.appendChild(el);
+            });
+        }
+
+        function createRoomElement(room) {
+            const el = document.createElement('a');
+            el.href = `/chat/room?roomId=${room.roomId}`;
+            el.className = 'block chat-room-item transition-all duration-300';
+            el.dataset.roomId = room.roomId;
+
+            const timeStr = formatTime(room.lastDate);
+
+            // Image
+            let imgHtml = '';
+            if (room.otherImg) {
+                imgHtml = `<img src="${room.otherImg}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(room.otherName)}&background=random';">`;
+            } else {
+                const colors = ['bg-red-100 text-red-600', 'bg-blue-100 text-blue-600', 'bg-green-100 text-green-600', 'bg-yellow-100 text-yellow-600', 'bg-purple-100 text-purple-600'];
+                const colorClass = colors[(room.otherName || '?').length % colors.length];
+                const initial = (room.otherName || '?').charAt(0);
+                imgHtml = `<div class="w-full h-full flex items-center justify-center font-bold text-lg ${colorClass}">${initial}</div>`;
+            }
+
+            // Unread Badge
+            let badgeHtml = '';
+            if (room.unreadCount > 0) {
+                badgeHtml = `<div class="unread-badge size-5 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm shrink-0 ml-2">${room.unreadCount}</div>`;
+            } else {
+                badgeHtml = `<div class="unread-badge size-5 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm shrink-0 ml-2 hidden">0</div>`;
+            }
+
+            el.innerHTML = `
+                <div class="flex items-center gap-4 p-4 rounded-xl hover:bg-background-light dark:hover:bg-background-dark transition-colors cursor-pointer group relative">
+                    <div class="size-12 rounded-full overflow-hidden shrink-0 bg-gray-100 relative">
+                        ${imgHtml}
+                    </div>
+                    <div class="flex-grow min-w-0 pr-8">
+                        <div class="flex justify-between items-center mb-1">
+                            <p class="font-bold text-base truncate text-text-light dark:text-text-dark">${room.otherName}</p>
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-text-light/50 dark:text-text-dark/50 room-time">${timeStr}</span>
+                                ${badgeHtml}
+                            </div>
+                        </div>
+                        <p class="text-sm text-text-light/70 dark:text-text-dark/70 truncate room-last-msg">${room.lastMessage || '대화 내용 없음'}</p>
+                    </div>
+                    
+                    <!-- Leave Button (Visible on Hover/Swipe) -->
+                    <button onclick="leaveRoom(event, ${room.roomId})" 
+                        class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
+                        title="나가기">
+                        <span class="material-symbols-outlined">logout</span>
+                    </button>
+                </div>
+            `;
+            return el;
+        }
+
+        function formatTime(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const now = new Date();
+            if (date.toDateString() === now.toDateString()) {
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+
+        function connectWebSocket() {
+            if (stompClient && stompClient.connected) return;
+
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.debug = null;
+
+            stompClient.connect({}, onConnected, onError);
+        }
+
+        function onConnected() {
+            if (myUserId) {
+                stompClient.subscribe('/topic/user/' + myUserId + '/chat', (payload) => {
+                    const message = JSON.parse(payload.body);
+                    const exists = document.querySelector(`.chat-room-item[data-room-id="${message.roomId}"]`);
+                    if (exists) {
+                        updateRoomList(message.roomId, message);
+                    } else {
+                        loadChatRoomsAndConnect();
+                    }
+                });
+            }
+
+            myRooms.forEach(room => {
+                subscribeToRoom(room.roomId);
+            });
+        }
+
+        function subscribeToRoom(roomId) {
+            if (subscribedRooms.has(roomId)) return;
+
+            stompClient.subscribe('/topic/room/' + roomId, (payload) => {
+                const message = JSON.parse(payload.body);
+                updateRoomList(roomId, message);
+            });
+            subscribedRooms.add(roomId);
+        }
+
+        function updateRoomList(roomId, message) {
+            // 1. Ignore interactions that shouldn't reorder list or bump unread count
+            const ignoredTypes = ['JOIN', 'LEAVE', 'READ'];
+            if (message.type && ignoredTypes.includes(message.type)) {
+                return;
+            }
+
+            // 2. Prevent Double Counting (De-duplication)
+            // Use pseudo-key: roomId + timestamp + senderId
+            const msgKey = `${roomId}-${message.timestamp}-${message.senderId}-${message.content}`;
+            if (processedMessages.has(msgKey)) {
+                return;
+            }
+            processedMessages.add(msgKey);
+            // Remove key after 2 seconds (safe enough for network latency dupes)
+            setTimeout(() => processedMessages.delete(msgKey), 2000);
+
+            // Find existing element
+            const existingEl = document.querySelector(`.chat-room-item[data-room-id="${roomId}"]`);
+
+            if (existingEl) {
+                // Update content
+                const msgEl = existingEl.querySelector('.room-last-msg');
+                const timeEl = existingEl.querySelector('.room-time');
+
+                if (msgEl) {
+                    if (message.type === 'IMAGE') {
+                        msgEl.textContent = '사진을 보냈습니다.';
+                    } else {
+                        msgEl.textContent = message.content;
+                    }
+                }
+                if (timeEl) timeEl.textContent = formatTime(message.timestamp || new Date());
+
+                // Move to top
+                chatRoomList.prepend(existingEl);
+
+                // Highlight effect
+                const innerDiv = existingEl.querySelector('div');
+                innerDiv.classList.add('bg-primary/5');
+                setTimeout(() => {
+                    innerDiv.classList.remove('bg-primary/5');
+                }, 1000);
+
+                // Unread Badge Logic
+                // If I am NOT the sender, increment badge
+                if (message.senderId && String(message.senderId) !== String(myUserId)) {
+                    const badge = existingEl.querySelector('.unread-badge');
+                    if (badge) {
+                        let count = parseInt(badge.innerText) || 0;
+                        count++;
+                        badge.innerText = count;
+                        badge.classList.remove('hidden');
+                    }
+                }
+
+            } else {
+                // If it's a new room (not in list), just reload to fetch it
+                loadChatRoomsAndConnect();
+            }
+        }
+
+        function onError(error) {
+            console.error('WebSocket Error:', error);
+            // Retry logic could go here
+        }
+
+        function openSearchModal() {
+            searchModal.classList.remove('hidden');
+            modalUserSearchInput.focus();
+        }
+
+        function closeSearchModal() {
+            searchModal.classList.add('hidden');
+            modalUserSearchInput.value = '';
+            modalUserSearchResults.innerHTML = '<div class="text-center text-sm opacity-50 py-8">검색어를 입력하세요</div>';
+        }
+
+        // ==========================================
+        // Main User Search Logic (New)
+        // ==========================================
+        let uSearchTimeout;
+        mainUserSearchInput.addEventListener('input', (e) => {
+            const keyword = e.target.value.trim();
+            if (uSearchTimeout) clearTimeout(uSearchTimeout);
+
+            // Restore list if empty
+            if (keyword.length < 1) {
+                renderChatRooms(myRooms); // Show full list again
+                return;
+            }
+
+            uSearchTimeout = setTimeout(() => {
+                fetch(`/chat/api/users?keyword=${encodeURIComponent(keyword)}`)
+                    .then(res => res.json())
+                    .then(users => {
+                        if (users.length === 0) {
+                            chatRoomList.innerHTML = `
+                                <div class="text-center py-10 opacity-50">
+                                    <span class="material-symbols-outlined text-4xl mb-2">person_off</span>
+                                    <p class="text-sm">검색 결과가 없습니다.</p>
+                                </div>
+                             `;
+                            return;
+                        }
+
+                        // Render User Search Results
+                        chatRoomList.innerHTML = '';
+                        users.forEach(user => {
+                            const el = document.createElement('div');
+                            el.className = 'flex items-center gap-3 p-4 rounded-xl hover:bg-background-light dark:hover:bg-background-dark cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-800';
+
+                            // Avatar
+                            let avatarHtml = '';
+                            if (user.memImg) {
+                                avatarHtml = `<img src="${user.memImg}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random';">`;
+                            } else {
+                                avatarHtml = `<img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=User&background=random';">`;
+                            }
+
+                            el.innerHTML = `
+                                <div class="size-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                                    ${avatarHtml}
+                                </div>
+                                <div class="flex-grow min-w-0">
+                                    <p class="font-bold text-base truncate">${user.name}</p>
+                                    <p class="text-sm opacity-50 truncate">${user.email}</p>
+                                </div>
+                                <button class="px-3 py-1.5 rounded-full bg-primary text-white text-xs font-bold">
+                                    채팅하기
+                                </button>
+                            `;
+
+                            el.onclick = () => startChat(user.id);
+                            chatRoomList.appendChild(el);
+                        });
+                    });
+            }, 300);
+        });
+
+        // Modal Search Logic (Existing)
+        let mSearchTimeout;
+        modalUserSearchInput.addEventListener('input', (e) => {
+            const keyword = e.target.value.trim();
+            if (mSearchTimeout) clearTimeout(mSearchTimeout);
+
+            if (keyword.length < 1) {
+                modalUserSearchResults.innerHTML = '<div class="text-center text-sm opacity-50 py-8">검색어를 입력하세요</div>';
+                return;
+            }
+
+            mSearchTimeout = setTimeout(() => {
+                fetch(`/chat/api/users?keyword=${encodeURIComponent(keyword)}`)
+                    .then(res => res.json())
+                    .then(users => {
+                        modalUserSearchResults.innerHTML = '';
+                        if (users.length === 0) {
+                            modalUserSearchResults.innerHTML = '<div class="text-center text-sm opacity-50 py-8">검색 결과가 없습니다</div>';
+                            return;
+                        }
+
+                        users.forEach(user => {
+                            const el = document.createElement('div');
+                            el.className = 'flex items-center gap-3 p-3 rounded-xl hover:bg-background-light dark:hover:bg-background-dark cursor-pointer transition-colors';
+
+                            // Avatar logic same as above
+                            let avatarHtml = '';
+                            if (user.memImg) {
+                                avatarHtml = `<img src="${user.memImg}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random';">`;
+                            } else {
+                                avatarHtml = `<img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=User&background=random';">`;
+                            }
+
+                            el.innerHTML = `
+                                <div class="size-10 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                                     ${avatarHtml}
+                                </div>
+                                <div class="flex-grow min-w-0">
+                                    <p class="font-bold text-sm truncate">${user.name}</p>
+                                    <p class="text-xs opacity-50 truncate">${user.email}</p>
+                                </div>
+                            `;
+
+                            el.onclick = () => {
+                                closeSearchModal();
+                                startChat(user.id);
+                            };
+                            modalUserSearchResults.appendChild(el);
+                        });
+                    });
+            }, 300);
+        });
+        
+        function leaveRoom(event, roomId) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!confirm('채팅방을 나가시겠습니까?\n나가면 대화 내용을 볼 수 없습니다.')) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('roomId', roomId);
+
+            fetch('/chat/api/room/leave', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => {
+                    if (res.ok) {
+                        // 목록에서 해당 채팅방 제거
+                        const roomEl = document.querySelector(`.chat-room-item[data-room-id="${roomId}"]`);
+                        if (roomEl) {
+                            roomEl.remove();
+                        }
+                        // myRooms 배열에서도 제거
+                        myRooms = myRooms.filter(r => r.roomId !== roomId);
+
+                        // 채팅방이 없으면 빈 상태 표시
+                        if (myRooms.length === 0) {
+                            chatRoomList.innerHTML = `
+                            <div class="text-center py-10 opacity-50">
+                                <span class="material-symbols-outlined text-4xl mb-2">chat_bubble_outline</span>
+                                <p class="text-sm">진행 중인 대화가 없습니다.</p>
+                            </div>
+                        `;
+                        }
+                    } else {
+                        alert('채팅방 나가기에 실패했습니다.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error leaving room:', err);
+                    alert('오류가 발생했습니다.');
+                });
+        }
+
+
+        function startChat(targetUserId) {
+            const formData = new FormData();
+            formData.append('targetUserId', targetUserId);
+
+            fetch('/chat/api/room', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => {
+                    if (!res.ok) {
+                        if (res.status === 500) {
+                            if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                                window.location.href = '/auth/login';
+                            }
+                            return null;
+                        }
+                        throw new Error('Network response was not ok');
+                    }
+                    return res.text();
+                })
+                .then(roomId => {
+                    if (roomId) {
+                        window.location.href = `/chat/room?roomId=${roomId}`;
+                    }
+                })
+                .catch(err => {
+                    if (err.message !== 'Network response was not ok') {
+                        console.error(err);
+                        alert('채팅방을 생성할 수 없습니다.\n잠시 후 다시 시도해주세요.');
+                    }
+                });
+        }
+    </script>
+</body>
+
+</html>

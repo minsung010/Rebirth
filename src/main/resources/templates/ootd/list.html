@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body class="font-display bg-[#f5f5f5] dark:bg-background-dark text-text-light dark:text-text-dark ootd-page-body">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Custom Styles for Calendar -->
+    <style>
+        /* Modern Calendar Styles with Glassmorphism */
+        :root {
+            --fc-border-color: rgba(229, 231, 235, 0.5);
+            --fc-button-text-color: #fff;
+            --fc-button-bg-color: #8B5CF6;
+            --fc-button-border-color: #7C3AED;
+            --fc-button-hover-bg-color: #7C3AED;
+            --fc-button-hover-border-color: #6D28D9;
+            --fc-button-active-bg-color: #6D28D9;
+            --fc-button-active-border-color: #5B21B6;
+            --fc-today-bg-color: rgba(139, 92, 246, 0.1) !important;
+            --fc-page-bg-color: transparent;
+        }
+
+        .dark {
+            --fc-border-color: rgba(75, 85, 99, 0.5);
+            --fc-today-bg-color: rgba(139, 92, 246, 0.2) !important;
+        }
+
+        /* Calendar Container Glass Effect */
+        .ootd-calendar-container {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .dark .ootd-calendar-container {
+            background: rgba(30, 27, 47, 0.7);
+        }
+
+        /* Customize FullCalendar Header */
+        .fc-toolbar-title {
+            font-family: 'Space Grotesk', sans-serif !important;
+            font-weight: 700 !important;
+            letter-spacing: -0.025em;
+        }
+
+        .fc .fc-button {
+            border-radius: 0.75rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.2);
+        }
+
+        .fc .fc-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px -1px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Today Button - Red Color Gradient */
+        .fc .fc-today-button {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%) !important;
+            border: none !important;
+            opacity: 1 !important;
+        }
+
+        .fc .fc-today-button:hover {
+            background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%) !important;
+        }
+
+        /* Equal width for right-side buttons (캘린더, OOTD 목록) */
+        .fc .fc-dayGridMonth-button,
+        .fc .fc-listWeek-button {
+            min-width: 80px !important;
+            text-align: center;
+            white-space: nowrap !important;
+            padding: 0.4rem 0.8rem !important;
+        }
+
+        .fc-daygrid-day-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 500;
+            padding: 8px !important;
+            color: #4B5563;
+        }
+
+        .dark .fc-daygrid-day-number {
+            color: #D1D5DB;
+        }
+
+        .fc-col-header-cell-cushion {
+            padding: 12px !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        /* Events Styling */
+        .fc-event {
+            border-radius: 6px;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .fc-event:hover {
+            transform: scale(1.02);
+            z-index: 5;
+        }
+
+        /* Layout Utilities */
+        .ootd-page-body {
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.05) 0%, transparent 20%);
+            background-attachment: fixed;
+        }
+
+        .ootd-main {
+            min-height: calc(100vh - 80px);
+            padding-top: 80px;
+        }
+
+        .ootd-content {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ootd-calendar-section,
+        .ootd-fitting-section {
+            height: calc(100vh - 180px);
+            min-height: 600px;
+        }
+
+        .ootd-calendar-container,
+        .fitting-container {
+            height: 100%;
+        }
+
+        /* Mobile Optimization Media Queries */
+        @media (max-width: 1024px) {
+            .ootd-main {
+                padding-top: 60px;
+                /* Smaller header padding */
+            }
+
+            .ootd-calendar-section {
+                height: auto;
+                min-height: 600px;
+                /* Allow scroll on mobile */
+            }
+
+            .ootd-fitting-section {
+                height: auto;
+                min-height: auto;
+                /* Allow natural flow */
+            }
+
+            .fitting-container {
+                flex-direction: column;
+                height: auto;
+                gap: 2rem;
+            }
+
+            /* Stacked Layout Heights */
+            #mannequin-container {
+                min-height: 500px;
+                /* Canvas height on mobile */
+            }
+
+            .spotlight-beam {
+                height: 180px;
+                /* Shorter beams */
+            }
+
+            /* Adjust Wardrobe Height when stacked */
+            .lg\:w-1\/4 {
+                width: 100%;
+                height: 500px;
+                /* Fixed height for wardrobe on mobile */
+            }
+
+            /* FullCalendar Mobile Tweaks */
+            .fc-toolbar-title {
+                font-size: 1.1rem !important;
+            }
+
+            .fc .fc-button {
+                padding: 0.25rem 0.6rem !important;
+                font-size: 0.75rem !important;
+            }
+
+            .fc-col-header-cell-cushion {
+                font-size: 0.75rem !important;
+                padding: 4px !important;
+            }
+
+            .fc-daygrid-day-number {
+                font-size: 0.75rem !important;
+                padding: 4px !important;
+            }
+        }
+
+        /* Flexfixes for calendar */
+        .ootd-calendar-container #calendar {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .fc {
+            height: 100% !important;
+        }
+
+        .fc .fc-view-harness {
+            height: calc(100% - 60px) !important;
+        }
+
+        /* Studio Spotlights - Warm Yellow */
+        .spotlight-fixture {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: -5px;
+            /* Adjust position */
+            position: relative;
+            z-index: 20;
+            filter: drop-shadow(0 0 5px rgba(234, 179, 8, 0.3));
+        }
+
+        .spotlight-body {
+            width: 34px;
+            height: 24px;
+            background: linear-gradient(135deg, #1f2937 0%, #000 100%);
+            border-radius: 6px 6px 12px 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            position: relative;
+            border: 1px solid #374151;
+        }
+
+        .spotlight-body::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 10px;
+            background: radial-gradient(ellipse, #fff 10%, #fbbf24 50%, transparent 70%);
+            border-radius: 50%;
+            box-shadow: 0 0 20px 5px rgba(251, 191, 36, 0.6);
+            filter: blur(1px);
+        }
+
+        .spotlight-beam {
+            width: 100px;
+            height: 250px;
+            background: linear-gradient(to bottom,
+                    rgba(253, 224, 71, 0.2) 0%,
+                    rgba(253, 224, 71, 0.05) 40%,
+                    transparent 80%);
+            clip-path: polygon(35% 0%, 65% 0%, 100% 100%, 0% 100%);
+            margin-top: -5px;
+            filter: blur(8px);
+            pointer-events: none;
+            transform-origin: top center;
+            animation: beam-pulse 4s infinite alternate;
+        }
+
+        @keyframes beam-pulse {
+            0% {
+                opacity: 0.7;
+                transform: scaleY(1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scaleY(1.05);
+            }
+        }
+    </style>
+
+    <!-- 카테고리 필터 전역 함수 (다른 스크립트보다 먼저 로드) -->
+    <script>
+        // 전역 변수
+        var selectedCategory = '전체';
+        var wardrobeData = [];
+
+        // 카테고리 필터 함수
+        function filterCategory(category, btnElement) {
+            selectedCategory = category;
+
+            // 모든 버튼 비활성화 스타일
+            document.querySelectorAll('.category-tab-btn').forEach(function (b) {
+                b.classList.remove('text-primary', 'border-b-2', 'border-primary', 'bg-primary/5', 'dark:bg-primary/10', 'dark:text-primary-light');
+                b.classList.add('text-gray-500');
+            });
+
+            // 클릭한 버튼 활성화 스타일
+            if (btnElement) {
+                btnElement.classList.remove('text-gray-500');
+                btnElement.classList.add('text-primary', 'border-b-2', 'border-primary', 'bg-primary/5', 'dark:bg-primary/10', 'dark:text-primary-light');
+            }
+
+            // renderWardrobeItems가 정의되어 있으면 호출
+            if (typeof renderWardrobeItems === 'function') {
+                renderWardrobeItems();
+            }
+        }
+    </script>
+
+    <main class="ootd-main">
+        <!-- OOTD Content Area -->
+        <div class="ootd-content max-w-7xl mx-auto px-4 py-4">
+            <!-- 상단 탭 네비게이션 (Trendy Glass Style) -->
+            <div class="flex items-center justify-between mb-8 relative z-10">
+                <div
+                    class="flex items-center gap-2 p-1.5 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg">
+                    <button id="tabOotd" onclick="switchTab('ootd')"
+                        class="flex items-center gap-2 px-4 py-2 lg:px-6 lg:py-2.5 rounded-xl font-bold font-display transition-all duration-300 text-xs lg:text-sm tracking-wide">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        OOTD CALENDAR
+                    </button>
+                    <button id="tabFitting" onclick="switchTab('fitting')"
+                        class="flex items-center gap-2 px-4 py-2 lg:px-6 lg:py-2.5 rounded-xl font-bold font-display transition-all duration-300 text-xs lg:text-sm tracking-wide text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <i class="fa-solid fa-shirt"></i>
+                        FITTING ROOM
+                    </button>
+                </div>
+            </div>
+
+            <!-- 1. OOTD 캘린더 섹션 -->
+            <div id="calendarSection" class="ootd-calendar-section hidden animate-fade-in">
+                <div
+                    class="ootd-calendar-container rounded-3xl shadow-2xl border border-white/50 dark:border-gray-700/50 p-6">
+                    <div id="calendar"></div>
+                </div>
+
+                <!-- 날짜별 코디 상세 보기 모달 -->
+                <div id="calendarDetailModal"
+                    class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div
+                        class="bg-white dark:bg-card-dark rounded-2xl max-w-lg w-full p-6 shadow-2xl transform transition-all scale-100">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 id="calDetailDate" class="text-xl font-bold text-gray-800 dark:text-white"></h3>
+                            <button onclick="closeCalDetail()"
+                                class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                        </div>
+                        <div id="calDetailContent" class="space-y-4">
+                            <!-- 코디 이미지가 여기에 들어감 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 피팅룸 섹션 (기존 메인) -->
+            <div id="fittingSection" class="ootd-fitting-section active">
+                <!-- ... 기존 피팅룸 내용 ... -->
+                <div class="fitting-container flex flex-col lg:flex-row gap-4">
+
+                    <!-- 왼쪽: 3D 마네킹 (메인 영역) -->
+                    <div
+                        class="lg:w-3/4 w-full relative bg-white rounded-2xl overflow-hidden shadow-2xl border border-gray-200 flex flex-col min-h-[500px] lg:min-h-0">
+
+                        <!-- 스튜디오 조명 오버레이 -->
+                        <div
+                            class="absolute top-0 left-0 right-0 h-16 flex justify-center items-start gap-20 z-20 pointer-events-none">
+                            <!-- 왼쪽 조명 -->
+                            <div class="spotlight-fixture">
+                                <div class="spotlight-body"></div>
+                                <div class="spotlight-beam"></div>
+                            </div>
+                            <!-- 중앙 조명 -->
+                            <div class="spotlight-fixture">
+                                <div class="spotlight-body"></div>
+                                <div class="spotlight-beam"></div>
+                            </div>
+                            <!-- 오른쪽 조명 -->
+                            <div class="spotlight-fixture">
+                                <div class="spotlight-body"></div>
+                                <div class="spotlight-beam"></div>
+                            </div>
+                        </div>
+
+                        <!-- 3D 캔버스 -->
+                        <div id="mannequin-container"
+                            class="w-full flex-grow cursor-grab active:cursor-grabbing bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+                        </div>
+
+                        <!-- 상단 컨트롤 -->
+                        <div class="absolute top-6 right-6 flex gap-3 z-10">
+                            <!-- 저장 버튼 (캘린더 등록) -->
+                            <button id="saveToCalendarBtn"
+                                class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md text-gray-700 dark:text-gray-200 px-4 py-2 rounded-xl text-sm font-bold shadow-lg border border-white/20 transition-all hover:bg-white hover:scale-105 flex items-center gap-2 group">
+                                <span class="group-hover:text-primary transition-colors"><i
+                                        class="fas fa-calendar-check"></i></span>
+                                <span>저장</span>
+                            </button>
+                            <!-- 초기화 버튼 -->
+                            <button id="resetMannequin"
+                                class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md text-gray-500 hover:text-red-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg border border-white/20 transition-all hover:bg-white hover:scale-105 flex items-center gap-2">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </div>
+
+                        <!-- ... (중략) ... -->
+                        <!-- 하단 안내 (삭제됨) -->
+
+                        <!-- 드롭존 오버레이 -->
+                        <div id="dropZone"
+                            class="hidden absolute inset-0 bg-primary/20 backdrop-blur-[2px] border-4 border-primary/50 border-dashed z-20 flex items-center justify-center pointer-events-none transition-all">
+                            <div
+                                class="bg-primary text-white px-8 py-4 rounded-full font-bold shadow-2xl transform scale-110 flex items-center gap-2 animate-bounce">
+                                <i class="fas fa-tshirt text-xl"></i> <span class="text-lg">Drop here to wear</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 오른쪽 옷장 ... -->
+                    <div
+                        class="lg:w-1/4 w-full flex flex-col bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/40 dark:border-gray-700 overflow-hidden h-[500px] lg:h-auto">
+                        <!-- ... 옷장 내용 생략 (기존 유지) ... -->
+                        <div
+                            class="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-transparent">
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                    <i class="fas fa-door-open text-xs"></i>
+                                </div>
+                                <h2 class="font-bold text-gray-800 dark:text-gray-100 font-display">내 옷장</h2>
+                            </div>
+                            <button id="refreshWardrobe"
+                                class="text-gray-400 hover:text-primary transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+
+                        <!-- 카테고리 탭 (심플 버전) -->
+                        <div id="categoryTabs"
+                            class="grid grid-cols-4 border-b border-gray-100 dark:border-gray-700 text-xs font-semibold tracking-wide">
+                            <button onclick="filterCategory('전체', this)"
+                                class="category-tab-btn p-3 text-primary border-b-2 border-primary bg-primary/5 dark:bg-primary/10 dark:text-primary-light transition-colors"
+                                data-category="전체">전체</button>
+                            <button onclick="filterCategory('상의', this)"
+                                class="category-tab-btn p-3 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                data-category="상의">상의</button>
+                            <button onclick="filterCategory('하의', this)"
+                                class="category-tab-btn p-3 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                data-category="하의">하의</button>
+                            <button onclick="filterCategory('아우터', this)"
+                                class="category-tab-btn p-3 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                data-category="아우터">아우터</button>
+                        </div>
+
+                        <!-- 옷 목록 (스크롤 영역) -->
+                        <div
+                            class="flex-1 overflow-y-auto custom-scrollbar p-3 bg-gray-50 dark:bg-gray-900/30 relative">
+                            <div id="wardrobeGrid" class="grid grid-cols-2 gap-3">
+                                <!-- JS로 로드됨 -->
+                            </div>
+                            <div id="wardrobeLoading"
+                                class="hidden absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 z-10 backdrop-blur-sm">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                            </div>
+                            <div id="emptyWardrobe"
+                                class="hidden absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                                <i class="fas fa-box-open text-3xl mb-2 opacity-50"></i>
+                                <p class="text-sm">옷장이 비어있어요</p>
+                            </div>
+                        </div>
+
+                        <!-- 선택된 아이템 정보 (하단 고정) -->
+                        <div id="selectedItemInfo"
+                            class="hidden p-4 border-t border-gray-100 dark:border-gray-700 bg-primary/5 dark:bg-primary/10 flex items-center gap-3 animate-fade-in-up">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary text-lg shadow-sm">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[10px] text-primary font-bold uppercase tracking-wider mb-0.5">
+                                    SELECTED</p>
+                                <h3 id="selectedItemName"
+                                    class="text-sm font-bold text-gray-800 dark:text-gray-200 truncate font-display">아이템
+                                    이름</h3>
+                                <p id="selectedItemDetail" class="text-xs text-gray-500 truncate">카테고리</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- (기존 Feed 섹션은 숨김 처리 혹은 삭제 - 요청사항에서 캘린더가 메인인듯 함) -->
+            <!-- 캘린더 저장 모달 -->
+            <div id="saveToPropModal"
+                class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+                <div class="bg-white dark:bg-card-dark rounded-2xl max-w-md w-full p-6 shadow-2xl animate-fade-in-up">
+                    <h3 class="text-xl font-bold mb-4"><i class="fa-solid fa-calendar-days mr-2 text-gray-600"></i>OOTD
+                        캘린더 저장</h3>
+
+                    <div class="mb-4">
+                        <img id="savePreviewImg" src=""
+                            class="w-full h-48 object-contain bg-gray-100 rounded-lg border border-gray-200">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">날짜 선택</label>
+                        <input type="date" id="ootdDateInput"
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">메모 (선택)</label>
+                        <textarea id="ootdMemoInput"
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            placeholder="예: 데이트룩, 출근룩 등"></textarea>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="document.getElementById('saveToPropModal').classList.add('hidden')"
+                            class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors">취소</button>
+                        <button id="confirmSaveOotd"
+                            class="flex-1 bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary-light shadow-lg shadow-primary/30 transition-all transform hover:scale-105">저장하기</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FullCalendar CSS/JS Load -->
+            <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+            <script>
+                // 탭 전환 로직
+                function switchTab(tab) {
+                    const ootdTab = document.getElementById('tabOotd');
+                    const fittingTab = document.getElementById('tabFitting');
+                    const calendarSec = document.getElementById('calendarSection');
+                    const fittingSec = document.getElementById('fittingSection');
+
+                    if (tab === 'ootd') {
+                        // OOTD Active Style
+                        ootdTab.classList.add('bg-primary', 'text-white', 'shadow-md');
+                        ootdTab.classList.remove('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400');
+
+                        // Fitting Inactive
+                        fittingTab.classList.add('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400');
+                        fittingTab.classList.remove('bg-primary', 'text-white', 'shadow-md');
+
+                        // 섹션 전환
+                        calendarSec.classList.remove('hidden');
+                        fittingSec.classList.add('hidden');
+
+                        // 캘린더 리렌더링
+                        setTimeout(() => { if (calendar) calendar.render(); }, 100);
+
+                    } else {
+                        // Fitting Active Style
+                        fittingTab.classList.add('bg-primary', 'text-white', 'shadow-md');
+                        fittingTab.classList.remove('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400');
+
+                        // OOTD Inactive
+                        ootdTab.classList.add('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400');
+                        ootdTab.classList.remove('bg-primary', 'text-white', 'shadow-md');
+
+                        calendarSec.classList.add('hidden');
+                        fittingSec.classList.remove('hidden');
+
+                        // 마네킹 리사이즈
+                        setTimeout(() => {
+                            if (mannequin) mannequin.resize();
+                        }, 50);
+                    }
+                }
+
+                // 캘린더 관련 변수 및 초기화
+                let calendar = null;
+                const OOTD_STORAGE_KEY = 'rebirth_ootd_calendar_data';
+
+                document.addEventListener('DOMContentLoaded', () => {
+                    // 1. 캘린더 초기화
+                    const calendarEl = document.getElementById('calendar');
+                    calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        locale: 'ko',
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,listWeek'
+                        },
+                        buttonText: {
+                            today: 'This Month',
+                            month: '캘린더',
+                            list: 'OOTD 목록'
+                        },
+                        allDayText: 'OOTD',
+                        events: function (info, successCallback, failureCallback) {
+                            fetch('/api/ootd/calendar/list')
+                                .then(response => response.json())
+                                .then(result => {
+                                    if (result.success) {
+                                        const events = result.data.map(item => ({
+                                            id: item.id, // DB ID
+                                            title: item.title,
+                                            start: item.eventDate,
+                                            allDay: true,
+                                            extendedProps: {
+                                                // VO의 필드명은 imageBase64이나 JSON 변환 시 imageBase64로 옴
+                                                image: item.imageBase64,
+                                                description: item.title
+                                            }
+                                        }));
+                                        successCallback(events);
+                                    } else {
+                                        console.error('캘린더 로드 실패:', result.message);
+                                        failureCallback(result.message);
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error(err);
+                                    failureCallback(err);
+                                });
+                        },
+                        // 이벤트 커스텀 렌더링 (이미지 미리보기 추가)
+                        eventContent: function (arg) {
+                            let props = arg.event.extendedProps;
+                            let container = document.createElement('div');
+                            container.className = 'flex items-center gap-2 overflow-hidden';
+
+                            // 이미지 있으면 추가
+                            if (props.image) {
+                                let img = document.createElement('img');
+                                img.src = props.image;
+                                img.className = 'w-8 h-8 rounded-md object-contain bg-white border border-gray-200';
+                                container.appendChild(img);
+                            }
+
+                            let title = document.createElement('div');
+                            title.innerText = arg.event.title;
+                            title.className = 'text-sm font-medium truncate';
+                            container.appendChild(title);
+
+                            return { domNodes: [container] };
+                        },
+                        eventClick: function (info) {
+                            showEventDetail(info.event);
+                        },
+                        dayMaxEvents: true // 이벤트 많으면 +more 표시
+                    });
+                    calendar.render();
+
+                    // 2. 저장 버튼 리스너 (기존 screenshotBtn은 이미지 다운로드용으로 놔두거나 변경)
+                    // 새로 만든 saveToCalendarBtn 사용
+                    const btn = document.getElementById('saveToCalendarBtn');
+                    if (btn) {
+                        btn.addEventListener('click', () => {
+                            if (mannequin) {
+                                mannequin.takeScreenshotBlob().then(blob => {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                        document.getElementById('savePreviewImg').src = reader.result;
+                                        document.getElementById('ootdDateInput').valueAsDate = new Date(); // 오늘 날짜 기본
+                                        document.getElementById('saveToPropModal').classList.remove('hidden');
+                                    };
+                                    reader.readAsDataURL(blob);
+                                });
+                            }
+                        });
+                    }
+
+                    // 3. 모달 저장 확인 버튼
+                    document.getElementById('confirmSaveOotd').addEventListener('click', saveOotdToCalendar);
+
+                    // 초기 탭 설정 (OOTD 탭이 기본)
+                    switchTab('ootd');
+
+                    // 캘린더 초기 렌더링 문제 해결 - 약간의 딜레이 후 다시 렌더링
+                    setTimeout(() => {
+                        if (calendar) {
+                            calendar.updateSize();
+                            calendar.render();
+                        }
+                    }, 200);
+                });
+
+                // 더 이상 사용하지 않음 (API 대체됨)
+                // function loadEventsFromStorage() { ... }
+                // function saveEventsToStorage(events) { ... }
+
+                // 임시 showToast 함수 (실제 구현은 별도 파일에 있을 수 있음)
+                function showToast(message) {
+                    alert(message);
+                }
+
+                async function saveOotdToCalendar() {
+                    const date = document.getElementById('ootdDateInput').value;
+                    const title = document.getElementById('ootdMemoInput').value;
+
+                    // 미리보기 이미지에서 Base64 직접 가져오기 (가장 확실한 방법!)
+                    const imageBase64 = document.getElementById('savePreviewImg').src;
+
+                    if (!date) { showToast('날짜를 선택해주세요!'); return; }
+
+                    const eventData = {
+                        eventDate: date,
+                        title: title || '나의 OOTD', // 메모 없으면 기본값
+                        imageBase64: imageBase64   // 미리보기에서 직접 가져옴
+                    };
+
+                    // API 호출
+                    fetch('/api/ootd/calendar/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(eventData)
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                showToast('📅 캘린더에 저장되었습니다!');
+                                document.getElementById('saveToPropModal').classList.add('hidden');
+                                calendar.refetchEvents(); // 캘린더 새로고침
+
+                                // 탭 이동
+                                switchTab('ootd');
+                            } else {
+                                alert('저장 실패: ' + data.message);
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert('서버 오류가 발생했습니다.');
+                        });
+                }
+
+                // Blob -> Base64 변환 헬퍼
+                function blobToBase64(blob) {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                }
+
+                function showEventDetail(event) {
+                    const dateStr = event.start.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+                    document.getElementById('calDetailDate').innerText = dateStr;
+
+                    const contentInfo = document.getElementById('calDetailContent');
+                    contentInfo.innerHTML = `
+                         <div class="relative rounded-xl overflow-hidden bg-gray-100 mb-4 border border-gray-200">
+                            <img src="${event.extendedProps.image}" class="w-full object-contain max-h-[400px]">
+                         </div>
+                         <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-bold text-gray-700 mb-1">📝 메모</h4>
+                            <p class="text-gray-600">${event.title || '메모 없음'}</p>
+                         </div>
+                         <div class="flex justify-end mt-4">
+                            <button onclick="deleteEvent('${event.id}')" class="text-red-500 hover:text-red-700 text-sm underline">이 기록 삭제하기</button>
+                         </div>
+                    `;
+
+                    document.getElementById('calendarDetailModal').classList.remove('hidden');
+                }
+
+                function closeCalDetail() {
+                    document.getElementById('calendarDetailModal').classList.add('hidden');
+                }
+
+                function deleteEvent(eventId) {
+                    if (confirm('정말 삭제하시겠습니까?')) {
+                        fetch(`/api/ootd/calendar/${eventId}`, {
+                            method: 'DELETE'
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    const eventObj = calendar.getEventById(eventId);
+                                    if (eventObj) eventObj.remove(); // 캘린더 UI에서 제거
+                                    showToast('삭제되었습니다.');
+                                    document.getElementById('calendarDetailModal').classList.add('hidden');
+                                } else {
+                                    alert('삭제 실패: ' + data.message);
+                                }
+                            })
+                            .catch(e => alert('오류 발생'));
+                    }
+                }
+            </script>
+    </main>
+
+    <!-- OOTD 공유 모달 -->
+    <div id="shareModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold">OOTD 공유하기</h3>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+            <div class="mb-4">
+                <img id="previewImage" src="" alt="OOTD Preview"
+                    class="w-full h-48 object-contain bg-gray-100 dark:bg-gray-800 rounded-lg">
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium mb-1">제목</label>
+                    <input type="text" id="ootdTitle" placeholder="오늘의 코디 제목"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">설명</label>
+                    <textarea id="ootdDescription" placeholder="코디 설명을 입력하세요" rows="2"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">태그</label>
+                    <input type="text" id="ootdTags" placeholder="#캐주얼 #데일리 #봄코디"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700">
+                </div>
+            </div>
+            <div class="flex gap-2 mt-6">
+                <button id="cancelShare"
+                    class="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">취소</button>
+                <button id="submitShare"
+                    class="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600">공유하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OOTD 상세 모달 -->
+    <div id="detailModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-card-dark rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="relative">
+                <img id="detailImage" src="" alt="OOTD"
+                    class="w-full aspect-square object-contain bg-gray-100 dark:bg-gray-800">
+                <button id="closeDetailModal"
+                    class="absolute top-4 right-4 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 text-xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <img id="detailUserImage" src="" alt="" class="w-10 h-10 rounded-full bg-gray-200">
+                    <div>
+                        <p id="detailUserName" class="font-medium">사용자</p>
+                        <p id="detailDate" class="text-xs text-gray-500">날짜</p>
+                    </div>
+                </div>
+
+                <h3 id="detailTitle" class="text-xl font-bold mb-2">제목</h3>
+                <p id="detailDescription" class="text-gray-600 dark:text-gray-400 mb-4">설명</p>
+
+                <div id="detailTags" class="flex flex-wrap gap-2 mb-4"></div>
+
+                <div class="flex items-center justify-between border-t dark:border-gray-700 pt-4">
+                    <div class="flex items-center gap-4">
+                        <button id="likeBtn"
+                            class="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
+                            <span id="likeIcon">🤍</span>
+                            <span id="likeCount">0</span>
+                        </button>
+                        <span class="flex items-center gap-1 text-gray-500">
+                            <span>💬</span>
+                            <span id="commentCount">0</span>
+                        </span>
+                        <span class="flex items-center gap-1 text-gray-500">
+                            <span>👁️</span>
+                            <span id="viewCount">0</span>
+                        </span>
+                    </div>
+
+                    <!-- 공유 버튼들 -->
+                    <div class="flex items-center gap-2">
+                        <button id="copyLinkBtn" title="링크 복사"
+                            class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center transition-colors">
+                            🔗
+                        </button>
+                        <button id="shareKakaoBtn" title="카카오톡 공유"
+                            class="w-9 h-9 rounded-full bg-yellow-400 hover:bg-yellow-500 flex items-center justify-center transition-colors">
+                            💬
+                        </button>
+                        <button id="shareTwitterBtn" title="트위터 공유"
+                            class="w-9 h-9 rounded-full bg-blue-400 hover:bg-blue-500 flex items-center justify-center transition-colors text-white">
+                            𝕏
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex justify-end mt-3">
+                    <button id="applyOutfitBtn"
+                        class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 flex items-center gap-2 transition-all">
+                        <span>👗</span> 이 코디 적용하기
+                    </button>
+                </div>
+
+                <!-- 댓글 섹션 -->
+                <div class="mt-6 border-t dark:border-gray-700 pt-4">
+                    <h4 class="font-semibold mb-4 flex items-center gap-2">
+                        <span>💬</span> 댓글 <span id="commentCountLabel"
+                            class="text-gray-400 text-sm font-normal">(0)</span>
+                    </h4>
+
+                    <!-- 댓글 작성 -->
+                    <div class="flex gap-3 mb-4">
+                        <input type="text" id="commentInput" placeholder="댓글을 입력하세요..."
+                            class="flex-1 px-4 py-2 border rounded-full focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700 text-sm">
+                        <button id="submitCommentBtn"
+                            class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full text-sm transition-all">
+                            등록
+                        </button>
+                    </div>
+
+                    <!-- 댓글 목록 -->
+                    <div id="commentList" class="space-y-4 max-h-60 overflow-y-auto">
+                        <!-- 댓글이 여기에 렌더링됩니다 -->
+                        <p id="noCommentsMsg" class="text-center text-gray-400 text-sm py-4">아직 댓글이 없습니다. 첫 댓글을 남겨보세요!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <!-- Three.js CDN -->
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js" type="module"></script>
+    <!-- 일반 스크립트에서 모듈을 쓰기 위해 importmap 사용 -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script th:src="@{/js/mannequin3d.js(v=${#dates.createNow().getTime()})}" type="module"></script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .wardrobe-item {
+            transition: all 0.2s ease;
+        }
+
+        .wardrobe-item:hover {
+            transform: scale(1.05);
+        }
+
+        .wardrobe-item.selected {
+            box-shadow: 0 0 0 2px #6366f1;
+        }
+
+        .ootd-card {
+            transition: all 0.3s ease;
+        }
+
+        .ootd-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+
+    <script>
+        const colorNameToHex = {
+            '화이트': 0xffffff, '흰색': 0xffffff, 'white': 0xffffff,
+            '블랙': 0x000000, '검정': 0x000000, 'black': 0x000000,
+            '네이비': 0x1e3a5f, 'navy': 0x1e3a5f, '블루': 0x3b82f6, 'blue': 0x3b82f6,
+            '레드': 0xef4444, 'red': 0xef4444, '그린': 0x22c55e, 'green': 0x22c55e,
+            '핑크': 0xec4899, 'pink': 0xec4899, '퍼플': 0x8b5cf6, 'purple': 0x8b5cf6,
+            '베이지': 0xf5f5dc, 'beige': 0xf5f5dc, '브라운': 0x8b4513, 'brown': 0x8b4513,
+            '인디고': 0x4f46e5, 'indigo': 0x4f46e5
+        };
+
+        const categoryToType = {
+            // 상의
+            '상의': { part: 'top', type: 'tshirt' },
+            '반팔': { part: 'top', type: 'tshirt' },
+            '티셔츠': { part: 'top', type: 'tshirt' },
+            '반팔 티셔츠': { part: 'top', type: 'tshirt' },
+            '긴팔': { part: 'top', type: 'longsleeve' },
+            '긴팔 티셔츠': { part: 'top', type: 'longsleeve' },
+            '맨투맨': { part: 'top', type: 'longsleeve' },
+            '후드티': { part: 'top', type: 'longsleeve' },
+            '니트': { part: 'top', type: 'longsleeve' },
+            '셔츠': { part: 'top', type: 'longsleeve' },
+            '블라우스': { part: 'top', type: 'tshirt' },
+            // 하의
+            '하의': { part: 'bottom', type: 'pants' },
+            '바지': { part: 'bottom', type: 'pants' },
+            '청바지': { part: 'bottom', type: 'pants' },
+            '슬랙스': { part: 'bottom', type: 'pants' },
+            '치마': { part: 'bottom', type: 'skirt' },
+            '스커트': { part: 'bottom', type: 'skirt' },
+            '반바지': { part: 'bottom', type: 'shorts' },
+            '숏팬츠': { part: 'bottom', type: 'shorts' },
+            // 원피스
+            '원피스': { part: 'dress', type: 'dress' },
+            '드레스': { part: 'dress', type: 'dress' },
+            // 신발
+            '신발': { part: 'shoes', type: 'shoes' },
+            '스니커즈': { part: 'shoes', type: 'shoes' },
+            '운동화': { part: 'shoes', type: 'shoes' },
+            '구두': { part: 'shoes', type: 'shoes' },
+            '슬리퍼': { part: 'shoes', type: 'shoes' },
+            '샌들': { part: 'shoes', type: 'shoes' },
+            '부츠': { part: 'shoes', type: 'shoes' }
+        };
+
+        // 코디 프리셋
+        const outfitPresets = {
+            casual: { topType: 'tshirt', bottomType: 'pants', topColor: 0xffffff, bottomColor: 0x1e3a5f, shoeColor: 0xffffff, theme: 'light' },
+            formal: { topType: 'longsleeve', bottomType: 'pants', topColor: 0x000000, bottomColor: 0x1e293b, shoeColor: 0x000000, theme: 'dark' },
+            date: { topType: 'dress', bottomType: 'skirt', topColor: 0xec4899, bottomColor: 0xec4899, shoeColor: 0xffffff, theme: 'pink' },
+            sporty: { topType: 'tshirt', bottomType: 'shorts', topColor: 0xf97316, bottomColor: 0x000000, shoeColor: 0xffffff, theme: 'light' },
+            street: { topType: 'longsleeve', bottomType: 'pants', topColor: 0x8b5cf6, bottomColor: 0x000000, shoeColor: 0x000000, theme: 'dark' }
+        };
+
+        const themeColors = { dark: 0x1a1a2e, light: 0xf0f0f0, pink: 0xffd1dc, forest: 0x2d5a27 };
+
+        let mannequin = null;
+        // wardrobeData, selectedCategory는 상단 스크립트에서 이미 선언됨
+        let currentOutfit = { topType: 'tshirt', bottomType: 'pants', topColor: '0x4f46e5', bottomColor: '0x1e293b', shoeColor: '0xffffff', backgroundTheme: 'dark' };
+        let screenshotDataUrl = null;
+        let currentOotdId = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                mannequin = initMannequin3D('mannequin-container');
+            } catch (error) {
+                console.error("마네킹 초기화 실패:", error);
+            }
+            // mannequin 초기화 실패와 관계없이 옷장은 로드 시도
+            loadWardrobe();
+
+            // 뷰 토글
+            document.getElementById('toggleView').addEventListener('click', toggleView);
+            document.getElementById('backToFitting').addEventListener('click', () => showSection('fitting'));
+
+            // 스크린샷
+            document.getElementById('screenshotBtn').addEventListener('click', () => mannequin?.takeScreenshot());
+
+            // OOTD 공유
+            document.getElementById('shareOotdBtn').addEventListener('click', openShareModal);
+            document.getElementById('closeModal').addEventListener('click', () => document.getElementById('shareModal').classList.add('hidden'));
+            document.getElementById('cancelShare').addEventListener('click', () => document.getElementById('shareModal').classList.add('hidden'));
+            document.getElementById('submitShare').addEventListener('click', submitOotd);
+
+            // 상세 모달
+            document.getElementById('closeDetailModal').addEventListener('click', () => document.getElementById('detailModal').classList.add('hidden'));
+            document.getElementById('likeBtn').addEventListener('click', toggleLike);
+            document.getElementById('applyOutfitBtn').addEventListener('click', applyCurrentOutfit);
+
+            // 초기화
+            document.getElementById('refreshWardrobe').addEventListener('click', loadWardrobe);
+
+            // 옷 벗기기
+            document.getElementById('resetMannequin').addEventListener('click', () => {
+                if (mannequin) {
+                    try {
+                        mannequin.removeAllClothing();
+                        showToast('✨ 옷을 모두 벗겼습니다.');
+                        // 선택 효과 제거
+                        document.querySelectorAll('.wardrobe-item').forEach(i => i.classList.remove('selected', 'ring-2', 'ring-indigo-500'));
+                        document.getElementById('selectedItemInfo').classList.add('hidden');
+                    } catch (e) { console.error(e); }
+                }
+            });
+
+            // 설정 버튼 토글
+            document.getElementById('settingBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('settingPopup').classList.toggle('hidden');
+            });
+
+            // 팝업 닫기 (외부 클릭)
+            document.addEventListener('click', (e) => {
+                const popup = document.getElementById('settingPopup');
+                const btn = document.getElementById('settingBtn');
+                if (popup && !popup.contains(e.target) && !btn.contains(e.target)) {
+                    popup.classList.add('hidden');
+                }
+            });
+
+            // 회전 각도 슬라이더
+            const angleSlider = document.getElementById('angleSlider');
+            const angleValue = document.getElementById('angleValue');
+
+            if (angleSlider) {
+                angleSlider.addEventListener('input', function () {
+                    const val = parseFloat(this.value);
+                    angleValue.textContent = Math.round(val * 100) + '%';
+                    if (mannequin) mannequin.setRotationAngle(val);
+                });
+            }
+
+            // 프리셋
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    applyPreset(this.dataset.preset);
+                });
+            });
+
+            // 상의 타입
+            document.querySelectorAll('.top-type-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    currentOutfit.topType = this.dataset.type;
+                    mannequin?.setTopType(this.dataset.type);
+                    updateTypeButtons('.top-type-btn', this);
+                    document.getElementById('bottomSection').style.opacity = this.dataset.type === 'dress' ? '0.3' : '1';
+                    document.getElementById('bottomSection').style.pointerEvents = this.dataset.type === 'dress' ? 'none' : 'auto';
+                });
+            });
+
+            // 하의 타입
+            document.querySelectorAll('.bottom-type-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    currentOutfit.bottomType = this.dataset.type;
+                    mannequin?.setBottomType(this.dataset.type);
+                    updateTypeButtons('.bottom-type-btn', this);
+                });
+            });
+
+            // 색상 버튼
+            setupColorButtons('.top-color-btn', hex => { currentOutfit.topColor = '0x' + hex.toString(16); mannequin?.setTopColor(hex); });
+            setupColorButtons('.bottom-color-btn', hex => { currentOutfit.bottomColor = '0x' + hex.toString(16); mannequin?.setBottomColor(hex); });
+            setupColorButtons('.shoe-color-btn', hex => { currentOutfit.shoeColor = '0x' + hex.toString(16); mannequin?.setShoeColor(hex); });
+
+            // 배경 테마
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    currentOutfit.backgroundTheme = this.dataset.theme;
+                    mannequin?.setBackgroundColor(themeColors[this.dataset.theme]);
+                    document.querySelectorAll('.theme-btn').forEach(b => {
+                        b.classList.toggle('border-indigo-500', b === this);
+                        b.classList.toggle('border-transparent', b !== this);
+                    });
+                });
+            });
+        });
+
+        function updateTypeButtons(selector, active) {
+            document.querySelectorAll(selector).forEach(b => {
+                b.classList.toggle('bg-indigo-500', b === active);
+                b.classList.toggle('bg-white/10', b !== active);
+            });
+        }
+
+        function setupColorButtons(selector, callback) {
+            document.querySelectorAll(selector).forEach(btn => {
+                btn.addEventListener('click', function () {
+                    callback(parseInt(this.dataset.color));
+                    document.querySelectorAll(selector).forEach(b => {
+                        b.classList.toggle('border-indigo-400', b === this);
+                        b.classList.toggle('border-transparent', b !== this);
+                    });
+                });
+            });
+        }
+
+        function applyPreset(presetName) {
+            const preset = outfitPresets[presetName];
+            if (!preset || !mannequin) return;
+
+            mannequin.setTopType(preset.topType);
+            mannequin.setTopColor(preset.topColor);
+            if (preset.topType !== 'dress') {
+                mannequin.setBottomType(preset.bottomType);
+                mannequin.setBottomColor(preset.bottomColor);
+            }
+            mannequin.setShoeColor(preset.shoeColor);
+            mannequin.setBackgroundColor(themeColors[preset.theme]);
+
+            currentOutfit = { ...preset, backgroundTheme: preset.theme };
+
+            // UI 동기화
+            document.querySelectorAll('.top-type-btn').forEach(b => b.classList.toggle('bg-indigo-500', b.dataset.type === preset.topType));
+            document.querySelectorAll('.bottom-type-btn').forEach(b => b.classList.toggle('bg-indigo-500', b.dataset.type === preset.bottomType));
+            document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('border-indigo-500', b.dataset.theme === preset.theme));
+        }
+
+        function toggleView() {
+            const fittingSection = document.getElementById('fittingRoomSection');
+            showSection(fittingSection.classList.contains('hidden') ? 'fitting' : 'feed');
+        }
+
+        function showSection(section) {
+            const fittingSection = document.getElementById('fittingRoomSection');
+            const feedSection = document.getElementById('ootdFeedSection');
+            const toggleBtn = document.getElementById('toggleView');
+
+            if (section === 'feed') {
+                fittingSection.classList.add('hidden');
+                feedSection.classList.remove('hidden');
+                toggleBtn.innerHTML = '<span>👗</span> 피팅룸 보기';
+                loadOotdFeed();
+            } else {
+                fittingSection.classList.remove('hidden');
+                feedSection.classList.add('hidden');
+                toggleBtn.innerHTML = '<span>📋</span> 피드 보기';
+            }
+        }
+
+        async function loadWardrobe() {
+            try {
+                document.getElementById('wardrobeLoading').style.display = 'block';
+                const response = await fetch('/api/wardrobe/list');
+                const result = await response.json();
+                if (result.success && result.data) { wardrobeData = result.data; renderWardrobeItems(); }
+                else { document.getElementById('wardrobeGrid').innerHTML = '<div class="col-span-2 text-center py-8 text-gray-400 text-sm">옷장이 비어있습니다</div>'; document.getElementById('emptyWardrobe').classList.remove('hidden'); }
+            } catch (e) { document.getElementById('wardrobeGrid').innerHTML = '<div class="col-span-2 text-center py-8 text-gray-400 text-sm">로그인이 필요합니다</div>'; }
+        }
+
+        function renderWardrobeItems() {
+            document.getElementById('wardrobeLoading').style.display = 'none';
+            let items = selectedCategory === '전체' ? wardrobeData : wardrobeData.filter(i => (i.category || '').includes(selectedCategory));
+
+            const grid = document.getElementById('wardrobeGrid');
+            const emptyState = document.getElementById('emptyWardrobe');
+
+            if (!items.length) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = items.map(item => `
+                <div class="wardrobe-item aspect-square rounded-lg overflow-hidden cursor-grab bg-white/10 relative group" 
+                     draggable="true"
+                     data-id="${item.clothesId}" 
+                     data-category="${item.category || ''}" 
+                     data-color="${item.color || ''}" 
+                     data-name="${item.name || ''}"
+                     data-image="${item.imageUrl || ''}">
+                    ${item.imageUrl ? `<img src="${item.imageUrl}" class="w-full h-full object-cover pointer-events-none" draggable="false">` : '<div class="w-full h-full flex items-center justify-center text-xl">👕</div>'}
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <span class="text-white text-xs text-center px-1">${item.name || item.category}<br><span class="text-xs opacity-70">드래그하여 입히기</span></span>
+                    </div>
+                </div>
+            `).join('');
+
+            // 드래그 이벤트 바인딩
+            document.querySelectorAll('.wardrobe-item').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                // 클릭으로도 입히기 가능
+                item.addEventListener('click', () => applyClothesToMannequin(item));
+            });
+        }
+
+        // 드래그 앤 드롭 핸들러
+        let draggedItem = null;
+
+        function handleDragStart(e) {
+            draggedItem = e.target.closest('.wardrobe-item');
+            e.target.classList.add('opacity-50', 'scale-95');
+            document.getElementById('dropZone').classList.remove('hidden');
+
+            // 드래그 이미지 설정
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'copy';
+                e.dataTransfer.setData('text/plain', draggedItem.dataset.id);
+            }
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('opacity-50', 'scale-95');
+            document.getElementById('dropZone').classList.add('hidden');
+        }
+
+        // 마네킹 컨테이너 드롭 이벤트
+        document.getElementById('mannequin-container').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+
+        document.getElementById('mannequin-container').addEventListener('drop', (e) => {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.add('hidden');
+
+            if (draggedItem) {
+                applyClothesToMannequin(draggedItem);
+
+                // 입히기 효과
+                const container = document.getElementById('mannequin-container');
+                container.classList.add('ring-4', 'ring-green-500');
+                setTimeout(() => container.classList.remove('ring-4', 'ring-green-500'), 500);
+
+                // 토스트 표시
+                showToast('✨ 옷이 입혀졌습니다!');
+            }
+            draggedItem = null;
+        });
+
+        // 현재 입은 옷 정보 저장 (이름 포함)
+        let wornItems = {};
+
+        function applyClothesToMannequin(el) {
+            const category = el.dataset.category;
+            const imageUrl = el.dataset.image;
+            const name = el.dataset.name;
+
+            // 카테고리를 3D 파츠로 변환
+            const typeInfo = categoryToType[category];
+            const part = typeInfo ? typeInfo.part : 'top'; // 기본값 top
+
+            // 토글 기능: 이미 선택된 옷을 다시 클릭하면 벗기기
+            if (el.classList.contains('selected')) {
+                el.classList.remove('selected', 'ring-2', 'ring-indigo-500');
+                document.getElementById('selectedItemInfo').classList.add('hidden');
+
+                if (mannequin) {
+                    // 해당 카테고리 옷 벗기기
+                    mannequin.removeClothing(part);
+                    delete wornItems[part]; // 정보 삭제
+                    showToast(`👕 ${name || category} 벗겼습니다.`);
+                }
+                return;
+            }
+
+            // 선택 효과 (같은 부위의 다른 옷만 제거)
+            document.querySelectorAll('.wardrobe-item').forEach(i => {
+                const iCategory = i.dataset.category;
+                const iTypeInfo = categoryToType[iCategory];
+                const iPart = iTypeInfo ? iTypeInfo.part : 'top';
+                // 같은 파츠(상의/하의)면 선택 해제
+                if (iPart === part) {
+                    i.classList.remove('selected', 'ring-2', 'ring-indigo-500');
+                }
+            });
+            el.classList.add('selected', 'ring-2', 'ring-indigo-500');
+
+            // 정보 표시
+            document.getElementById('selectedItemInfo').classList.remove('hidden');
+            document.getElementById('selectedItemName').textContent = name || category;
+            document.getElementById('selectedItemDetail').textContent = category;
+
+            if (mannequin && imageUrl) {
+                // 3D 마네킹에 입히기
+                mannequin.wearImage(part, imageUrl);
+                wornItems[part] = name || category; // 정보 저장
+
+                showToast(`✨ ${name || category} 착용 완료!`);
+            } else if (!imageUrl) {
+                showToast('❌ 이미지 정보가 없는 옷입니다.');
+            }
+        }
+
+        // 옷 벗기기 버튼
+        document.getElementById('resetMannequin').addEventListener('click', () => {
+            if (mannequin) {
+                mannequin.removeAllClothing();
+                wornItems = {}; // 초기화
+                document.querySelectorAll('.wardrobe-item').forEach(i => i.classList.remove('selected', 'ring-2', 'ring-indigo-500'));
+                document.getElementById('selectedItemInfo').classList.add('hidden');
+                showToast('🧍 마네킹이 초기화되었습니다.');
+            }
+        });
+
+        function openShareModal() {
+            if (!mannequin) return;
+            mannequin.isDragging = true;
+            mannequin.renderer.render(mannequin.scene, mannequin.camera);
+            screenshotDataUrl = mannequin.renderer.domElement.toDataURL('image/png');
+            mannequin.isDragging = false;
+            document.getElementById('previewImage').src = screenshotDataUrl;
+            document.getElementById('shareModal').classList.remove('hidden');
+        }
+
+        async function submitOotd() {
+            const title = document.getElementById('ootdTitle').value.trim();
+            if (!title) { alert('제목을 입력해주세요.'); return; }
+            try {
+                const response = await fetch('/api/ootd/create', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description: document.getElementById('ootdDescription').value, tags: document.getElementById('ootdTags').value, imageBase64: screenshotDataUrl, ...currentOutfit })
+                });
+                const result = await response.json();
+                if (result.success) { alert('OOTD가 공유되었습니다! 🎉'); document.getElementById('shareModal').classList.add('hidden'); }
+                else { alert(result.message || '공유에 실패했습니다.'); }
+            } catch (e) { alert('오류가 발생했습니다.'); }
+        }
+
+        let currentFeedTab = 'all'; // 'all' or 'my'
+        let currentSort = 'latest';
+        let allOotdData = [];
+        let myOotdData = [];
+
+        async function loadOotdFeed() {
+            const grid = document.getElementById('ootdGrid');
+            const loading = document.getElementById('ootdLoading');
+            const emptyState = document.getElementById('emptyState');
+
+            loading.style.display = 'block';
+            emptyState.classList.add('hidden');
+            grid.innerHTML = '';
+            grid.appendChild(loading);
+
+            try {
+                const endpoint = currentFeedTab === 'my' ? '/api/ootd/my' : '/api/ootd/list?limit=50';
+                const response = await fetch(endpoint);
+                const result = await response.json();
+                loading.style.display = 'none';
+
+                if (result.success && result.data?.length) {
+                    let data = result.data;
+
+                    // 정렬 적용
+                    data = sortOotdData(data, currentSort);
+
+                    renderOotdCards(data, grid);
+                } else {
+                    grid.innerHTML = '';
+                    if (currentFeedTab === 'my') {
+                        emptyState.classList.remove('hidden');
+                    } else {
+                        grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500"><p class="text-4xl mb-3">📸</p><p>아직 OOTD가 없습니다</p></div>';
+                    }
+                }
+            } catch (e) {
+                loading.style.display = 'none';
+                grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500">데이터를 불러올 수 없습니다</div>';
+            }
+        }
+
+        function sortOotdData(data, sort) {
+            switch (sort) {
+                case 'popular':
+                    return [...data].sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+                case 'views':
+                    return [...data].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
+                case 'latest':
+                default:
+                    return [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+        }
+
+        function renderOotdCards(data, grid) {
+            const isMyTab = currentFeedTab === 'my';
+            grid.innerHTML = data.map(ootd => `
+                <div class="ootd-card bg-white dark:bg-card-dark rounded-xl overflow-hidden shadow-md cursor-pointer relative group" data-id="${ootd.ootdId}">
+                    <div class="aspect-square"><img src="${ootd.imageUrl || '/images/placeholder.png'}" alt="${ootd.title}" class="w-full h-full object-cover"></div>
+                    <div class="p-3">
+                        <p class="font-medium text-sm truncate">${ootd.title || '제목 없음'}</p>
+                        <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+                            <span>${ootd.userName || '익명'}</span>
+                            <div class="flex items-center gap-2"><span class="${ootd.liked ? 'text-red-500' : ''}">❤️ ${ootd.likeCount || 0}</span><span>👁️ ${ootd.viewCount || 0}</span></div>
+                        </div>
+                    </div>
+                    ${isMyTab ? `<button class="delete-ootd-btn absolute top-2 right-2 w-8 h-8 bg-red-500/80 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" data-id="${ootd.ootdId}" title="삭제">🗑️</button>` : ''}
+                </div>
+            `).join('');
+
+            grid.querySelectorAll('.ootd-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('delete-ootd-btn')) {
+                        openDetailModal(card.dataset.id);
+                    }
+                });
+            });
+
+            // 삭제 버튼 이벤트
+            grid.querySelectorAll('.delete-ootd-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (confirm('이 OOTD를 삭제하시겠습니까?')) {
+                        await deleteOotd(btn.dataset.id);
+                    }
+                });
+            });
+        }
+
+        async function deleteOotd(ootdId) {
+            try {
+                const response = await fetch(`/api/ootd/${ootdId}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) {
+                    // 토스트 표시
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                    toast.textContent = '✅ OOTD가 삭제되었습니다.';
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 2000);
+
+                    loadOotdFeed(); // 새로고침
+                } else {
+                    alert(result.message || '삭제에 실패했습니다.');
+                }
+            } catch (e) {
+                alert('오류가 발생했습니다.');
+            }
+        }
+
+        // 탭 전환 이벤트
+        document.getElementById('tabAll').addEventListener('click', () => {
+            currentFeedTab = 'all';
+            document.getElementById('tabAll').classList.add('bg-indigo-500', 'text-white');
+            document.getElementById('tabAll').classList.remove('text-gray-300');
+            document.getElementById('tabMy').classList.remove('bg-indigo-500', 'text-white');
+            document.getElementById('tabMy').classList.add('text-gray-300');
+            document.getElementById('emptyState').classList.add('hidden');
+            loadOotdFeed();
+        });
+
+        document.getElementById('tabMy').addEventListener('click', () => {
+            currentFeedTab = 'my';
+            document.getElementById('tabMy').classList.add('bg-indigo-500', 'text-white');
+            document.getElementById('tabMy').classList.remove('text-gray-300');
+            document.getElementById('tabAll').classList.remove('bg-indigo-500', 'text-white');
+            document.getElementById('tabAll').classList.add('text-gray-300');
+            loadOotdFeed();
+        });
+
+        // 정렬 변경 이벤트
+        document.getElementById('sortSelect').addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            loadOotdFeed();
+        });
+
+
+        async function openDetailModal(ootdId) {
+            currentOotdId = ootdId;
+            try {
+                const response = await fetch(`/api/ootd/${ootdId}`);
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const o = result.data;
+                    document.getElementById('detailImage').src = o.imageUrl || '/images/placeholder.png';
+                    document.getElementById('detailUserImage').src = o.userProfileImage || '/images/default-avatar.png';
+                    document.getElementById('detailUserName').textContent = o.userName || '익명';
+                    document.getElementById('detailDate').textContent = o.createdAt ? new Date(o.createdAt).toLocaleDateString('ko-KR') : '';
+                    document.getElementById('detailTitle').textContent = o.title || '제목 없음';
+                    document.getElementById('detailDescription').textContent = o.description || '';
+                    document.getElementById('detailTags').innerHTML = (o.tags || '').split(/[,\s]+/).filter(t => t).map(t => `<span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-xs">${t.startsWith('#') ? t : '#' + t}</span>`).join('');
+                    document.getElementById('likeCount').textContent = o.likeCount || 0;
+                    document.getElementById('viewCount').textContent = o.viewCount || 0;
+                    document.getElementById('likeIcon').textContent = o.liked ? '❤️' : '🤍';
+                    document.getElementById('applyOutfitBtn').dataset.outfit = JSON.stringify({ topType: o.topType, bottomType: o.bottomType, topColor: o.topColor, bottomColor: o.bottomColor, shoeColor: o.shoeColor, backgroundTheme: o.backgroundTheme });
+                    document.getElementById('detailModal').classList.remove('hidden');
+
+                    // 댓글 로드
+                    loadComments(ootdId);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // 댓글 로드
+        async function loadComments(ootdId) {
+            try {
+                const response = await fetch(`/api/ootd/${ootdId}/comments`);
+                const result = await response.json();
+                if (result.success) {
+                    renderComments(result.data || []);
+                    updateCommentCount(result.count || 0);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // 댓글 렌더링
+        function renderComments(comments) {
+            const container = document.getElementById('commentList');
+            const noMsg = document.getElementById('noCommentsMsg');
+
+            if (!comments.length) {
+                noMsg.style.display = 'block';
+                container.innerHTML = '';
+                container.appendChild(noMsg);
+                return;
+            }
+
+            noMsg.style.display = 'none';
+            container.innerHTML = comments.map(c => `
+                <div class="flex gap-3 comment-item" data-id="${c.commentId}">
+                    <img src="${c.userProfileImage || '/images/default-avatar.png'}" alt="" class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-sm">${c.userName || '익명'}</span>
+                            <span class="text-xs text-gray-400">${c.createdAt ? formatTimeAgo(new Date(c.createdAt)) : ''}</span>
+                        </div>
+                        <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">${escapeHtml(c.content)}</p>
+                    </div>
+                    <button class="delete-comment-btn text-gray-400 hover:text-red-500 text-xs opacity-0 group-hover:opacity-100 transition-opacity" 
+                        data-id="${c.commentId}" title="삭제">🗑️</button>
+                </div>
+            `).join('');
+
+            // 삭제 버튼 이벤트
+            container.querySelectorAll('.delete-comment-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteComment(btn.dataset.id));
+            });
+        }
+
+        // 댓글 수 업데이트
+        function updateCommentCount(count) {
+            document.getElementById('commentCount').textContent = count;
+            document.getElementById('commentCountLabel').textContent = `(${count})`;
+        }
+
+        // 댓글 작성
+        async function submitComment() {
+            const input = document.getElementById('commentInput');
+            const content = input.value.trim();
+
+            if (!content) {
+                input.focus();
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/ootd/${currentOotdId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    input.value = '';
+                    renderComments(result.data || []);
+                    updateCommentCount(result.count || 0);
+                } else {
+                    alert(result.message || '댓글 등록에 실패했습니다.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('오류가 발생했습니다.');
+            }
+        }
+
+        // 댓글 삭제
+        async function deleteComment(commentId) {
+            if (!confirm('댓글을 삭제하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`/api/ootd/${currentOotdId}/comments/${commentId}`, { method: 'DELETE' });
+                const result = await response.json();
+
+                if (result.success) {
+                    document.querySelector(`.comment-item[data-id="${commentId}"]`)?.remove();
+                    updateCommentCount(result.count || 0);
+                } else {
+                    alert(result.message || '삭제에 실패했습니다.');
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // 시간 포맷
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+
+            if (diff < 60) return '방금 전';
+            if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        // HTML 이스케이프
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 댓글 이벤트 리스너 추가
+        document.getElementById('submitCommentBtn').addEventListener('click', submitComment);
+        document.getElementById('commentInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitComment();
+        });
+
+        async function toggleLike() {
+            if (!currentOotdId) return;
+            try {
+                const response = await fetch(`/api/ootd/${currentOotdId}/like`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('likeIcon').textContent = result.liked ? '❤️' : '🤍';
+                    document.getElementById('likeCount').textContent = result.likeCount;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function applyCurrentOutfit() {
+            const btn = document.getElementById('applyOutfitBtn');
+            const outfit = JSON.parse(btn.dataset.outfit || '{}');
+            if (!mannequin || !outfit.topType) return;
+
+            mannequin.setTopType(outfit.topType);
+            outfit.topColor && mannequin.setTopColor(parseInt(outfit.topColor));
+            if (outfit.topType !== 'dress') {
+                outfit.bottomType && mannequin.setBottomType(outfit.bottomType);
+                outfit.bottomColor && mannequin.setBottomColor(parseInt(outfit.bottomColor));
+            }
+            outfit.shoeColor && mannequin.setShoeColor(parseInt(outfit.shoeColor));
+            outfit.backgroundTheme && mannequin.setBackgroundColor(themeColors[outfit.backgroundTheme]);
+
+            document.getElementById('detailModal').classList.add('hidden');
+            showSection('fitting');
+
+            // 알림
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-bounce';
+            toast.textContent = '✨ 코디가 적용되었습니다!';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        // ==================== 공유 기능 ====================
+
+        let currentOotdData = null; // 현재 상세 보기 중인 OOTD 데이터
+
+        // 링크 복사
+        document.getElementById('copyLinkBtn').addEventListener('click', async () => {
+            const shareUrl = `${window.location.origin}/ootd/list?id=${currentOotdId}`;
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                showToast('📋 링크가 복사되었습니다!');
+            } catch (e) {
+                // 폴백: 구형 브라우저용
+                const textArea = document.createElement('textarea');
+                textArea.value = shareUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast('📋 링크가 복사되었습니다!');
+            }
+        });
+
+        // 카카오톡 공유
+        document.getElementById('shareKakaoBtn').addEventListener('click', () => {
+            const title = document.getElementById('detailTitle').textContent || '오늘의 코디';
+            const description = document.getElementById('detailDescription').textContent || 'Re:birth 3D 피팅룸에서 만든 OOTD를 확인해보세요!';
+            const imageUrl = document.getElementById('detailImage').src;
+            const shareUrl = `${window.location.origin}/ootd/list?id=${currentOotdId}`;
+
+            // 카카오 SDK가 없으면 웹 공유
+            if (typeof Kakao === 'undefined') {
+                // 카카오톡 공유 URL 스킴
+                const kakaoShareUrl = `https://story.kakao.com/share?url=${encodeURIComponent(shareUrl)}`;
+                window.open(kakaoShareUrl, '_blank', 'width=600,height=400');
+            } else {
+                // 카카오 SDK 사용
+                Kakao.Share.sendDefault({
+                    objectType: 'feed',
+                    content: {
+                        title: title,
+                        description: description,
+                        imageUrl: imageUrl.startsWith('http') ? imageUrl : window.location.origin + imageUrl,
+                        link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
+                    },
+                    buttons: [{ title: 'OOTD 보러가기', link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }]
+                });
+            }
+        });
+
+        // 트위터(X) 공유
+        document.getElementById('shareTwitterBtn').addEventListener('click', () => {
+            const title = document.getElementById('detailTitle').textContent || '오늘의 코디';
+            const shareUrl = `${window.location.origin}/ootd/list?id=${currentOotdId}`;
+            const tweetText = `${title} - Re:birth 3D 피팅룸에서 만든 OOTD를 확인해보세요! 👗✨`;
+
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+            window.open(twitterUrl, '_blank', 'width=600,height=400');
+        });
+
+        // 토스트 메시지 유틸
+        function showToast(message, type = 'success') {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500'
+            };
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg z-50`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        // OOTD 캘린더 저장 함수
+        async function saveOotdToCalendar() {
+            const dateInput = document.getElementById('ootdDateInput');
+            const memoInput = document.getElementById('ootdMemoInput');
+
+            if (!dateInput.value) {
+                alert('날짜를 선택해주세요.');
+                return;
+            }
+
+            // 입은 옷 정보 문자열 생성
+            const wornItemsList = Object.values(wornItems).filter(item => item).join(', ');
+            let title = memoInput.value.trim();
+
+            // 메모가 없으면 옷 이름만, 있으면 (옷 이름) 추가
+            if (wornItemsList) {
+                if (title) {
+                    title += ` (${wornItemsList})`;
+                } else {
+                    title = wornItemsList;
+                }
+            } else if (!title) {
+                title = '나의 코디'; // 기본값
+            }
+
+            const btn = document.querySelector('button[onclick="saveOotdToCalendar()"]');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 저장 중...';
+
+            try {
+                // currentSnapshotBlob 사용 (없으면 다시 캡처)
+                let blob = currentSnapshotBlob;
+                if (!blob && mannequin) {
+                    blob = await mannequin.takeScreenshotBlob();
+                }
+
+                // Blob -> Base64
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = async () => {
+                    const base64data = reader.result;
+
+                    const response = await fetch('/api/ootd/calendar/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title: title,
+                            eventDate: dateInput.value, // yyyy-MM-dd
+                            imageBase64: base64data
+                        })
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('📅 캘린더에 저장되었습니다!');
+                        document.getElementById('saveToPropModal').classList.add('hidden');
+
+                        // 입력 초기화
+                        memoInput.value = '';
+
+                        // 캘린더 탭으로 이동 및 새로고침
+                        switchTab('ootd');
+                        if (calendar) {
+                            calendar.refetchEvents();
+                        }
+                    } else {
+                        alert(result.message || '저장에 실패했습니다.');
+                    }
+
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                };
+
+            } catch (e) {
+                console.error(e);
+                alert('오류가 발생했습니다.');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        }
+
+        // URL에 id 파라미터가 있으면 해당 OOTD 상세 열기
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ootdId = urlParams.get('id');
+            if (ootdId) {
+                showSection('feed');
+                setTimeout(() => openDetailModal(ootdId), 500);
+            }
+        });
+    </script>
+
+    <!-- 저장 모달 (캘린더 연동) -->
+    <div id="saveToPropModal"
+        class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div
+            class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl transform transition-all scale-100 animate-fade-in-up">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800">
+                <i class="far fa-calendar-alt text-indigo-500"></i> OOTD 캘린더 저장
+            </h3>
+
+            <!-- 미리보기 이미지 -->
+            <div class="mb-4 bg-gray-100 rounded-lg overflow-hidden flex justify-center border border-gray-200">
+                <img id="savePreviewImg" src="" alt="preview" class="h-48 object-contain">
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">날짜 선택</label>
+                    <input type="date" id="ootdDateInput"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">메모 (선택)</label>
+                    <textarea id="ootdMemoInput" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-shadow"
+                        placeholder="오늘의 코디 메모..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="document.getElementById('saveToPropModal').classList.add('hidden')"
+                    class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-bold transition-colors">
+                    취소
+                </button>
+                <button onclick="saveOotdToCalendar()"
+                    class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 transition-colors flex justify-center items-center gap-2">
+                    <i class="fas fa-check"></i> 저장하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수 (중복 선언 방지)
+        if (typeof currentSnapshotBlob === 'undefined') {
+            var currentSnapshotBlob = null;
+        }
+
+        // 저장 버튼 클릭 이벤트 (모달 열기)
+        document.getElementById('saveToCalendarBtn')?.addEventListener('click', async () => {
+            if (!mannequin) return;
+
+            // 버튼 로딩 효과
+            const btn = document.getElementById('saveToCalendarBtn');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 캡처 중...';
+
+            try {
+                // 스크린샷 캡처 (Blob)
+                const blob = await mannequin.takeScreenshotBlob();
+                currentSnapshotBlob = blob; // 전역 변수 저장
+
+                const url = URL.createObjectURL(blob);
+                const previewImg = document.getElementById('savePreviewImg');
+                if (previewImg) previewImg.src = url;
+
+                // 날짜 기본값 (오늘)
+                const dateInput = document.getElementById('ootdDateInput');
+                if (dateInput && !dateInput.value) {
+                    dateInput.valueAsDate = new Date();
+                }
+
+                // 메모 입력창 초기화 (비워두기)
+                const memoInput = document.getElementById('ootdMemoInput');
+                if (memoInput) {
+                    memoInput.value = '';
+                    memoInput.placeholder = "예) 결혼식룩, 데이트룩...";
+                }
+
+                // 모달 표시
+                document.getElementById('saveToPropModal').classList.remove('hidden');
+
+            } catch (e) {
+                console.error("캡처 실패:", e);
+                alert("이미지 캡처 중 오류가 발생했습니다.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        });
+    </script>
+
+</body>
+
+</html>

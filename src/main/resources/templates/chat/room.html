@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col">
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <main class="flex-grow pt-24 px-4 pb-12">
+        <div
+            class="max-w-4xl mx-auto w-full h-[calc(100vh-10rem)] flex flex-col bg-card-light dark:bg-card-dark rounded-3xl border border-border-light dark:border-border-dark shadow-xl overflow-hidden">
+
+            <!-- Chat Header -->
+            <div
+                class="p-4 border-b border-border-light dark:border-border-dark bg-primary/10 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <!-- Partner Avatar (1:1 채팅) -->
+                    <div th:if="${partnerName != null}"
+                        class="size-12 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-lg font-bold overflow-hidden">
+                        <img th:if="${partnerImg != null}" th:src="${partnerImg}" class="w-full h-full object-cover"
+                            th:data-name="${#strings.defaultString(partnerName, 'Unknown')}"
+                            onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(this.getAttribute('data-name')) + '&background=random';">
+                        <span th:unless="${partnerImg != null}"
+                            th:text="${#strings.substring(partnerName, 0, 1)}">U</span>
+                    </div>
+                    <!-- Default Icon (전체 채팅방) -->
+                    <div th:unless="${partnerName != null}"
+                        class="size-10 rounded-full bg-primary flex items-center justify-center text-white">
+                        <span class="material-symbols-outlined">forum</span>
+                    </div>
+                    <div>
+                        <!-- 1:1 채팅방: 상대방 닉네임 표시 -->
+                        <h2 th:if="${partnerName != null}" class="font-bold text-lg" th:text="${partnerName}">상대방</h2>
+                        <!-- 전체 채팅방: 기본 제목 -->
+                        <h2 th:unless="${partnerName != null}" class="font-bold text-lg"
+                            th:text="${roomId != null ? '1:1 채팅방' : '전체 채팅방'}">전체 채팅방</h2>
+                        <!-- 상대방 이메일 표시 -->
+                        <p th:if="${partnerEmail != null}" class="text-xs opacity-60" th:text="${partnerEmail}">
+                            email@example.com</p>
+                        <p th:unless="${partnerEmail != null}" class="text-xs opacity-60"
+                            th:text="${roomId != null ? '개인적인 대화를 나누세요' : '모든 회원과 자유롭게 대화하세요'}">모든 회원과 자유롭게 대화하세요</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <!-- Search Toggle Button -->
+                    <button onclick="toggleSearchPanel()"
+                        class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-text-light/50 dark:text-text-dark/50">
+                        <span class="material-symbols-outlined">search</span>
+                    </button>
+                    <div id="connectionStatus" class="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-600">
+                        연결 중...
+                    </div>
+                </div>
+            </div>
+
+            <!-- [NEW] Product Info Header (If coming from Market) -->
+            <div th:if="${itemTitle != null}"
+                class="flex items-center gap-4 px-5 py-3 bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shrink-0 shadow-sm relative z-20">
+                <!-- Image -->
+                <div
+                    class="size-12 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden shrink-0">
+                    <img th:if="${itemImage != null}" th:src="${itemImage}" class="w-full h-full object-cover">
+                    <div th:unless="${itemImage != null}"
+                        class="w-full h-full flex items-center justify-center text-gray-400">
+                        <span class="material-symbols-outlined text-sm">checkroom</span>
+                    </div>
+                </div>
+                <!-- Info -->
+                <div class="flex-grow min-w-0">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">판매중</span>
+                        <h3 class="font-bold text-sm truncate" th:text="${itemTitle}">상품명</h3>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="font-bold text-gray-900 dark:text-white"
+                            th:text="${#numbers.formatInteger(itemPrice, 0, 'COMMA') + '원'}">0원</span>
+                        <span th:if="${itemTradeLocation != null}" class="flex items-center gap-0.5 text-gray-500">
+                            <span class="material-symbols-outlined text-[10px]">location_on</span>
+                            <span th:text="${itemTradeLocation}" class="truncate max-w-[150px]">거래장소</span>
+                        </span>
+                    </div>
+                </div>
+                <!-- View Detail Button -->
+                <div class="flex items-center gap-2">
+                    <button th:if="${isSeller == true}" onclick="confirmTrade()"
+                        class="px-3 py-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors shrink-0 shadow-sm flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                        거래 확정
+                    </button>
+                    <a th:if="${itemId != null}" th:href="@{/market/detail/{id}(id=${itemId})}" target="_blank"
+                        class="px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors shrink-0">
+                        상품 보기
+                    </a>
+                </div>
+            </div>
+
+            <!-- Search Panel (Bar Style) -->
+            <div id="searchPanel"
+                class="hidden flex-none w-full z-10 bg-white dark:bg-gray-800 border-b border-border-light dark:border-border-dark shadow-sm p-3 flex items-center gap-2 transition-all duration-200">
+                <div class="flex-grow flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2">
+                    <input type="text" id="roomMsgSearchInput" placeholder="대화 내용 검색 (Enter로 찾기)"
+                        class="bg-transparent border-none text-sm w-full focus:outline-none text-text-light dark:text-text-dark min-w-0">
+                </div>
+                <button onclick="performSearch('up')"
+                    class="p-2 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors shrink-0"
+                    type="button" title="이전 찾기">
+                    <span class="material-symbols-outlined text-xl">arrow_upward</span>
+                </button>
+                <button onclick="performSearch('down')"
+                    class="p-2 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors shrink-0"
+                    type="button" title="다음 찾기">
+                    <span class="material-symbols-outlined text-xl">arrow_downward</span>
+                </button>
+                <button onclick="toggleSearchPanel()"
+                    class="p-2 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors shrink-0"
+                    type="button" title="닫기">
+                    <span class="material-symbols-outlined text-xl">close</span>
+                </button>
+            </div>
+
+            <!-- Chat Messages Area -->
+            <div id="chatArea" style="opacity: 0; transition: opacity 0.2s;"
+                class="flex flex-col flex-grow overflow-y-auto p-4 space-y-4 bg-background-light/50 dark:bg-background-dark/50 relative">
+                <!-- Messages will be appended here -->
+                <div class="text-center text-xs opacity-40 my-4">
+                    채팅방에 입장하셨습니다.
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div
+                class="p-4 border-t border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark z-20 relative">
+                <form id="messageForm" class="flex gap-2 items-center">
+                    <label
+                        class="p-3 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl cursor-pointer transition-colors text-text-light/50 dark:text-text-dark/50 shrink-0"
+                        title="사진 보내기">
+                        <span class="material-symbols-outlined">image</span>
+                        <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="uploadImage(this)">
+                    </label>
+                    <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." autocomplete="off"
+                        class="flex-grow px-4 py-3 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:outline-none focus:border-primary transition-colors min-w-0">
+                    <button type="submit"
+                        class="px-5 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold transition-colors flex items-center gap-2 shrink-0">
+                        <span class="material-symbols-outlined">send</span>
+                        <span class="hidden sm:inline">전송</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Hidden User Info -->
+    <input type="hidden" id="username" th:value="${nickname != null ? nickname : username}">
+    <input type="hidden" id="userId" th:value="${username}">
+    <input type="hidden" id="roomId" th:value="${roomId}">
+    <input type="hidden" id="partnerLastReadAt" th:value="${partnerLastReadAt}">
+    <input type="hidden" id="itemInfoId" th:value="${itemId}">
+
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <!-- SockJS & STOMP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script th:inline="javascript">
+        const chatArea = document.getElementById('chatArea');
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const searchPanel = document.getElementById('searchPanel');
+        const roomMsgSearchInput = document.getElementById('roomMsgSearchInput');
+
+        const username = document.getElementById('username').value;
+        const roomIdValue = document.getElementById('roomId').value;
+        const roomId = roomIdValue && roomIdValue !== '' ? parseInt(roomIdValue) : null;
+
+        let partnerLastReadAt = document.getElementById('partnerLastReadAt').value;
+        if (partnerLastReadAt) partnerLastReadAt = new Date(partnerLastReadAt);
+
+        let stompClient = null;
+        let lastRenderedDate = null; // 날짜 변경 감지용 변수
+
+        const colors = [
+            '#2196F3', '#32c787', '#00BCD4', '#ff5652',
+            '#ffc107', '#ff85af', '#FF9800', '#39bbb0'
+        ];
+
+        function connect() {
+            if (username) {
+                const socket = new SockJS('/ws');
+                stompClient = Stomp.over(socket);
+                stompClient.debug = null;
+
+                stompClient.connect({}, onConnected, onError);
+            }
+        }
+
+        function onConnected() {
+            connectionStatus.textContent = '연결됨';
+            connectionStatus.className = 'text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-600';
+
+            if (roomId) {
+                stompClient.subscribe('/topic/room/' + roomId, onMessageReceived);
+                // loadPreviousMessages(); // 페이지 로드 시 미리 호출함
+            } else {
+                stompClient.subscribe('/topic/public', onMessageReceived);
+            }
+
+            const joinMessage = { sender: username, type: 'JOIN' };
+            if (roomId) joinMessage.roomId = roomId;
+
+            stompClient.send("/app/chat.addUser", {}, JSON.stringify(joinMessage));
+        }
+
+        async function loadPreviousMessages() {
+            if (!roomId) return;
+            try {
+                const response = await fetch(`/chat/api/messages?roomId=${roomId}`);
+                const messages = await response.json();
+
+                lastRenderedDate = null; // 초기화
+                messages.forEach(msg => {
+                    displayMessage({
+                        sender: msg.sender,
+                        content: msg.content,
+                        type: msg.type,
+                        timestamp: msg.createdAt,
+                        imageUrl: msg.imageUrl
+                    }, true);
+                });
+
+                scrollToBottom();
+                // 이미지 로딩 등으로 인한 높이 변화 대응을 위해 지연 실행
+                setTimeout(scrollToBottom, 100);
+                setTimeout(() => {
+                    scrollToBottom();
+                    chatArea.style.opacity = 1; // 위치 잡고 보여주기
+                }, 300);
+            } catch (error) {
+                console.error('이전 메시지 로드 실패:', error);
+                chatArea.style.opacity = 1; // 에러 나도 보여주긴 해야 함
+            }
+
+        }
+
+        function confirmTrade() {
+            const itemId = document.getElementById('itemInfoId').value;
+            if (!itemId) {
+                alert('상품 정보를 찾을 수 없습니다.');
+                return;
+            }
+
+            if (confirm('이 사용자와 거래를 확정하시겠습니까?\n거래가 완료되면 판매 완료 상태로 변경되며, 에코 포인트 50P가 지급됩니다!')) {
+                fetch('/market/complete/' + itemId, {
+                    method: 'POST',
+                    headers: {}
+                })
+                    .then(response => {
+                        if (response.ok || response.redirected) {
+                            alert('거래가 확정되었습니다! 50 에코포인트가 적립되었습니다.');
+                            // UI 업데이트: 버튼 비활성화 및 텍스트 변경
+                            const btn = document.querySelector('button[onclick="confirmTrade()"]');
+                            if (btn) {
+                                btn.disabled = true;
+                                btn.innerHTML = '<span class="material-symbols-outlined text-[14px]">check_circle</span> 거래 완료';
+                                btn.classList.remove('bg-primary', 'hover:bg-primary-dark');
+                                btn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                            }
+                            // 판매중 태그 업데이트
+                            const statusTag = document.querySelector('.bg-primary\\/10.text-primary');
+                            if (statusTag) {
+                                statusTag.classList.remove('bg-primary/10', 'text-primary');
+                                statusTag.classList.add('bg-gray-200', 'text-gray-600');
+                                statusTag.textContent = '판매완료';
+                            }
+                        } else {
+                            alert('처리 중 오류가 발생했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('서버 통신 중 오류가 발생했습니다.');
+                    });
+            }
+        }
+
+        function scrollToBottom() {
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function displayMessage(message, isHistory = false) {
+            if (message.type === 'READ') {
+                const isMe = message.sender === username;
+                if (!isMe) {
+                    partnerLastReadAt = new Date();
+                    document.querySelectorAll('.unread-mark').forEach(el => el.remove());
+                }
+                return;
+            }
+
+            // --- [Start] Date Divider Logic ---
+            if (message.timestamp && message.type !== 'JOIN' && message.type !== 'LEAVE') {
+                const msgDate = new Date(message.timestamp);
+                const dateHeader = msgDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+
+                if (lastRenderedDate !== dateHeader) {
+                    const divider = document.createElement('div');
+                    divider.className = 'flex justify-center my-4';
+                    divider.innerHTML = `
+                        <span class="text-xs text-text-light/60 dark:text-text-dark/60 bg-gray-100 dark:bg-gray-700/50 px-3 py-1 rounded-full shadow-sm border border-border-light dark:border-border-dark">
+                            ${dateHeader}
+                        </span>
+                    `;
+                    chatArea.appendChild(divider);
+                    lastRenderedDate = dateHeader;
+                }
+            }
+            // --- [End] Date Divider Logic ---
+
+            const messageElement = document.createElement('div');
+            // ID 추가 (스크롤 이동용)
+            // messageElement.id = 'msg-' + (message.id || Date.now()); 
+
+            if (message.type === 'JOIN') {
+                messageElement.classList.add('text-center', 'text-xs', 'opacity-60', 'my-2');
+                messageElement.innerText = message.sender + ' 님이 입장하셨습니다.';
+
+                const isMe = message.sender === username;
+                if (!isMe) {
+                    partnerLastReadAt = new Date();
+                    document.querySelectorAll('.unread-mark').forEach(el => el.remove());
+                }
+
+            } else if (message.type === 'LEAVE') {
+                messageElement.classList.add('text-center', 'text-xs', 'opacity-60', 'my-2');
+                messageElement.innerText = message.sender + ' 님이 퇴장하셨습니다.';
+            } else {
+                const isMe = message.sender === username;
+
+                if (!isHistory && !isMe && roomId && stompClient && stompClient.connected) {
+                    stompClient.send("/app/chat.readMessage", {}, JSON.stringify({
+                        sender: username,
+                        roomId: roomId,
+                        type: 'READ'
+                    }));
+                }
+
+                messageElement.classList.add('flex', 'flex-col', 'gap-1', 'max-w-[80%]');
+                if (isMe) {
+                    messageElement.classList.add('self-end', 'items-end');
+                } else {
+                    messageElement.classList.add('self-start', 'items-start');
+                }
+
+                const msgContainer = document.createElement('div');
+                msgContainer.classList.add('flex', 'items-end', 'gap-2');
+                if (isMe) msgContainer.classList.add('flex-row-reverse');
+
+                const bubble = document.createElement('div');
+                bubble.classList.add('px-4', 'py-2', 'rounded-2xl', 'text-sm', 'break-words', 'max-w-full');
+                if (isMe) {
+                    bubble.classList.add('bg-primary', 'text-white', 'rounded-tr-none');
+                } else {
+                    bubble.classList.add('bg-white', 'dark:bg-gray-700', 'border', 'border-border-light', 'dark:border-border-dark', 'rounded-tl-none');
+                }
+
+                if (message.type === 'IMAGE') {
+                    bubble.classList.remove('px-4', 'py-2');
+                    bubble.classList.add('p-1', 'overflow-hidden');
+                    const img = document.createElement('img');
+                    img.src = message.imageUrl;
+                    img.className = 'max-w-[240px] max-h-[240px] w-auto h-auto rounded-lg cursor-pointer hover:opacity-95 transition-opacity object-cover';
+                    img.onclick = () => window.open(message.imageUrl, '_blank');
+                    bubble.appendChild(img);
+                } else {
+                    bubble.innerText = message.content;
+                }
+
+                const metaWrapper = document.createElement('div');
+                metaWrapper.classList.add('flex', 'flex-col', 'items-end', 'justify-end');
+                if (!isMe) metaWrapper.classList.add('items-start');
+
+                if (isMe) {
+                    const msgTime = message.timestamp ? new Date(message.timestamp) : new Date();
+                    let isUnread = true;
+                    if (partnerLastReadAt && partnerLastReadAt >= msgTime) isUnread = false;
+
+                    if (isUnread) {
+                        const unreadMark = document.createElement('span');
+                        unreadMark.classList.add('unread-mark', 'text-[10px]', 'text-yellow-500', 'font-bold', 'mb-0.5');
+                        unreadMark.innerText = '1';
+                        metaWrapper.appendChild(unreadMark);
+                    }
+                }
+
+                const timeSpan = document.createElement('span');
+                timeSpan.classList.add('text-[10px]', 'text-gray-400', 'whitespace-nowrap');
+
+                let timeStr = '';
+                if (message.timestamp) {
+                    const date = new Date(message.timestamp);
+                    timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } else {
+                    timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+                timeSpan.innerText = timeStr;
+
+                metaWrapper.appendChild(timeSpan);
+                msgContainer.appendChild(bubble);
+                msgContainer.appendChild(metaWrapper);
+
+                if (!isMe) {
+                    const senderName = document.createElement('span');
+                    senderName.classList.add('text-xs', 'opacity-60', 'ml-1');
+                    senderName.innerText = message.sender;
+                    messageElement.appendChild(senderName);
+                }
+
+                messageElement.appendChild(msgContainer);
+            }
+
+            chatArea.appendChild(messageElement);
+        }
+
+        function onError(error) {
+            connectionStatus.textContent = '연결 끊김';
+            connectionStatus.className = 'text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-600';
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('text-center', 'text-red-500', 'text-xs', 'my-2');
+            messageElement.innerText = '서버와 연결이 끊어졌습니다. 페이지를 새로고침해주세요.';
+            chatArea.appendChild(messageElement);
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+            const messageContent = messageInput.value.trim();
+            if (messageContent && stompClient) {
+                const now = new Date(); // 로컬 시간 사용
+                const chatMessage = {
+                    sender: username,
+                    content: messageInput.value,
+                    type: 'CHAT'
+                };
+                // 로컬에서 바로 날짜 구분선이 보이게 하려면 timestamp를 보내거나, 수신 시점에 처리됨.
+                // 보통 서버 round-trip 후 onMessageReceived에서 처리되므로 여기선 전송만 함.
+                if (roomId) chatMessage.roomId = roomId;
+
+                stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
+                messageInput.value = '';
+            }
+        }
+
+        function onMessageReceived(payload) {
+            const message = JSON.parse(payload.body);
+            displayMessage(message);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        async function uploadImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // 로딩 표시 등 UX 처리는 생략 (필요 시 추가)
+            try {
+                const response = await fetch('/chat/api/chat/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    const chatMessage = {
+                        sender: username,
+                        content: '사진을 보냈습니다.',
+                        type: 'IMAGE',
+                        imageUrl: data.url,
+                        roomId: roomId
+                    };
+                    stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
+                } else {
+                    alert('이미지 업로드 실패: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Upload Error:', error);
+                alert('이미지 전송 중 오류가 발생했습니다.');
+            }
+
+            input.value = '';
+        }
+
+        messageForm.addEventListener('submit', sendMessage, true);
+
+        // 페이지 로드 즉시 메시지 로딩 시작
+        loadPreviousMessages();
+        connect();
+
+        // ============================
+        // Search Logic (Client-side Highlight & Scroll)
+        // ============================
+        let searchMatches = [];
+        let currentMatchIndex = -1;
+        let lastKeyword = '';
+
+        function toggleSearchPanel() {
+            const bar = document.getElementById('searchPanel');
+            bar.classList.toggle('hidden');
+            if (!bar.classList.contains('hidden')) {
+                document.getElementById('roomMsgSearchInput').focus();
+            } else {
+                clearSearch();
+            }
+        }
+
+        function clearSearch() {
+            const marks = chatArea.querySelectorAll('mark');
+            marks.forEach(mark => {
+                const text = document.createTextNode(mark.textContent);
+                mark.parentNode.replaceChild(text, mark);
+            });
+            chatArea.normalize();
+
+            searchMatches = [];
+            currentMatchIndex = -1;
+            lastKeyword = '';
+            document.getElementById('roomMsgSearchInput').value = '';
+        }
+
+        const searchInput = document.getElementById('roomMsgSearchInput');
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                performSearch('up'); // Enter defaults to search up (previous messages)
+            }
+        });
+
+        function performSearch(direction) {
+            const keyword = searchInput.value.trim();
+            if (!keyword) return;
+
+            // If same keyword, just navigate
+            if (searchMatches.length > 0 && keyword === lastKeyword) {
+                navigateMatches(direction);
+                return;
+            }
+
+            // New search
+            const marks = chatArea.querySelectorAll('mark');
+            marks.forEach(mark => {
+                const text = document.createTextNode(mark.textContent);
+                mark.parentNode.replaceChild(text, mark);
+            });
+            chatArea.normalize();
+
+            lastKeyword = keyword;
+            searchMatches = [];
+
+            const bubbles = chatArea.querySelectorAll('.break-words');
+
+            bubbles.forEach(bubble => {
+                const text = bubble.textContent;
+                // Escape regex special characters
+                const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(${escapedKeyword})`, 'gi');
+
+                if (regex.test(text)) {
+                    bubble.innerHTML = text.replace(regex, '<mark class="bg-yellow-300 text-black rounded-sm">$1</mark>');
+                }
+            });
+
+            const allMarks = chatArea.querySelectorAll('mark');
+            searchMatches = Array.from(allMarks);
+
+            if (searchMatches.length === 0) {
+                // No results
+                // Highlight input to indicate failure?
+                return;
+            }
+
+            // Start from the last match (most recent message)
+            currentMatchIndex = searchMatches.length - 1;
+            updateMatchFocus();
+        }
+
+        function navigateMatches(direction) {
+            if (searchMatches.length === 0) return;
+
+            if (direction === 'up') {
+                currentMatchIndex--;
+                if (currentMatchIndex < 0) currentMatchIndex = searchMatches.length - 1;
+            } else {
+                currentMatchIndex++;
+                if (currentMatchIndex >= searchMatches.length) currentMatchIndex = 0;
+            }
+            updateMatchFocus();
+        }
+
+        function updateMatchFocus() {
+            // Reset styles
+            searchMatches.forEach(m => {
+                m.className = 'bg-yellow-300 text-black rounded-sm transition-colors duration-200';
+            });
+
+            const current = searchMatches[currentMatchIndex];
+            if (current) {
+                // Active style
+                current.className = 'bg-orange-500 text-white rounded-sm transition-colors duration-200 ring-4 ring-orange-200/50';
+                current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    </script>
+
+</body>
+
+</html>

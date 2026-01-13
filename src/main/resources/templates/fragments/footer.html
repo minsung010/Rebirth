@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<footer th:fragment="footerFragment" class="bg-[#0f0f12] text-white/60 border-t border-white/5 pt-20 pb-10">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+            <!-- Brand Section -->
+            <div class="space-y-6">
+                <a href="/" class="flex items-center gap-2 group">
+                    <span
+                        class="material-symbols-outlined text-3xl text-primary group-hover:rotate-12 transition-transform duration-500">eco</span>
+                    <span class="text-2xl font-black text-white tracking-tighter">Re:birth</span>
+                </a>
+                <p class="text-sm leading-relaxed">
+                    지구를 위한 가장 아름다운 순환.<br>
+                    당신의 옷장에서 시작되는 작은 변화가<br>
+                    지구의 내일을 바꿉니다.
+                </p>
+                <div class="flex gap-4 pt-2">
+                    <a href="#"
+                        class="size-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300">
+                        <i class="fa-brands fa-instagram"></i> <!-- FontAwesome placeholder, using text for now -->
+                        <span class="font-bold text-xs">IG</span>
+                    </a>
+                    <a href="#"
+                        class="size-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300">
+                        <span class="font-bold text-xs">YT</span>
+                    </a>
+                    <a href="#"
+                        class="size-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300">
+                        <span class="font-bold text-xs">FB</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div>
+                <h4 class="text-white font-bold mb-6 text-lg">Services</h4>
+                <ul class="space-y-4 text-sm">
+                    <li><a href="/wardrobe"
+                            class="hover:text-primary transition-colors hover:translate-x-1 inline-block">스마트 옷장</a>
+                    </li>
+                    <li><a href="/analysis"
+                            class="hover:text-primary transition-colors hover:translate-x-1 inline-block">AI 의류 분석</a>
+                    </li>
+                    <li><a href="/community"
+                            class="hover:text-primary transition-colors hover:translate-x-1 inline-block">커뮤니티</a></li>
+                    <li><a href="/ranking"
+                            class="hover:text-primary transition-colors hover:translate-x-1 inline-block">에코 랭킹</a></li>
+                </ul>
+            </div>
+
+            <!-- Support & Legal -->
+            <div>
+                <h4 class="text-white font-bold mb-6 text-lg">Support</h4>
+                <ul class="space-y-4 text-sm">
+                    <li><a href="/community"
+                            class="hover:text-primary transition-colors hover:translate-x-1 inline-block">공지사항</a></li>
+                    <li><a href="/chat/bot"
+                            class="hover:text-primary transition-colors hover:translate-x-1 inline-block">자주 묻는
+                            질문</a></li>
+                    <li><a href="/community"
+                            class="hover:text-primary transition-colors hover:translate-x-1 inline-block">이용약관</a></li>
+                    <li><a href="/community"
+                            class="hover:text-primary transition-colors hover:translate-x-1 inline-block">개인정보처리방침</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Newsletter -->
+            <div>
+                <h4 class="text-white font-bold mb-6 text-lg">Newsletter</h4>
+                <p class="text-sm mb-6">최신 업사이클링 트렌드와 이벤트를<br>가장 먼저 받아보세요.</p>
+                <form class="relative">
+                    <input type="email" placeholder="이메일 주소"
+                        class="w-full bg-white/5 border border-white/10 rounded-full py-3 px-5 text-sm text-white focus:outline-none focus:border-primary focus:bg-white/10 transition-all placeholder:text-white/20">
+                    <button type="button"
+                        class="absolute right-1 top-1 bottom-1 size-10 bg-primary rounded-full text-white flex items-center justify-center hover:bg-primary/90 transition-colors">
+                        <span class="material-symbols-outlined text-lg">arrow_forward</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div
+            class="border-t border-white/5 pt-10 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-white/30">
+            <p>&copy; 2025 Re:birth. All rights reserved.</p>
+            <div class="flex gap-6">
+                <span>주제 : 지속가능한 옷장 관리 시스템</span>
+                <span>팀명 : E% (Energy 100%)</span>
+                <span>미래융합교육원</span>
+            </div>
+        </div>
+    </div>
+    <!-- Chatbot Widget Inclusion -->
+    <div th:replace="~{fragments/chatbot_widget :: chatbotWidgetFragment}"></div>
+
+    <script th:src="@{/js/main.js(v='1.4')}"></script>
+</footer>
+
+</html>

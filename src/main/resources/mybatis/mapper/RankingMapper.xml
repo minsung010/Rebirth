@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.ranking.RankingDao">
+
+    <!-- 
+        랭킹 리스트 조회 
+        Type: 'eco' (Default), 'donation', 'sales'
+    -->
+    <select id="selectRankingList" resultType="com.rebirth.my.ranking.RankingVo">
+        SELECT * FROM (
+            SELECT 
+                U.ID AS USER_ID,
+                UP.NICKNAME,
+                UP.ACTIVE_DECORATION AS activeDecoration,
+                COALESCE(U.MEM_IMG, UP.AVATAR_URL) AS AVATAR_URL,
+                UP.ECO_POINTS,
+                
+                -- 기부 횟수 (서브쿼리로 집계)
+                NVL((SELECT COUNT(*) FROM CLOTHING_ITEMS WHERE USER_ID = U.ID AND STATUS = 'DONATED'), 0) AS DONATION_COUNT,
+                
+                -- 판매 횟수 (서브쿼리로 집계)
+                NVL((SELECT COUNT(*) FROM CLOTHING_ITEMS WHERE USER_ID = U.ID AND STATUS = 'SOLD'), 0) AS SALES_COUNT,
+
+                -- 랭킹 산정 (Type에 따라 동적 정렬)
+                <choose>
+                    <when test="type == 'donation'">
+                        RANK() OVER (ORDER BY NVL((SELECT COUNT(*) FROM CLOTHING_ITEMS WHERE USER_ID = U.ID AND STATUS = 'DONATED'), 0) DESC) AS RANK
+                    </when>
+                    <when test="type == 'sales'">
+                        RANK() OVER (ORDER BY NVL((SELECT COUNT(*) FROM CLOTHING_ITEMS WHERE USER_ID = U.ID AND STATUS = 'SOLD'), 0) DESC) AS RANK
+                    </when>
+                    <otherwise>
+                        -- Default: Eco Point
+                        RANK() OVER (ORDER BY UP.ECO_POINTS DESC) AS RANK
+                    </otherwise>
+                </choose>
+                
+            FROM USERS U
+            JOIN USER_PROFILES UP ON U.ID = UP.USER_ID
+            WHERE U.STATUS = 'ACTIVE' -- 활성 유저만 표시
+        )
+        ORDER BY RANK ASC, USER_ID ASC
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+    </select>
+
+    <select id="countTotalUsers" resultType="int">
+        SELECT COUNT(*) 
+        FROM USERS U
+        JOIN USER_PROFILES UP ON U.ID = UP.USER_ID
+        WHERE U.STATUS = 'ACTIVE'
+    </select>
+
+    <!-- 나의 랭킹 상세 조회 (MypageMapper 로직 활용) -->
+    <select id="selectMyRankingDetail" parameterType="long" resultType="com.rebirth.my.mypage.MypageVo">
+        /* RankingDao.selectMyRankingDetail */
+        WITH ECO_RANK AS (
+            SELECT USER_ID, RANK() OVER (ORDER BY ECO_POINTS DESC) AS R, COUNT(*) OVER () AS T
+            FROM USER_PROFILES
+        ),
+        DONATE_RANK AS (
+            SELECT U.ID AS USER_ID, RANK() OVER (ORDER BY NVL(DR.CNT, 0) DESC) AS R, NVL(DR.CNT, 0) AS C
+            FROM USERS U
+            LEFT JOIN (
+                SELECT USER_ID, COUNT(*) AS CNT 
+                FROM CLOTHING_ITEMS 
+                WHERE STATUS = 'DONATED' 
+                GROUP BY USER_ID
+            ) DR ON U.ID = DR.USER_ID
+        ),
+        SALE_RANK AS (
+            SELECT U.ID AS USER_ID, RANK() OVER (ORDER BY NVL(CI.CNT, 0) DESC) AS R, NVL(CI.CNT, 0) AS C
+            FROM USERS U
+            LEFT JOIN (SELECT USER_ID, COUNT(*) AS CNT FROM CLOTHING_ITEMS WHERE STATUS = 'SOLD' GROUP BY USER_ID) CI ON U.ID = CI.USER_ID
+        )
+        SELECT 
+            E.R AS ecoPointRank,
+            D.R AS donationRank,
+            S.R AS salesRank,
+            E.T AS totalUsers,
+            D.C AS donationCount,
+            S.C AS salesCount,
+            
+            -- 기본 정보도 함께 반환 (프로필 표시용)
+            UP.NICKNAME AS USER_NAME,
+            UP.ECO_POINTS AS ECO_POINT,
+            UP.ACTIVE_DECORATION AS activeDecoration,
+            COALESCE(U.MEM_IMG, UP.AVATAR_URL) AS AVATAR_URL
+            
+        FROM ECO_RANK E
+        JOIN DONATE_RANK D ON E.USER_ID = D.USER_ID
+        JOIN SALE_RANK S ON E.USER_ID = S.USER_ID
+        JOIN USERS U ON E.USER_ID = U.ID
+        JOIN USER_PROFILES UP ON E.USER_ID = UP.USER_ID
+        WHERE E.USER_ID = #{userId}
+    </select>
+
+</mapper>

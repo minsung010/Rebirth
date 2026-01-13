@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>사용자 신고</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 p-6">
+
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-xl font-bold mb-4 text-red-600">🚨 사용자 신고</h2>
+        <p class="text-sm text-gray-600 mb-6">
+            불건전한 행위를 하는 사용자를 신고해주세요.<br>
+            허위 신고 시 불이익을 받을 수 있습니다.
+        </p>
+
+        <form id="reportForm">
+            <input type="hidden" id="targetUserId" th:value="${targetUserId}">
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">신고 사유</label>
+                <select id="reasonCategory"
+                    class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="SPAM">스팸 / 부적절한 홍보</option>
+                    <option value="ABUSIVE">욕설 / 비하 발언</option>
+                    <option value="INAPPROPRIATE_CONTENT">음란 / 청소년 유해 정보</option>
+                    <option value="FRAUD">사기 / 거래 불이행</option>
+                    <option value="ETC">기타</option>
+                </select>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">상세 내용</label>
+                <textarea id="description" rows="4"
+                    class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    placeholder="구체적인 내용을 적어주세요."></textarea>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="button" onclick="window.close()"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">
+                    취소
+                </button>
+                <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                    신고하기
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('reportForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const data = {
+                reportedUserId: document.getElementById('targetUserId').value,
+                reasonCategory: document.getElementById('reasonCategory').value,
+                description: document.getElementById('description').value
+            };
+
+            fetch('/report/api/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        window.close();
+                    } else {
+                        alert("신고 실패: " + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert("오류가 발생했습니다.");
+                });
+        });
+    </script>
+
+</body>
+
+</html>

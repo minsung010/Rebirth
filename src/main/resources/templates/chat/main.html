@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark h-screen flex flex-col overflow-hidden">
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-20 h-full flex items-stretch overflow-hidden">
+        <div class="w-full h-full max-w-7xl mx-auto flex gap-6 p-4 md:p-6">
+
+            <!-- Chat List (Left) -->
+            <div
+                class="hidden md:flex flex-col w-80 shrink-0 bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-border-light dark:border-border-dark">
+                    <h2 class="text-xl font-bold">메시지</h2>
+                </div>
+                <div class="flex-grow overflow-y-auto p-2 space-y-1">
+                    <!-- Chat Item (Active) -->
+                    <div class="flex items-center gap-3 p-3 rounded-xl bg-primary/10 cursor-pointer">
+                        <div class="relative">
+                            <div
+                                class="size-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                <span class="material-symbols-outlined text-gray-500">smart_toy</span>
+                            </div>
+                            <div
+                                class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-card-light dark:border-card-dark">
+                            </div>
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <p class="font-bold text-sm truncate">리버스 AI 봇</p>
+                                <span class="text-xs text-text-light/50 dark:text-text-dark/50">방금</span>
+                            </div>
+                            <p class="text-xs text-text-light/70 dark:text-text-dark/70 truncate">무엇을 도와드릴까요?</p>
+                        </div>
+                    </div>
+
+                    <!-- Chat Item -->
+                    <div
+                        class="flex items-center gap-3 p-3 rounded-xl hover:bg-background-light dark:hover:bg-background-dark transition-colors cursor-pointer">
+                        <div
+                            class="size-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-bold">
+                            K
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <p class="font-bold text-sm truncate">김철수</p>
+                                <span class="text-xs text-text-light/50 dark:text-text-dark/50">10분 전</span>
+                            </div>
+                            <p class="text-xs text-text-light/70 dark:text-text-dark/70 truncate">지난번 올리신 자켓 아직 있나요?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Room (Right) -->
+            <div
+                class="flex-grow flex flex-col bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden relative">
+                <!-- Chat Header -->
+                <div
+                    class="p-4 border-b border-border-light dark:border-border-dark flex justify-between items-center bg-card-light/50 backdrop-blur-md absolute top-0 left-0 right-0 z-10">
+                    <div class="flex items-center gap-3">
+                        <div class="size-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                            <span class="material-symbols-outlined text-gray-500">smart_toy</span>
+                        </div>
+                        <div>
+                            <p class="font-bold">리버스 AI 봇</p>
+                            <p class="text-xs text-green-500 font-medium">● 온라인</p>
+                        </div>
+                    </div>
+                    <button
+                        class="size-8 rounded-full hover:bg-background-light dark:hover:bg-background-dark flex items-center justify-center transition-colors">
+                        <span class="material-symbols-outlined text-text-light/60 dark:text-text-dark/60">more_vert</span>
+                    </button>
+                </div>
+
+                <!-- Messages -->
+                <div
+                    class="flex-grow overflow-y-auto p-6 pt-20 space-y-6 bg-background-light/30 dark:bg-background-dark/30">
+                    <!-- Date Divider -->
+                    <div class="flex justify-center">
+                        <span
+                            class="px-3 py-1 rounded-full bg-border-light/50 dark:bg-border-dark/50 text-xs font-bold text-text-light/50 dark:text-text-dark/50">오늘</span>
+                    </div>
+
+                    <!-- Bot Message -->
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="size-8 rounded-full bg-gray-200 flex shrink-0 items-center justify-center overflow-hidden">
+                            <span class="material-symbols-outlined text-gray-500 text-sm">smart_toy</span>
+                        </div>
+                        <div class="flex flex-col gap-1 max-w-[70%]">
+                            <div class="p-3 bg-white dark:bg-border-dark rounded-2xl rounded-tl-none shadow-sm text-sm">
+                                안녕하세요! 리버스 AI 챗봇입니다.<br>
+                                옷장 정리나 스타일링에 대해 궁금한 점이 있으신가요?
+                            </div>
+                            <span class="text-[10px] text-text-light/40 dark:text-text-dark/40 ml-1">오전 10:23</span>
+                        </div>
+                    </div>
+
+                    <!-- User Message -->
+                    <div class="flex items-start gap-3 flex-row-reverse">
+                        <div class="flex flex-col gap-1 max-w-[70%] items-end">
+                            <div class="p-3 bg-primary text-white rounded-2xl rounded-tr-none shadow-sm text-sm">
+                                안 입는 청바지를 어떻게 할지 모르겠어.
+                            </div>
+                            <span class="text-[10px] text-text-light/40 dark:text-text-dark/40 mr-1">오전 10:24</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="p-4 bg-card-light dark:bg-card-dark border-t border-border-light dark:border-border-dark">
+                    <div class="flex items-center gap-2 w-full">
+                        <button type="button"
+                            class="group relative size-10 rounded-full hover:bg-background-light dark:hover:bg-background-dark flex items-center justify-center text-text-light/50 dark:text-text-dark/50 transition-colors shrink-0">
+                            <span class="material-symbols-outlined">add_circle</span>
+
+                            <!-- Dropdown Menu (Hover) -->
+                            <div
+                                class="absolute bottom-full left-0 mb-2 w-48 bg-card-light dark:bg-card-dark rounded-xl shadow-xl border border-border-light dark:border-border-dark hidden group-hover:block overflow-hidden z-20">
+                                <div class="p-1">
+                                    <a href="#"
+                                        class="flex items-center gap-3 px-3 py-2 hover:bg-background-light dark:hover:bg-background-dark rounded-lg text-sm transition-colors">
+                                        <span class="material-symbols-outlined text-primary text-xl">image</span>
+                                        <span>사진 전송</span>
+                                    </a>
+                                    <a href="#"
+                                        class="flex items-center gap-3 px-3 py-2 hover:bg-background-light dark:hover:bg-background-dark rounded-lg text-sm transition-colors">
+                                        <span class="material-symbols-outlined text-secondary text-xl">styler</span>
+                                        <span>OOTD 공유</span>
+                                    </a>
+                                    <a href="#"
+                                        class="flex items-center gap-3 px-3 py-2 hover:bg-background-light dark:hover:bg-background-dark rounded-lg text-sm transition-colors">
+                                        <span class="material-symbols-outlined text-green-500 text-xl">checkroom</span>
+                                        <span>내 옷장 공유</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </button>
+                        <div class="flex-grow relative">
+                            <input type="text" placeholder="메시지를 입력하세요..."
+                                class="w-full h-10 px-4 rounded-full bg-background-light dark:bg-background-dark border-none focus:ring-2 focus:ring-primary/50 text-sm transition-all shadow-inner">
+                        </div>
+                        <button type="submit"
+                            class="size-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-transform hover:scale-105 shadow-md shrink-0">
+                            <span class="material-symbols-outlined text-sm">send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+    
+</body>
+
+</html>

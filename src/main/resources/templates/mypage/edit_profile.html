@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col">
+
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <main class="flex-grow flex items-center justify-center py-24 px-4">
+        <div class="w-full max-w-lg animate-fade-in-up">
+            <div
+                class="bg-card-light dark:bg-card-dark rounded-3xl p-8 border border-border-light dark:border-border-dark shadow-xl relative overflow-hidden">
+
+                <div
+                    class="absolute bottom-0 left-0 w-64 h-64 bg-secondary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2">
+                </div>
+
+                <div class="text-center mb-8 relative">
+                    <h1 class="text-2xl font-bold">회원정보 수정</h1>
+                    <p class="text-text-light/60 dark:text-text-dark/60 text-sm mt-1">회원 정보를 수정합니다.</p>
+                </div>
+
+                <form class="space-y-5 relative" action="/mypage/update" method="post" enctype="multipart/form-data">
+
+                    <div class="flex flex-col items-center gap-4 mb-6">
+                        <div class="relative">
+                            <div
+                                class="size-24 rounded-full border-4 border-card-light dark:border-card-dark shadow-xl overflow-hidden bg-white">
+                                <img th:src="${user.memImg != null ? user.memImg : (profile != null && profile.avatarUrl != null ? profile.avatarUrl : 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.name)}"
+                                    class="size-24 rounded-full object-cover" th:data-name="${user.name}"
+                                    onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(this.getAttribute('data-name')) + '&background=random';">
+                            </div>
+                            <label for="profileImage"
+                                class="absolute bottom-0 right-0 size-8 rounded-full bg-primary text-white flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-md">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                            </label>
+                            <input type="file" id="profileImage" name="profileImage" accept="image/*" class="hidden">
+                        </div>
+                        <p class="text-xs text-text-light/60 dark:text-text-dark/60">프로필 사진 변경</p>
+                    </div>
+
+                    <div id="historySection" class="mb-8">
+                        <label class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1 mb-2 block">최근 5개
+                            프로필 히스토리</label>
+                        <div id="historyContainer" class="flex gap-2 justify-center">
+                            <div class="text-sm text-text-light/40 dark:text-text-dark/40" id="loadingMessage">히스토리 로딩
+                                중...</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="space-y-1">
+                            <label for="loginId"
+                                class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">아이디</label>
+                            <input type="text" id="loginId" name="loginId" th:value="${user.loginId}"
+                                class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                            <p id="idErrorMsg" class="text-xs ml-1 text-red-500 font-bold hidden"></p>
+                        </div>
+                        <div class="space-y-1">
+                            <label for="email"
+                                class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">이메일</label>
+                            <input type="email" id="email" name="email" th:value="${user.email}" readonly
+                                class="w-full h-12 px-4 rounded-xl bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark text-text-light/50 dark:text-text-dark/50 cursor-not-allowed outline-none">
+
+                            <!-- Linked Social Accounts -->
+                            <div class="mt-2 flex gap-2 items-center">
+                                <span class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">연동된 소셜
+                                    계정:</span>
+                                <div class="flex gap-2">
+                                    <span th:if="${linkedProviders.contains('GOOGLE')}"
+                                        class="text-xs font-bold px-2 py-1 rounded bg-red-100 text-red-600 border border-red-200">Google</span>
+                                    <span th:if="${linkedProviders.contains('KAKAO')}"
+                                        class="text-xs font-bold px-2 py-1 rounded bg-yellow-100 text-yellow-700 border border-yellow-200">Kakao</span>
+                                    <span th:if="${linkedProviders.contains('NAVER')}"
+                                        class="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-700 border border-green-200">Naver</span>
+                                    <span th:if="${linkedProviders.isEmpty()}" class="text-xs text-gray-400">없음</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="nickname"
+                            class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">닉네임</label>
+                        <input type="text" id="nickname" name="nickname" th:value="${profile.nickname}"
+                            placeholder="별명 입력"
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                    </div>
+
+                    <!-- Address Section -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">주소</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="zipcode" name="zipcode" placeholder="우편번호" readonly
+                                class="w-32 h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                            <button type="button" onclick="execDaumPostcode()"
+                                class="px-4 h-12 bg-secondary/10 text-secondary font-bold rounded-xl hover:bg-secondary/20 transition-colors whitespace-nowrap">
+                                우편번호 찾기
+                            </button>
+                        </div>
+                        <input type="text" id="address" name="address" placeholder="주소" readonly
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+
+                        <div class="grid grid-cols-1 gap-2">
+                            <input type="text" id="detailAddress" name="detailAddress" placeholder="상세주소"
+                                class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label for="birthDate"
+                            class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">생년월일</label>
+                        <input type="date" id="birthDate" name="birthDate"
+                            th:value="${user.birthDate != null ? #temporals.format(user.birthDate, 'yyyy-MM-dd') : ''}"
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                    </div>
+
+
+                    <div class="space-y-1">
+                        <label for="password" class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">새
+                            비밀번호
+                            (변경 시 입력)</label>
+                        <input type="password" id="password" name="password" placeholder="변경할 비밀번호 입력"
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="confirm-password"
+                            class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">새
+                            비밀번호 확인</label>
+                        <input type="password" id="confirm-password" placeholder="비밀번호 재입력"
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 outline-none transition-all">
+                    </div>
+
+                    <div class="flex gap-3 mt-8">
+                        <a href="/mypage"
+                            class="flex-1 h-12 flex items-center justify-center rounded-xl border border-border-light dark:border-border-dark font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">취소</a>
+                        <button type="submit"
+                            class="flex-1 h-12 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95">수정
+                            완료</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    <script>
+        // --------------------------------------------------------
+        // 🚀 Daum Postcode Logic
+        // --------------------------------------------------------
+        function execDaumPostcode() {
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    var addr = ''; // 주소 변수
+                    var extraAddr = ''; // 참고항목 변수
+
+                    if (data.userSelectedType === 'R') { // 도로명 주소 선택
+                        addr = data.roadAddress;
+                    } else { // 지번 주소 선택
+                        addr = data.jibunAddress;
+                    }
+
+                    if (data.userSelectedType === 'R') {
+                        if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
+                            extraAddr += data.bname;
+                        }
+                        if (data.buildingName !== '' && data.apartment === 'Y') {
+                            extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                        }
+                        if (extraAddr !== '') {
+                            extraAddr = ' (' + extraAddr + ')';
+                        }
+                        // document.getElementById("extraAddress").value = extraAddr; // 필요 시 사용
+                    } else {
+                        // document.getElementById("extraAddress").value = '';
+                    }
+
+                    document.getElementById('zipcode').value = data.zonecode;
+                    document.getElementById("address").value = addr;
+                    document.getElementById("detailAddress").focus();
+                }
+            }).open();
+        }
+
+        // --------------------------------------------------------
+        // 🚀 Profile Logic
+        // --------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // 1. Address Parsing Logic (Pre-fill)
+            const fullAddress = "[[${user.address}]]"; // Using Thymeleaf inlining
+            const detailAddress = "[[${user.addressDetail}]]";
+
+            if (fullAddress && fullAddress !== 'null') {
+                // 가정: (12345) 서울 강남구... 형식
+                // 정규식으로 우편번호 추출 시도: \(\d+\)
+                const match = fullAddress.match(/^\((\d+)\)\s*(.*)$/);
+                if (match) {
+                    document.getElementById('zipcode').value = match[1];
+                    document.getElementById('address').value = match[2];
+                } else {
+                    // 형식이 다르면 전체를 주소 칸에 넣거나, 사용자 수정 유도
+                    document.getElementById('address').value = fullAddress;
+                }
+            }
+
+            if (detailAddress && detailAddress !== 'null') {
+                document.getElementById('detailAddress').value = detailAddress;
+            }
+
+
+            const loginIdInput = document.getElementById('loginId');
+            const idErrorMsg = document.getElementById('idErrorMsg');
+            const originalLoginId = loginIdInput.value; // Store original ID to ignore if unchanged
+
+            loginIdInput.addEventListener('blur', function () {
+                const loginId = this.value;
+                if (!loginId) return;
+
+                // If ID hasn't changed, don't check
+                if (loginId === originalLoginId) {
+                    idErrorMsg.classList.add('hidden');
+                    this.classList.remove('border-red-500');
+                    return;
+                }
+
+                fetch('/auth/check-id?loginId=' + loginId)
+                    .then(response => response.json())
+                    .then(isDuplicate => {
+                        if (isDuplicate) {
+                            idErrorMsg.innerText = '이미 사용 중인 아이디입니다.';
+                            idErrorMsg.classList.remove('hidden', 'text-green-500');
+                            idErrorMsg.classList.add('text-red-500');
+                            this.classList.add('border-red-500');
+                        } else {
+                            idErrorMsg.innerText = '사용 가능한 아이디입니다.';
+                            idErrorMsg.classList.remove('hidden', 'text-red-500');
+                            idErrorMsg.classList.add('text-green-500');
+                            this.classList.remove('border-red-500');
+                        }
+                    })
+                    .catch(err => console.error(err));
+            });
+
+            // Form Validation
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function (e) {
+                const loginId = loginIdInput.value;
+                if (loginId !== originalLoginId && idErrorMsg.classList.contains('text-red-500')) {
+                    e.preventDefault();
+                    alert('이미 사용 중인 아이디입니다. 다른 아이디를 입력해주세요.');
+                    loginIdInput.focus();
+                }
+            });
+
+            // 페이지 로드 시 히스토리 로드
+            loadHistory();
+        });
+
+        // ... (Existing Profile Image Logic) ...
+        const UPLOAD_API = '/mypage/profile/upload';
+        const HISTORY_API = '/mypage/profile/history';
+        const RESTORE_API = '/mypage/profile/restore';
+
+        function loadHistory() {
+            const container = document.getElementById('historyContainer');
+            const loadingMsg = document.getElementById('loadingMessage');
+            if (loadingMsg) loadingMsg.style.display = 'block';
+            container.innerHTML = '';
+
+            fetch(HISTORY_API)
+                .then(response => {
+                    if (!response.ok) throw new Error('히스토리 로드 실패');
+                    return response.json();
+                })
+                .then(paths => {
+                    if (loadingMsg) loadingMsg.style.display = 'none';
+
+                    if (paths && paths.length > 0) {
+                        paths.forEach(path => {
+                            const thumbnail = document.createElement('img');
+                            thumbnail.src = path;
+                            thumbnail.alt = 'History Image';
+                            thumbnail.className = 'size-12 rounded-lg object-cover cursor-pointer border border-border-light dark:border-border-dark hover:border-primary transition-colors';
+                            thumbnail.onclick = () => restoreImage(path);
+                            container.appendChild(thumbnail);
+                        });
+                    } else {
+                        container.innerHTML = '<span class="text-sm text-text-light/60 dark:text-text-dark/60">아직 저장된 히스토리가 없습니다.</span>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading history:', error);
+                    if (loadingMsg) {
+                        loadingMsg.innerText = '히스토리 로드 중 오류가 발생했습니다.';
+                        loadingMsg.className = 'text-sm text-red-500';
+                    }
+                });
+        }
+
+        function restoreImage(path) {
+            fetch(RESTORE_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imagePath: path })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('복원 실패: ' + (data.message || '알 수 없는 오류'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Restore Error:', error);
+                    alert('프로필 복원 중 통신 오류가 발생했습니다.');
+                });
+        }
+
+        document.getElementById('profileImage').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('profileImage', file);
+
+            fetch(UPLOAD_API, {
+                method: 'POST',
+                body: formData,
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const newWebUrl = data.newPath;
+                        const mainImg = document.querySelector('img[class*="size-24"]');
+                        if (mainImg) {
+                            mainImg.src = newWebUrl + "?t=" + new Date().getTime();
+                        }
+                        loadHistory();
+                    } else {
+                        alert('업로드 실패: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Upload Error:', error);
+                    alert('파일 업로드 중 통신 오류가 발생했습니다.');
+                })
+        });
+    </script>
+</body>
+
+</html>

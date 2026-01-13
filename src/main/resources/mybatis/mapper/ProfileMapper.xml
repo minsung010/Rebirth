@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rebirth.my.mapper.ProfileMapper">
+
+    <insert id="insertProfileHistory" parameterType="map">
+        INSERT INTO PROFILE_IMAGE_HISTORY (
+            HIST_ID,
+            USER_ID,
+            IMAGE_PATH,
+            UPLOADED_AT
+        )
+        VALUES (
+            SEQ_PROFILE_IMAGE_HISTORY.NEXTVAL,
+            #{userId},
+            #{imagePath},
+            SYSDATE
+        )
+    </insert>
+ 
+    <delete id="deleteOldestHistory" parameterType="long">
+        DELETE FROM PROFILE_IMAGE_HISTORY
+        WHERE USER_ID = #{userId}
+          AND HIST_ID IN (
+              SELECT HIST_ID
+              FROM (
+                  SELECT HIST_ID,
+                         ROW_NUMBER() OVER (ORDER BY UPLOADED_AT DESC) AS rn
+                  FROM PROFILE_IMAGE_HISTORY
+                  WHERE USER_ID = #{userId}
+              )
+              WHERE rn > 5
+          )
+    </delete>
+
+    <select id="selectRecentImageHistory" parameterType="long" resultType="String">
+        SELECT IMAGE_PATH
+        FROM (
+            SELECT IMAGE_PATH,
+                   ROW_NUMBER() OVER (ORDER BY UPLOADED_AT DESC) AS rn
+            FROM PROFILE_IMAGE_HISTORY
+            WHERE USER_ID = #{userId}
+        )
+        WHERE rn <![CDATA[ <= ]]> 5
+        ORDER BY rn ASC
+    </select>
+
+    <update id="updateUserProfileImage" parameterType="map">
+        UPDATE USERS
+        SET MEM_IMG = #{imagePath}
+        WHERE 	ID = #{userId}
+    </update>
+    
+        <select id="selectUserById" parameterType="long" resultType="com.rebirth.my.domain.User">
+			    SELECT ID, LOGIN_ID, NAME, EMAIL, PHONE, PASSWORD, ADDRESS, BIRTH_DATE, ROLE, STATUS, MEM_IMG, EMAIL_VERIF_STATUS, WITHDRAWAL_AT,CREATED_AT,UPDATED_AT
+			    FROM USERS
+			    WHERE ID = #{userId}
+			</select>
+
+		<update id="updateUserProfileAvatar">
+		    UPDATE USER_PROFILES 
+		    SET AVATAR_URL = #{imagePath} 
+		    WHERE USER_ID = #{userId}
+		</update>
+
+</mapper>

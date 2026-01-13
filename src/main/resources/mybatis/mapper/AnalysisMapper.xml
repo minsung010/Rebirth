@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.analysis.AnalysisDao">
+
+    <insert id="insertAnalysis" parameterType="com.rebirth.my.analysis.AnalysisVo">
+        /* AnalysisDao.insertAnalysis */
+        INSERT INTO ANALYSIS_TB (
+            ID, IMAGE_URL, RESULT
+        ) VALUES (
+            #{id}, #{imageUrl}, #{result}
+        )
+    </insert>
+
+    <select id="selectAnalysisList" resultType="com.rebirth.my.analysis.AnalysisVo">
+        /* AnalysisDao.selectAnalysisList */
+        SELECT
+            ID,
+            IMAGE_URL,
+            RESULT
+        FROM ANALYSIS_TB
+    </select>
+</mapper>

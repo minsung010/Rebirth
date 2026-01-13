@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center py-24 px-4">
+        <div class="w-full max-w-md animate-fade-in-up">
+
+            <div
+                class="bg-card-light dark:bg-card-dark rounded-3xl p-8 border border-border-light dark:border-border-dark shadow-xl relative overflow-hidden">
+                <!-- Decorative Background -->
+                <div
+                    class="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2">
+                </div>
+
+                <!-- Logo & Title -->
+                <div class="text-center mb-8 relative">
+                    <div
+                        class="size-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="material-symbols-outlined text-red-500 text-3xl">warning</span>
+                    </div>
+                    <h1 class="text-2xl font-bold">회원 탈퇴 신청</h1>
+                    <p class="text-text-light/60 dark:text-text-dark/60 text-sm mt-1">탈퇴를 진행하시려면 비밀번호를 입력해주세요.</p>
+                </div>
+
+                <!-- Info Box -->
+                <div
+                    class="bg-gray-50 dark:bg-background-dark rounded-xl p-4 mb-6 border border-border-light dark:border-border-dark">
+                    <ul class="text-xs text-text-light/70 dark:text-text-dark/70 space-y-2">
+                        <li class="flex gap-2">
+                            <span class="text-red-500">•</span>
+                            <span>탈퇴 신청 시 3일간의 유예 기간이 부여됩니다.</span>
+                        </li>
+                        <li class="flex gap-2">
+                            <span class="text-red-500">•</span>
+                            <span>3일 이내에는 언제든지 탈퇴를 취소하실 수 있습니다.</span>
+                        </li>
+                        <li class="flex gap-2">
+                            <span class="text-red-500">•</span>
+                            <span>3일 경과 후에는 모든 정보가 <strong>영구 삭제</strong>됩니다.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Withdrawal Form -->
+                <form class="space-y-4 relative" action="/mypage/withdraw" method="post" id="withdrawForm">
+                    <div class="space-y-1">
+                        <label for="password"
+                            class="text-xs font-bold text-text-light/50 dark:text-text-dark/50 ml-1">비밀번호 확인</label>
+                        <input type="password" id="password" name="password" placeholder="현재 비밀번호 입력" required
+                            class="w-full h-12 px-4 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-red-500/50 outline-none transition-all">
+                    </div>
+
+                    <!-- Error Message -->
+                    <div th:if="${error}" class="text-red-500 text-sm font-bold text-center">
+                        <span th:text="${error}"></span>
+                    </div>
+
+                    <div class="flex gap-3 mt-6">
+                        <a href="/mypage"
+                            class="flex-1 h-12 flex items-center justify-center rounded-xl border border-border-light dark:border-border-dark font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            취소
+                        </a>
+                        <button type="button" onclick="confirmWithdraw()"
+                            class="flex-1 h-12 bg-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 hover:bg-red-600 transition-all hover:scale-[1.02] active:scale-95">
+                            탈퇴 신청
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <script>
+        function confirmWithdraw() {
+            if (confirm("정말로 탈퇴 신청을 하시겠습니까? \n3일 후 모든 정보가 삭제되며, 그 전까지는 취소가 가능합니다.")) {
+                document.getElementById('withdrawForm').submit();
+            }
+        }
+    </script>
+</body>
+
+</html>

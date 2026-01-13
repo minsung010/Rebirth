@@ -1,0 +1,1374 @@
+﻿<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body class="font-display bg-[#f5f5f5] dark:bg-background-dark text-text-light dark:text-text-dark overflow-hidden">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <main class="pt-20 h-screen flex flex-col" id="mainContent">
+        <!-- Search & Filter Bar -->
+        <div class="bg-white dark:bg-card-dark border-b border-gray-200 dark:border-gray-800 px-8 py-4">
+            <div class="max-w-[1600px] mx-auto flex flex-wrap items-center gap-4">
+                <!-- Search Input -->
+                <div class="flex-1 min-w-[300px] relative">
+                    <span
+                        class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                    <input type="text" id="searchInput" placeholder="찾으시는 의류를 검색해보세요 (예: 원피스)"
+                        class="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                </div>
+
+                <!-- Filter Dropdowns -->
+                <div class="flex items-center gap-3 flex-wrap">
+                    <!-- Category Filter -->
+                    <div class="relative">
+                        <button onclick="toggleDropdown('categoryDropdown')"
+                            class="flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-primary transition-all">
+                            <span class="material-symbols-outlined text-lg">checkroom</span>
+                            <span id="categoryLabel">카테고리</span>
+                            <span class="material-symbols-outlined text-sm">expand_more</span>
+                        </button>
+                        <div id="categoryDropdown"
+                            class="hidden absolute top-full left-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                            <button onclick="setCategory('전체')"
+                                class="w-full px-4 py-2.5 text-left hover:bg-primary/10 hover:text-primary transition-colors">전체</button>
+                            <button onclick="setCategory('상의')"
+                                class="w-full px-4 py-2.5 text-left hover:bg-primary/10 hover:text-primary transition-colors">상의</button>
+                            <button onclick="setCategory('하의')"
+                                class="w-full px-4 py-2.5 text-left hover:bg-primary/10 hover:text-primary transition-colors">하의</button>
+                            <button onclick="setCategory('아우터')"
+                                class="w-full px-4 py-2.5 text-left hover:bg-primary/10 hover:text-primary transition-colors">아우터</button>
+                        </div>
+                    </div>
+
+                    <!-- Distance Filter -->
+                    <div class="relative">
+                        <button onclick="toggleDropdown('distanceDropdown')"
+                            class="flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-primary transition-all">
+                            <span class="material-symbols-outlined text-lg">location_on</span>
+                            <span id="distanceLabel">거리</span>
+                            <span class="material-symbols-outlined text-sm">expand_more</span>
+                        </button>
+                        <div id="distanceDropdown"
+                            class="hidden absolute top-full left-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                            <button onclick="setDistance(0)"
+                                class="w-full px-4 py-2.5 text-left hover:bg-primary/10 hover:text-primary transition-colors">전체</button>
+                            <button onclick="setDistance(1)"
+                                class="w-full px-4 py-2.5 text-left hover:bg-primary/10 hover:text-primary transition-colors">1km
+                                이내</button>
+                            <button onclick="setDistance(3)"
+                                class="w-full px-4 py-2.5 text-left hover:bg-primary/10 hover:text-primary transition-colors">3km
+                                이내</button>
+                            <button onclick="setDistance(5)"
+                                class="w-full px-4 py-2.5 text-left hover:bg-primary/10 hover:text-primary transition-colors">5km
+                                이내</button>
+                            <button onclick="setDistance(10)"
+                                class="w-full px-4 py-2.5 text-left hover:bg-primary/10 hover:text-primary transition-colors">10km
+                                이내</button>
+                        </div>
+                    </div>
+
+                    <!-- My Items Filter -->
+                    <label
+                        class="flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer hover:border-primary transition-all">
+                        <input type="checkbox" id="myItemsOnly" onchange="filterItems()" class="w-4 h-4 accent-primary">
+                        <span class="text-sm font-medium">내 상품만</span>
+                    </label>
+
+                    <!-- Register Button -->
+                    <a href="/market/register"
+                        class="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        판매 등록
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content: Dynamic Layout -->
+        <div class="flex-1 overflow-hidden px-8 pb-6 transition-all duration-300" id="contentWrapper">
+            <!-- Default Layout: Map (left) + Product List (right) - shown by default -->
+            <div id="defaultLayout" class="flex w-full max-w-[1600px] mx-auto h-full gap-6 transition-all duration-300">
+                <!-- Map Container (Left) -->
+                <div id="mapContainerDefault"
+                    class="w-3/5 relative rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300">
+                    <div id="map" class="w-full h-full"></div>
+                    <!-- Refresh Button -->
+                    <button onclick="location.reload()"
+                        class="absolute top-4 left-1/2 -translate-x-1/2 px-5 py-2.5 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all z-10">
+                        <span class="material-symbols-outlined text-primary">refresh</span>
+                        <span class="font-medium">이 지역에서 다시 검색</span>
+                    </button>
+                    <!-- My Location Button -->
+                    <button onclick="showMyLocation()"
+                        class="absolute bottom-4 right-4 px-3 py-2.5 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all z-10 group"
+                        title="내 위치 보기">
+                        <span
+                            class="material-symbols-outlined text-blue-500 group-hover:text-blue-600">my_location</span>
+                    </button>
+                    <!-- Distance Radius Info -->
+                    <div id="distanceRadiusInfo"
+                        class="hidden absolute bottom-4 left-4 px-4 py-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+                        <p class="text-sm font-medium flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-blue-400/50 border border-blue-500"></span>
+                            <span id="radiusInfoText">반경 표시 중</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Product List Container (Right) -->
+                <div id="productListContainer"
+                    class="w-2/5 bg-white dark:bg-card-dark rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden transition-all duration-300">
+                    <!-- List Header -->
+                    <div
+                        class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
+                        <h2 class="text-lg font-bold">
+                            이 지역 의류 (<span id="itemCount" th:text="${#lists.size(items)}">0</span>)
+                        </h2>
+                        <select id="sortOrder" onchange="sortItems()"
+                            class="px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
+                            <option value="latest">최신순</option>
+                            <option value="distance">거리순</option>
+                            <option value="price_low">가격 낮은순</option>
+                            <option value="price_high">가격 높은순</option>
+                        </select>
+                    </div>
+
+                    <!-- Product List (Scrollable) -->
+                    <div class="flex-1 overflow-y-auto" id="productList">
+                        <!-- Item Cards -->
+                        <div th:each="item, iterStat : ${items}" th:id="'item-' + ${item.id}" th:data-id="${item.id}"
+                            th:data-seller-id="${item.userId}" th:data-seller-name="${item.sellerName}"
+                            th:data-name="${item.name}" th:data-price="${item.targetPrice}"
+                            th:data-category="${item.category}" th:data-lat="${item.latitude}"
+                            th:data-lng="${item.longitude}" th:data-distance="${item.distance}"
+                            th:data-image="${item.imageUrl}" th:data-status="${item.status}"
+                            th:data-trade-location="${item.tradeLocation}" onclick="selectItem(this)"
+                            class="item-card flex flex-col border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all">
+
+                            <!-- 기본 정보 (항상 표시) -->
+                            <div class="flex gap-4 p-4">
+                                <!-- Thumbnail -->
+                                <div class="relative w-20 h-20 flex-shrink-0">
+                                    <img th:if="${item.imageUrl != null}" th:src="${item.imageUrl}"
+                                        class="w-full h-full object-cover rounded-xl border border-gray-200 dark:border-gray-700">
+                                    <div th:unless="${item.imageUrl != null}"
+                                        class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl">
+                                        <span class="material-symbols-outlined text-2xl text-gray-400">checkroom</span>
+                                    </div>
+                                    <!-- Sold Overlay -->
+                                    <div th:if="${item.status == 'SOLD'}"
+                                        class="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center">
+                                        <span class="text-white text-xs font-bold">SOLD</span>
+                                    </div>
+                                </div>
+
+                                <!-- Info -->
+                                <div class="flex-1 min-w-0">
+                                    <span
+                                        class="inline-block px-2 py-0.5 text-[10px] font-bold rounded mb-1 bg-primary/10 text-primary">판매</span>
+                                    <h3 th:text="${item.name}" class="font-semibold text-sm line-clamp-1 mb-0.5">상품명
+                                    </h3>
+                                    <p class="text-primary font-bold"
+                                        th:text="${#numbers.formatInteger(item.targetPrice, 0, 'COMMA') + '원'}">10,000원
+                                    </p>
+                                    <p th:if="${item.distance != null}" class="text-xs text-gray-400 mt-1"
+                                        th:text="${item.distance} + 'km 거리'">1.2km 거리</p>
+                                </div>
+
+                                <!-- Wish -->
+                                <div class="flex flex-col items-end justify-between">
+                                    <span class="flex items-center gap-1 text-xs text-gray-400">
+                                        <span class="material-symbols-outlined text-sm"
+                                            th:style="${item.isWished} ? 'font-variation-settings: \'FILL\' 1; color: #ef4444;' : ''">favorite</span>
+                                        <span th:text="${item.wishCount}">0</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- 확장 정보 (선택 시 표시) -->
+                            <div
+                                class="expanded-details hidden bg-gradient-to-b from-primary/5 to-transparent px-4 pb-4">
+                                <!-- 거리 및 거래 장소 정보 -->
+                                <div class="mb-3 space-y-1">
+                                    <p
+                                        class="detail-distance text-sm text-blue-600 font-semibold flex items-center gap-1 hidden">
+                                        <span class="material-symbols-outlined text-sm">directions_walk</span>
+                                        <span class="distance-text"></span>
+                                    </p>
+                                    <p class="detail-trade-location text-sm text-gray-600 flex items-center gap-1">
+                                        <span
+                                            class="material-symbols-outlined text-sm text-green-600">location_on</span>
+                                        <span class="trade-location-text"></span>
+                                    </p>
+                                </div>
+                                <!-- Action Buttons -->
+                                <div class="flex gap-3">
+                                    <a href="#"
+                                        class="detail-chat-btn flex-1 py-2.5 bg-primary text-white rounded-xl font-semibold text-center hover:bg-primary/90 transition-all flex items-center justify-center gap-2 text-sm">
+                                        <span class="material-symbols-outlined text-lg">chat</span>
+                                        채팅하기
+                                    </a>
+                                    <a href="#"
+                                        class="detail-view-btn flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-all flex items-center justify-center gap-2 text-sm">
+                                        <span class="material-symbols-outlined text-lg">visibility</span>
+                                        상세보기
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div th:if="${#lists.isEmpty(items)}"
+                            class="flex flex-col items-center justify-center py-20 text-gray-400">
+                            <span class="material-symbols-outlined text-6xl mb-4">storefront</span>
+                            <p class="text-lg font-medium">등록된 상품이 없습니다</p>
+                            <p class="text-sm">첫 번째 판매자가 되어보세요!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Layout: Map (left) + Product List & Chat (right stacked) -->
+            <div id="chatLayout" class="hidden w-full max-w-[1600px] mx-auto h-full gap-4 transition-all duration-300">
+                <!-- Left: Map Container (same position as default) -->
+                <div id="mapContainerChat"
+                    class="w-3/5 relative rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700">
+                    <!-- Map will be moved here when chat is open -->
+                </div>
+
+                <!-- Right: Product List (top) + Chat (bottom) -->
+                <div class="w-2/5 flex flex-col gap-4">
+                    <!-- Product List (top half) -->
+                    <div id="productListCompact"
+                        class="flex-1 bg-white dark:bg-card-dark rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+                        <!-- List Header -->
+                        <div
+                            class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
+                            <h2 class="text-base font-bold">
+                                상품 목록 (<span id="itemCountCompact">0</span>)
+                            </h2>
+                        </div>
+                        <!-- Compact Product List -->
+                        <div class="flex-1 overflow-y-auto" id="productListCompactItems">
+                            <!-- Items will be cloned here -->
+                        </div>
+                    </div>
+
+                    <!-- Chat Panel (bottom half) -->
+                    <div id="chatPanel"
+                        class="flex-1 bg-white dark:bg-card-dark rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+                        <!-- Chat Header -->
+                        <div
+                            class="p-3 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-primary/10 to-purple-500/10 flex justify-between items-center shrink-0">
+                            <div class="flex items-center gap-3">
+                                <div id="chatPartnerAvatar"
+                                    class="size-9 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-sm font-bold overflow-hidden">
+                                    <span id="chatPartnerInitial">U</span>
+                                </div>
+                                <div>
+                                    <h3 id="chatPartnerName" class="font-bold text-sm">상대방</h3>
+                                    <p class="text-xs text-gray-500">판매자와 채팅</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div id="chatConnectionStatus"
+                                    class="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-600">
+                                    연결 중...
+                                </div>
+                                <button onclick="closeChatPanel()"
+                                    class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                                    title="채팅 닫기">
+                                    <span class="material-symbols-outlined text-gray-500">close</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Chat Messages Area -->
+                        <div id="chatMessagesArea"
+                            class="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50/50 dark:bg-gray-900/30">
+                            <div class="text-center text-xs text-gray-400 my-4">
+                                채팅을 시작하세요!
+                            </div>
+                        </div>
+
+                        <!-- Chat Input Area -->
+                        <div
+                            class="p-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-card-dark shrink-0">
+                            <form id="inlineChatForm" class="flex gap-2">
+                                <input type="text" id="inlineChatInput" placeholder="메시지를 입력하세요..." autocomplete="off"
+                                    class="flex-grow px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-primary transition-colors text-sm">
+                                <button type="submit"
+                                    class="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold transition-colors flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-lg">send</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Kakao Map SDK -->
+    <script
+        th:src="@{'//dapi.kakao.com/v2/maps/sdk.js?appkey=' + ${kakaoMapsAppKey} + '&libraries=services,clusterer'}"></script>
+
+    <!-- SockJS & STOMP for Inline Chat -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Data from server
+        const items = /*[[${items}]]*/[];
+        const userAddress = /*[[${userAddress}]]*/ null;
+        const currentUserId = /*[[${userId}]]*/ null;
+        const currentUsername = /*[[${currentUsername}]]*/ null;
+
+        let map;
+        let markers = [];
+        let selectedItemId = null;
+        let currentCategory = '전체';
+        let currentDistance = 0;
+
+        // 내 위치 관련 변수
+        let myLocationMarker = null;
+        let myLocationLat = null;
+        let myLocationLng = null;
+        let distanceCircle = null; // 거리 반경 원
+
+        // Initialize Map
+        document.addEventListener('DOMContentLoaded', function () {
+            initMap();
+            geocodeAllItems(); // 모든 상품의 거래장소를 위경도로 변환
+        });
+
+        // 모든 상품의 tradeLocation을 위경도로 변환
+        function geocodeAllItems() {
+            if (!geocoder) {
+                geocoder = new kakao.maps.services.Geocoder();
+            }
+            const ps = new kakao.maps.services.Places();
+
+            document.querySelectorAll('.item-card').forEach(card => {
+                const tradeLocation = card.dataset.tradeLocation;
+                if (!tradeLocation || tradeLocation.trim() === '') return;
+
+                // 괄호 안 주소 추출
+                const addressMatch = tradeLocation.match(/\(([^)]+)\)/);
+                const searchAddress = addressMatch ? addressMatch[1] : tradeLocation;
+
+                // Places API로 검색
+                ps.keywordSearch(searchAddress, function (data, status) {
+                    if (status === kakao.maps.services.Status.OK && data.length > 0) {
+                        card.dataset.lat = data[0].y;
+                        card.dataset.lng = data[0].x;
+                        console.log('[Geocode]', card.dataset.name, '->', data[0].y, data[0].x);
+                    } else {
+                        // 주소 검색 시도
+                        geocoder.addressSearch(searchAddress, function (result, status) {
+                            if (status === kakao.maps.services.Status.OK && result.length > 0) {
+                                card.dataset.lat = result[0].y;
+                                card.dataset.lng = result[0].x;
+                                console.log('[Geocode]', card.dataset.name, '->', result[0].y, result[0].x);
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        function initMap() {
+            const mapContainer = document.getElementById('map');
+            const mapOption = {
+                center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울 기본값
+                level: 7
+            };
+            map = new kakao.maps.Map(mapContainer, mapOption);
+
+            // 사용자 주소로 중심점 설정 및 내 위치 좌표 저장
+            if (userAddress) {
+                const geocoder = new kakao.maps.services.Geocoder();
+                geocoder.addressSearch(userAddress, function (result, status) {
+                    if (status === kakao.maps.services.Status.OK) {
+                        const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                        map.setCenter(coords);
+                        map.setLevel(5);
+
+                        // 내 위치 좌표 저장 (거리 계산용)
+                        myLocationLat = parseFloat(result[0].y);
+                        myLocationLng = parseFloat(result[0].x);
+
+                        // 페이지 로드 시 내 위치 마커 자동 표시
+                        showMyLocationMarker(coords);
+                    }
+                });
+            }
+
+            // 마커 표시 (페이지 로드 시 숨김)
+            // displayMarkers();
+
+            // 지도 이동 이벤트
+            kakao.maps.event.addListener(map, 'dragend', function () {
+                // 지도 이동 시 "이 지역에서 다시 검색" 버튼 활성화
+            });
+        }
+
+        function displayMarkers() {
+            // 기존 마커 제거
+            markers.forEach(m => m.setMap(null));
+            markers = [];
+
+            items.forEach(item => {
+                if (item.latitude && item.longitude) {
+                    const position = new kakao.maps.LatLng(item.latitude, item.longitude);
+
+                    // 커스텀 마커 이미지
+                    const markerImage = new kakao.maps.MarkerImage(
+                        'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="45" viewBox="0 0 36 45">
+                                <path d="M18 0C8.06 0 0 8.06 0 18c0 12.63 16.18 25.78 16.87 26.37a2 2 0 0 0 2.26 0C19.82 43.78 36 30.63 36 18 36 8.06 27.94 0 18 0z" fill="#8B5CF6"/>
+                                <circle cx="18" cy="18" r="8" fill="white"/>
+                            </svg>
+                        `),
+                        new kakao.maps.Size(36, 45),
+                        { offset: new kakao.maps.Point(18, 45) }
+                    );
+
+                    const marker = new kakao.maps.Marker({
+                        position: position,
+                        map: map,
+                        image: markerImage,
+                        title: item.name
+                    });
+
+                    // 마커 클릭 이벤트
+                    kakao.maps.event.addListener(marker, 'click', function () {
+                        const itemEl = document.getElementById('item-' + item.id);
+                        if (itemEl) {
+                            selectItem(itemEl);
+                            itemEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+
+                    marker.itemId = item.id;
+                    markers.push(marker);
+                }
+            });
+
+            // 마커가 있으면 범위에 맞게 지도 조정
+            if (markers.length > 0 && !userAddress) {
+                const bounds = new kakao.maps.LatLngBounds();
+                markers.forEach(m => bounds.extend(m.getPosition()));
+                map.setBounds(bounds);
+            }
+        }
+
+        let tradeLocationMarker = null; // 희망 거래 장소 마커
+        let tradeLocationInfoWindow = null; // 희망 거래 장소 인포윈도우
+        let geocoder = null;
+        let noLocationOverlay = null; // 거래 장소 없음 안내 오버레이
+
+        // 모든 거래 장소 관련 오버레이/마커 제거
+        function clearAllTradeLocationUI() {
+            if (tradeLocationMarker) {
+                tradeLocationMarker.setMap(null);
+                tradeLocationMarker = null;
+            }
+            if (tradeLocationInfoWindow) {
+                tradeLocationInfoWindow.close();
+                tradeLocationInfoWindow = null;
+            }
+            if (noLocationOverlay) {
+                noLocationOverlay.setMap(null);
+                noLocationOverlay = null;
+            }
+        }
+
+        // 두 좌표 사이의 거리 계산 (Haversine 공식, km 단위 반환)
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371; // 지구 반지름 (km)
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // 거래 장소 주소로 거리 계산
+        function calculateDistanceFromTradeLocation(location, distanceEl, distanceText) {
+            if (!geocoder) {
+                geocoder = new kakao.maps.services.Geocoder();
+            }
+
+            // 괄호 안 주소 추출
+            const addressMatch = location.match(/\(([^)]+)\)/);
+            const searchAddress = addressMatch ? addressMatch[1] : location;
+
+            // Places API로 검색
+            const ps = new kakao.maps.services.Places();
+            ps.keywordSearch(searchAddress, function (data, status) {
+                if (status === kakao.maps.services.Status.OK && data.length > 0) {
+                    const tradeLat = parseFloat(data[0].y);
+                    const tradeLng = parseFloat(data[0].x);
+                    const dist = calculateDistance(myLocationLat, myLocationLng, tradeLat, tradeLng).toFixed(1);
+                    distanceText.textContent = '내 위치에서 약 ' + dist + 'km';
+                    distanceEl.classList.remove('hidden');
+                } else {
+                    // 주소 검색 시도
+                    geocoder.addressSearch(searchAddress, function (result, status) {
+                        if (status === kakao.maps.services.Status.OK && result.length > 0) {
+                            const tradeLat = parseFloat(result[0].y);
+                            const tradeLng = parseFloat(result[0].x);
+                            const dist = calculateDistance(myLocationLat, myLocationLng, tradeLat, tradeLng).toFixed(1);
+                            distanceText.textContent = '내 위치에서 약 ' + dist + 'km';
+                            distanceEl.classList.remove('hidden');
+                        } else {
+                            distanceEl.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+        }
+
+        function selectItem(element) {
+            const id = element.dataset.id;
+            const sellerId = element.dataset.sellerId;
+            const sellerName = element.dataset.sellerName;
+            const name = element.dataset.name;
+            const price = parseInt(element.dataset.price).toLocaleString() + '원';
+            const image = element.dataset.image;
+            const distance = element.dataset.distance;
+            const lat = parseFloat(element.dataset.lat);
+            const lng = parseFloat(element.dataset.lng);
+            const tradeLocation = element.dataset.tradeLocation;
+
+            // 모든 카드의 확장 영역 닫기 및 선택 스타일 제거
+            document.querySelectorAll('.item-card').forEach(el => {
+                el.classList.remove('bg-primary/5', 'border-l-4', 'border-l-primary');
+                el.querySelector('.expanded-details').classList.add('hidden');
+            });
+
+            // 클릭한 카드 선택 스타일 적용 및 확장 영역 열기
+            element.classList.add('bg-primary/5', 'border-l-4', 'border-l-primary');
+            const expandedDetails = element.querySelector('.expanded-details');
+            expandedDetails.classList.remove('hidden');
+
+            // 해당 카드 내부의 요소들 업데이트
+            const distanceEl = expandedDetails.querySelector('.detail-distance');
+            const distanceText = distanceEl.querySelector('.distance-text');
+
+            // 내 위치가 설정되어 있고, 거래 장소나 판매자 위치가 있으면 거리 계산
+            if (myLocationLat && myLocationLng) {
+                if (tradeLocation && tradeLocation.trim()) {
+                    // 거래 장소 위경도 검색 후 거리 계산
+                    calculateDistanceFromTradeLocation(tradeLocation, distanceEl, distanceText);
+                } else if (lat && lng) {
+                    // 판매자 위치 기반 거리 계산
+                    const dist = calculateDistance(myLocationLat, myLocationLng, lat, lng).toFixed(1);
+                    distanceText.textContent = '내 위치에서 약 ' + dist + 'km';
+                    distanceEl.classList.remove('hidden');
+                } else {
+                    distanceEl.classList.add('hidden');
+                }
+            } else if (distance) {
+                // 서버에서 계산된 거리 사용
+                distanceText.textContent = '약 ' + distance + 'km 거리';
+                distanceEl.classList.remove('hidden');
+            } else {
+                distanceEl.classList.add('hidden');
+            }
+
+            // 거래 희망 장소 표시
+            const tradeLocationEl = expandedDetails.querySelector('.detail-trade-location');
+            const tradeLocationText = tradeLocationEl.querySelector('.trade-location-text');
+            const locationIcon = tradeLocationEl.querySelector('.material-symbols-outlined');
+            if (tradeLocation && tradeLocation.trim()) {
+                tradeLocationText.textContent = tradeLocation;
+                tradeLocationEl.classList.remove('hidden');
+                locationIcon.classList.remove('text-amber-500');
+                locationIcon.classList.add('text-green-600');
+            } else {
+                tradeLocationText.textContent = '거래 희망 장소 미설정';
+                tradeLocationEl.classList.remove('hidden');
+                locationIcon.classList.remove('text-green-600');
+                locationIcon.classList.add('text-amber-500');
+            }
+
+            // 버튼 링크 설정
+            expandedDetails.querySelector('.detail-view-btn').href = '/market/detail/' + id;
+
+            // 내 상품이면 채팅 버튼 숨김
+            const chatBtn = expandedDetails.querySelector('.detail-chat-btn');
+            if (currentUserId && sellerId && String(currentUserId) === String(sellerId)) {
+                chatBtn.classList.add('hidden');
+            } else {
+                chatBtn.classList.remove('hidden');
+                chatBtn.href = '/chat/room?targetUserId=' + sellerId + '&itemId=' + id;
+            }
+
+            // 기존 거래 장소 UI 모두 제거 (마커, 인포윈도우, 오버레이)
+            clearAllTradeLocationUI();
+
+            // 희망 거래 장소가 있으면 지도에 표시
+            if (tradeLocation && tradeLocation.trim()) {
+                showTradeLocationOnMap(tradeLocation);
+            } else {
+                // 거래 장소가 없으면 안내 메시지 표시
+                showNoTradeLocationMessage();
+
+                // 판매자 위치가 있으면 해당 위치로 이동
+                if (lat && lng) {
+                    const position = new kakao.maps.LatLng(lat, lng);
+                    map.setCenter(position);
+                    map.setLevel(4);
+                }
+            }
+
+            selectedItemId = id;
+        }
+
+        function showTradeLocationOnMap(location) {
+            console.log('[거래장소] 검색 시작:', location);
+
+            // 기존 '거래 장소 없음' 오버레이 제거
+            if (noLocationOverlay) {
+                noLocationOverlay.setMap(null);
+                noLocationOverlay = null;
+            }
+
+            if (!geocoder) {
+                geocoder = new kakao.maps.services.Geocoder();
+            }
+
+            // 괄호 안의 주소 추출 (예: "시청역 대전1호선 2번출구 (대전 시구 둔산동 1545)" -> "대전 시구 둔산동 1545")
+            let searchKeyword = location;
+            const addressMatch = location.match(/\(([^)]+)\)/);
+            const extractedAddress = addressMatch ? addressMatch[1] : null;
+
+            // 괄호 앞 장소명 추출 (예: "시청역 대전1호선 2번출구 (대전 서구 둔산동 1545)" -> "시청역 대전1호선 2번출구")
+            const displayName = addressMatch ? location.replace(/\s*\([^)]+\)/, '').trim() : location;
+
+            // 장소명으로 검색 시도
+            const ps = new kakao.maps.services.Places();
+            ps.keywordSearch(searchKeyword, function (data, status) {
+                console.log('[거래장소] 키워드 검색 결과:', status, data);
+
+                if (status === kakao.maps.services.Status.OK && data.length > 0) {
+                    showTradeLocationMarker(data[0].y, data[0].x, displayName);
+                } else if (extractedAddress) {
+                    // 괄호 안 주소로 재검색
+                    console.log('[거래장소] 괄호 안 주소로 재검색:', extractedAddress);
+                    geocoder.addressSearch(extractedAddress, function (result, status) {
+                        console.log('[거래장소] 주소 검색 결과:', status, result);
+                        if (status === kakao.maps.services.Status.OK && result.length > 0) {
+                            showTradeLocationMarker(result[0].y, result[0].x, displayName);
+                        } else {
+                            // 키워드 없이 괄호 안 내용으로 장소 검색
+                            ps.keywordSearch(extractedAddress, function (data2, status2) {
+                                if (status2 === kakao.maps.services.Status.OK && data2.length > 0) {
+                                    showTradeLocationMarker(data2[0].y, data2[0].x, displayName);
+                                } else {
+                                    showTradeLocationSearchFailed(location);
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    // 주소 형식으로 검색
+                    geocoder.addressSearch(location, function (result, status) {
+                        console.log('[거래장소] 주소 검색 결과:', status, result);
+                        if (status === kakao.maps.services.Status.OK && result.length > 0) {
+                            showTradeLocationMarker(result[0].y, result[0].x, displayName);
+                        } else {
+                            showTradeLocationSearchFailed(location);
+                        }
+                    });
+                }
+            });
+        }
+
+        function showTradeLocationMarker(lat, lng, placeName) {
+            const latlng = new kakao.maps.LatLng(lat, lng);
+
+            // 거래 장소 마커 생성 (티셔츠 아이콘)
+            const markerImage = new kakao.maps.MarkerImage(
+                'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 512 512">
+                        <path d="M434.5 52.5L337 1.4a22.9 22.9 0 0 0-21.5 1.9c-14.6 9.8-35.3 19.7-59.5 19.7s-44.9-9.9-59.5-19.7A22.9 22.9 0 0 0 175 1.4L77.5 52.5a23 23 0 0 0-11.9 25.8l28.2 98.7a23 23 0 0 0 22 16.7h30.5v295.3a23 23 0 0 0 23 23h174.6a23 23 0 0 0 23-23V193.7h30.5a23 23 0 0 0 22-16.7l28.2-98.7a23 23 0 0 0-11.9-25.8zM256 68.6c33.6 0 64.5-10.4 86-24.7l68.6 35.8l-22.1 77.5h-22.1V68.6a23 23 0 0 0-23-23a163.3 163.3 0 0 1-87.4-25a163.3 163.3 0 0 1-87.4 25a23 23 0 0 0-23 23v88.6h-22.1L101.4 79.7L170 43.9c21.5 14.3 52.4 24.7 86 24.7z" fill="#FF6347" stroke="#1E293B" stroke-width="12"/>
+                    </svg>
+                `),
+                new kakao.maps.Size(44, 34),
+                { offset: new kakao.maps.Point(22, 44) }
+            );
+
+            tradeLocationMarker = new kakao.maps.Marker({
+                position: latlng,
+                map: map,
+                image: markerImage,
+                title: '희망 거래 장소: ' + placeName
+            });
+
+            // 인포윈도우 표시 (전역 변수에 저장하여 나중에 제거 가능)
+            tradeLocationInfoWindow = new kakao.maps.InfoWindow({
+                content: '<div style="padding:8px 12px;font-size:12px;font-weight:bold;color:#10B981;white-space:nowrap;">📍 거래 장소: ' + placeName + '</div>'
+            });
+            tradeLocationInfoWindow.open(map, tradeLocationMarker);
+
+            // 지도 이동
+            map.setCenter(latlng);
+            map.setLevel(3);
+
+            console.log('[거래장소] 마커 표시 완료:', placeName);
+        }
+
+        function showTradeLocationSearchFailed(location) {
+            console.warn('[거래장소] 검색 실패:', location);
+
+            // 검색 실패 시 안내 오버레이 표시
+            const content = `
+                <div style="
+                    background: linear-gradient(135deg, #fee2e2, #fecaca);
+                    border: 2px solid #ef4444;
+                    border-radius: 12px;
+                    padding: 12px 20px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-family: 'Noto Sans KR', sans-serif;
+                ">
+                    <span style="font-size: 24px;">⚠️</span>
+                    <div>
+                        <p style="margin:0; font-weight: 700; color: #dc2626; font-size: 14px;">거래 장소를 지도에 표시할 수 없습니다</p>
+                        <p style="margin:0; color: #b91c1c; font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${location}</p>
+                    </div>
+                </div>
+            `;
+
+            noLocationOverlay = new kakao.maps.CustomOverlay({
+                content: content,
+                position: map.getCenter(),
+                xAnchor: 0.5,
+                yAnchor: 0.5,
+                zIndex: 100
+            });
+
+            noLocationOverlay.setMap(map);
+
+            // 5초 후 자동으로 사라짐
+            setTimeout(() => {
+                if (noLocationOverlay) {
+                    noLocationOverlay.setMap(null);
+                }
+            }, 5000);
+        }
+
+        function showNoTradeLocationMessage() {
+            // 기존 오버레이 제거
+            if (noLocationOverlay) {
+                noLocationOverlay.setMap(null);
+            }
+
+            // 지도 중앙에 오버레이 메시지 표시
+            const content = `
+                <div style="
+                    background: linear-gradient(135deg, #fef3c7, #fde68a);
+                    border: 2px solid #f59e0b;
+                    border-radius: 12px;
+                    padding: 12px 20px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-family: 'Noto Sans KR', sans-serif;
+                ">
+                    <span style="font-size: 24px;">📍</span>
+                    <div>
+                        <p style="margin:0; font-weight: 700; color: #92400e; font-size: 14px;">거래 희망 장소 미설정</p>
+                        <p style="margin:0; color: #b45309; font-size: 12px;">판매자에게 채팅으로 문의해주세요</p>
+                    </div>
+                </div>
+            `;
+
+            noLocationOverlay = new kakao.maps.CustomOverlay({
+                content: content,
+                position: map.getCenter(),
+                xAnchor: 0.5,
+                yAnchor: 0.5,
+                zIndex: 100
+            });
+
+            noLocationOverlay.setMap(map);
+
+            // 3초 후 자동으로 사라짐
+            setTimeout(() => {
+                if (noLocationOverlay) {
+                    noLocationOverlay.setMap(null);
+                }
+            }, 3000);
+        }
+
+        function toggleDropdown(id) {
+            const dropdown = document.getElementById(id);
+            document.querySelectorAll('[id$="Dropdown"]').forEach(d => {
+                if (d.id !== id) d.classList.add('hidden');
+            });
+            dropdown.classList.toggle('hidden');
+        }
+
+        function setCategory(category) {
+            currentCategory = category;
+            document.getElementById('categoryLabel').textContent = category === '전체' ? '카테고리' : category;
+            document.getElementById('categoryDropdown').classList.add('hidden');
+            filterItems();
+        }
+
+        function setDistance(km) {
+            currentDistance = km;
+            document.getElementById('distanceLabel').textContent = km === 0 ? '거리' : km + 'km';
+            document.getElementById('distanceDropdown').classList.add('hidden');
+
+            // 거리 반경 원 그리기/제거
+            drawDistanceCircle(km);
+
+            filterItems();
+        }
+
+        // 내 위치 마커만 표시 (페이지 로드용 - alert 없음)
+        function showMyLocationMarker(locPosition) {
+            // 기존 마커 제거
+            if (myLocationMarker) {
+                myLocationMarker.setMap(null);
+            }
+
+            // 내 위치 마커 생성 (보라색 핀 + 집 아이콘)
+            const markerImage = new kakao.maps.MarkerImage(
+                'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
+                        <defs>
+                            <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#E879F9"/>
+                                <stop offset="50%" style="stop-color:#A855F7"/>
+                                <stop offset="100%" style="stop-color:#7C3AED"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M20 0C9 0 0 9 0 20c0 14 18 28.5 18.7 29.2a2 2 0 0 0 2.6 0C22 48.5 40 34 40 20 40 9 31 0 20 0z" fill="url(#pinGrad)"/>
+                        <path d="M20 8 L10 16 L10 28 L16 28 L16 22 L24 22 L24 28 L30 28 L30 16 Z" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+                        <rect x="16" y="22" width="8" height="6" fill="none" stroke="white" stroke-width="2"/>
+                    </svg>
+                `),
+                new kakao.maps.Size(30, 40),
+                { offset: new kakao.maps.Point(20, 50) }
+            );
+
+            myLocationMarker = new kakao.maps.Marker({
+                position: locPosition,
+                map: map,
+                image: markerImage,
+                title: '내 위치: ' + userAddress
+            });
+
+            console.log('[내 위치] 페이지 로드 시 자동 표시 완료');
+        }
+
+        // 내 위치 표시 (등록된 주소 기반)
+        function showMyLocation() {
+            if (!userAddress) {
+                alert('등록된 주소가 없습니다. 마이페이지에서 주소를 등록해주세요.');
+                return;
+            }
+
+            // 등록된 주소를 좌표로 변환
+            if (!geocoder) {
+                geocoder = new kakao.maps.services.Geocoder();
+            }
+
+            geocoder.addressSearch(userAddress, function (result, status) {
+                if (status === kakao.maps.services.Status.OK) {
+                    myLocationLat = parseFloat(result[0].y);
+                    myLocationLng = parseFloat(result[0].x);
+
+                    const locPosition = new kakao.maps.LatLng(myLocationLat, myLocationLng);
+
+                    // 기존 마커 제거
+                    if (myLocationMarker) {
+                        myLocationMarker.setMap(null);
+                    }
+
+                    // 내 위치 마커 생성 (보라색 핀 + 집 아이콘)
+                    const markerImage = new kakao.maps.MarkerImage(
+                        'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
+                                <defs>
+                                    <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#E879F9"/>
+                                        <stop offset="50%" style="stop-color:#A855F7"/>
+                                        <stop offset="100%" style="stop-color:#7C3AED"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M20 0C9 0 0 9 0 20c0 14 18 28.5 18.7 29.2a2 2 0 0 0 2.6 0C22 48.5 40 34 40 20 40 9 31 0 20 0z" fill="url(#pinGrad)"/>
+                                <path d="M20 8 L10 16 L10 28 L16 28 L16 22 L24 22 L24 28 L30 28 L30 16 Z" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+                                <rect x="16" y="22" width="8" height="6" fill="none" stroke="white" stroke-width="2"/>
+                            </svg>
+                        `),
+                        new kakao.maps.Size(30, 40),
+                        { offset: new kakao.maps.Point(20, 50) }
+                    );
+
+                    myLocationMarker = new kakao.maps.Marker({
+                        position: locPosition,
+                        map: map,
+                        image: markerImage,
+                        title: '내 위치: ' + userAddress
+                    });
+
+                    // 지도 중심 이동
+                    map.setCenter(locPosition);
+                    map.setLevel(4);
+
+                    // 현재 거리 필터가 설정되어 있으면 원 그리기
+                    if (currentDistance > 0) {
+                        drawDistanceCircle(currentDistance);
+                    }
+
+                    console.log('[내 위치] 등록 주소 기반 설정 완료:', userAddress, myLocationLat, myLocationLng);
+                } else {
+                    console.error('[내 위치] 주소 검색 실패:', status);
+                    alert('등록된 주소를 지도에 표시할 수 없습니다.');
+                }
+            });
+        }
+
+        // 거리 반경 원 그리기
+        function drawDistanceCircle(km) {
+            // 기존 원 제거
+            if (distanceCircle) {
+                distanceCircle.setMap(null);
+                distanceCircle = null;
+            }
+
+            // 거리 정보 UI 업데이트
+            const radiusInfo = document.getElementById('distanceRadiusInfo');
+            const radiusText = document.getElementById('radiusInfoText');
+
+            if (km === 0) {
+                radiusInfo.classList.add('hidden');
+                return;
+            }
+
+            // 내 위치가 없으면 현재 지도 중심 사용
+            let centerLat = myLocationLat;
+            let centerLng = myLocationLng;
+
+            if (!centerLat || !centerLng) {
+                const center = map.getCenter();
+                centerLat = center.getLat();
+                centerLng = center.getLng();
+            }
+
+            const centerPosition = new kakao.maps.LatLng(centerLat, centerLng);
+
+            // 반경 원 그리기
+            distanceCircle = new kakao.maps.Circle({
+                center: centerPosition,
+                radius: km * 1000, // km를 m로 변환
+                strokeWeight: 2,
+                strokeColor: '#3B82F6',
+                strokeOpacity: 0.8,
+                strokeStyle: 'solid',
+                fillColor: '#3B82F6',
+                fillOpacity: 0.15
+            });
+
+            distanceCircle.setMap(map);
+
+            // 원이 보이도록 지도 레벨 조정
+            const level = km <= 1 ? 4 : km <= 3 ? 5 : km <= 5 ? 6 : 7;
+            map.setCenter(centerPosition);
+            map.setLevel(level);
+
+            // 거리 정보 표시
+            radiusInfo.classList.remove('hidden');
+            radiusText.textContent = `반경 ${km}km 표시 중`;
+        }
+
+        function filterItems() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const myItemsOnly = document.getElementById('myItemsOnly').checked;
+            let visibleCount = 0;
+
+            document.querySelectorAll('.item-card').forEach(card => {
+                const name = card.dataset.name?.toLowerCase() || '';
+                const category = card.dataset.category || '';
+                const sellerId = card.dataset.sellerId;
+                const lat = parseFloat(card.dataset.lat);
+                const lng = parseFloat(card.dataset.lng);
+
+                // 거리 계산: 내 위치가 설정되어 있고 상품 좌표가 유효하면 실시간 계산
+                let distance = parseFloat(card.dataset.distance);
+                let matchDistance = true; // 기본값은 통과
+
+                if (currentDistance > 0) {
+                    // 내 위치와 상품 위치 모두 유효한 경우에만 거리 계산
+                    if (myLocationLat && myLocationLng && !isNaN(lat) && !isNaN(lng)) {
+                        distance = calculateDistance(myLocationLat, myLocationLng, lat, lng);
+                        matchDistance = distance <= currentDistance;
+                    } else if (!isNaN(distance)) {
+                        // 서버에서 받은 거리값이 있으면 사용
+                        matchDistance = distance <= currentDistance;
+                    }
+                    // 둘 다 없으면 matchDistance = true (거리 정보 없으면 표시)
+                }
+
+                const matchSearch = name.includes(searchText);
+                const matchCategory = currentCategory === '전체' || category === currentCategory;
+                const matchMyItems = !myItemsOnly || (currentUserId && String(sellerId) === String(currentUserId));
+
+                if (matchSearch && matchCategory && matchDistance && matchMyItems) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            document.getElementById('itemCount').textContent = visibleCount;
+        }
+
+        function sortItems() {
+            const order = document.getElementById('sortOrder').value;
+            const list = document.getElementById('productList');
+            const cards = Array.from(list.querySelectorAll('.item-card'));
+
+            cards.sort((a, b) => {
+                switch (order) {
+                    case 'distance':
+                        return (parseFloat(a.dataset.distance) || 999) - (parseFloat(b.dataset.distance) || 999);
+                    case 'price_low':
+                        return parseInt(a.dataset.price) - parseInt(b.dataset.price);
+                    case 'price_high':
+                        return parseInt(b.dataset.price) - parseInt(a.dataset.price);
+                    default: // latest
+                        return 0;
+                }
+            });
+
+            cards.forEach(card => list.appendChild(card));
+        }
+
+        function searchInCurrentArea() {
+            const center = map.getCenter();
+            alert('여기에 기능 뭘 추가할까요? 없앨까요?');
+        }
+
+        // 검색 입력 이벤트
+        document.getElementById('searchInput').addEventListener('input', filterItems);
+
+        // 드롭다운 외부 클릭 시 닫기
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('[onclick*="toggleDropdown"]')) {
+                document.querySelectorAll('[id$="Dropdown"]').forEach(d => d.classList.add('hidden'));
+            }
+        });
+
+        // ====================================
+        // Inline Chat Panel Logic
+        // ====================================
+        let chatStompClient = null;
+        let currentChatRoomId = null;
+        let currentChatPartnerId = null;
+        let currentChatPartnerName = null;
+        let isChatPanelOpen = false;
+        let chatLastRenderedDate = null;
+
+        const defaultLayout = document.getElementById('defaultLayout');
+        const chatLayout = document.getElementById('chatLayout');
+        const mapElement = document.getElementById('map');
+        const mapContainerDefault = document.getElementById('mapContainerDefault');
+        const mapContainerChat = document.getElementById('mapContainerChat');
+        const productListCompactItems = document.getElementById('productListCompactItems');
+        const chatMessagesArea = document.getElementById('chatMessagesArea');
+        const inlineChatForm = document.getElementById('inlineChatForm');
+        const inlineChatInput = document.getElementById('inlineChatInput');
+        const chatConnectionStatus = document.getElementById('chatConnectionStatus');
+
+        // Open chat as popup window
+        function openChatPanel(sellerId, sellerName) {
+            if (!currentUserId) {
+                if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                    window.location.href = '/auth/login';
+                }
+                return;
+            }
+
+            // Open chat room in popup window
+            const popupWidth = 430;
+            const popupHeight = 700;
+            const left = (screen.width - popupWidth) / 2;
+            const top = (screen.height - popupHeight) / 2;
+
+            const chatUrl = '/chat/room?targetUserId=' + sellerId;
+            window.open(
+                chatUrl,
+                'chatPopup_' + sellerId,
+                `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`
+            );
+        }
+
+        // Close chat panel - switch back to default layout
+        function closeChatPanel() {
+            // Move map back to default layout
+            mapContainerDefault.appendChild(mapElement);
+
+            // Switch layouts
+            chatLayout.classList.add('hidden');
+            chatLayout.classList.remove('flex');
+            defaultLayout.classList.remove('hidden');
+
+            isChatPanelOpen = false;
+
+            // Redraw map
+            setTimeout(() => {
+                if (map) {
+                    map.relayout();
+                }
+            }, 100);
+
+            // Disconnect chat if connected
+            if (chatStompClient && chatStompClient.connected) {
+                chatStompClient.disconnect();
+                chatStompClient = null;
+            }
+            currentChatRoomId = null;
+        }
+
+        // Select item in compact list
+        function selectItemCompact(card) {
+            // Remove previous selection
+            productListCompactItems.querySelectorAll('.item-card').forEach(c => {
+                c.classList.remove('ring-2', 'ring-primary', 'bg-primary/5');
+            });
+
+            // Add selection to clicked card
+            card.classList.add('ring-2', 'ring-primary', 'bg-primary/5');
+
+            // Pan map to item location if available
+            const lat = parseFloat(card.dataset.lat);
+            const lng = parseFloat(card.dataset.lng);
+            if (!isNaN(lat) && !isNaN(lng) && map) {
+                const position = new kakao.maps.LatLng(lat, lng);
+                map.panTo(position);
+            }
+        }
+
+        // Create or get existing chat room
+        async function createOrGetChatRoom(targetUserId) {
+            try {
+                const formData = new FormData();
+                formData.append('targetUserId', targetUserId);
+
+                const response = await fetch('/chat/api/room', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create chat room');
+                }
+
+                const roomId = await response.text();
+                currentChatRoomId = parseInt(roomId);
+
+                // Connect to WebSocket
+                connectChatWebSocket();
+
+                // Load previous messages
+                await loadChatMessages();
+
+            } catch (error) {
+                console.error('Error creating chat room:', error);
+                chatMessagesArea.innerHTML = '<div class="text-center text-red-500 text-xs my-4">채팅방 연결에 실패했습니다.</div>';
+            }
+        }
+
+        // Connect to WebSocket for chat
+        function connectChatWebSocket() {
+            if (chatStompClient && chatStompClient.connected) {
+                chatStompClient.disconnect();
+            }
+
+            const socket = new SockJS('/ws');
+            chatStompClient = Stomp.over(socket);
+            chatStompClient.debug = null;
+
+            chatStompClient.connect({}, onChatConnected, onChatError);
+        }
+
+        function onChatConnected() {
+            chatConnectionStatus.textContent = '연결됨';
+            chatConnectionStatus.className = 'text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-600';
+
+            if (currentChatRoomId) {
+                chatStompClient.subscribe('/topic/room/' + currentChatRoomId, onChatMessageReceived);
+
+                // Send join message
+                chatStompClient.send("/app/chat.addUser", {}, JSON.stringify({
+                    sender: currentUsername || 'User',
+                    type: 'JOIN',
+                    roomId: currentChatRoomId
+                }));
+            }
+        }
+
+        function onChatError(error) {
+            chatConnectionStatus.textContent = '연결 끊김';
+            chatConnectionStatus.className = 'text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-600';
+            console.error('Chat WebSocket error:', error);
+        }
+
+        // Load previous messages
+        async function loadChatMessages() {
+            if (!currentChatRoomId) return;
+
+            try {
+                const response = await fetch(`/chat/api/messages?roomId=${currentChatRoomId}`);
+                const messages = await response.json();
+
+                chatMessagesArea.innerHTML = '';
+                chatLastRenderedDate = null;
+
+                messages.forEach(msg => {
+                    displayChatMessage({
+                        sender: msg.sender,
+                        content: msg.content,
+                        type: msg.type,
+                        timestamp: msg.createdAt
+                    });
+                });
+
+                chatMessagesArea.scrollTop = chatMessagesArea.scrollHeight;
+
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        // Display chat message
+        function displayChatMessage(message) {
+            if (message.type === 'JOIN' || message.type === 'LEAVE' || message.type === 'READ') {
+                return; // Skip system messages in inline chat
+            }
+
+            // Date divider
+            if (message.timestamp) {
+                const msgDate = new Date(message.timestamp);
+                const dateHeader = msgDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+                if (chatLastRenderedDate !== dateHeader) {
+                    const divider = document.createElement('div');
+                    divider.className = 'flex justify-center my-3';
+                    divider.innerHTML = `<span class="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded-full">${dateHeader}</span>`;
+                    chatMessagesArea.appendChild(divider);
+                    chatLastRenderedDate = dateHeader;
+                }
+            }
+
+            const isMe = message.sender === (currentUsername || 'User');
+
+            const msgElement = document.createElement('div');
+            msgElement.className = `flex flex-col gap-0.5 max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`;
+
+            const bubble = document.createElement('div');
+            bubble.className = `px-3 py-2 rounded-2xl text-sm break-words ${isMe ? 'bg-primary text-white rounded-tr-sm' : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-tl-sm'}`;
+            bubble.textContent = message.content;
+
+            const timeStr = message.timestamp
+                ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const time = document.createElement('span');
+            time.className = 'text-[10px] text-gray-400';
+            time.textContent = timeStr;
+
+            if (!isMe) {
+                const sender = document.createElement('span');
+                sender.className = 'text-[10px] text-gray-500 ml-1';
+                sender.textContent = message.sender;
+                msgElement.appendChild(sender);
+            }
+
+            msgElement.appendChild(bubble);
+            msgElement.appendChild(time);
+
+            chatMessagesArea.appendChild(msgElement);
+        }
+
+        // Receive message from WebSocket
+        function onChatMessageReceived(payload) {
+            const message = JSON.parse(payload.body);
+            displayChatMessage(message);
+            chatMessagesArea.scrollTop = chatMessagesArea.scrollHeight;
+
+            // Send read receipt if not my message
+            if (message.sender !== (currentUsername || 'User') && chatStompClient && chatStompClient.connected) {
+                chatStompClient.send("/app/chat.readMessage", {}, JSON.stringify({
+                    sender: currentUsername || 'User',
+                    roomId: currentChatRoomId,
+                    type: 'READ'
+                }));
+            }
+        }
+
+        // Send message
+        inlineChatForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const content = inlineChatInput.value.trim();
+            if (!content || !chatStompClient || !currentChatRoomId) return;
+
+            chatStompClient.send("/app/chat.sendMessage", {}, JSON.stringify({
+                sender: currentUsername || 'User',
+                content: content,
+                type: 'CHAT',
+                roomId: currentChatRoomId
+            }));
+
+            inlineChatInput.value = '';
+        });
+
+        // Override chat button click handlers - REMOVED to allow redirection to full chat page with item info
+        // document.addEventListener('click', function (e) {
+        //     const chatBtn = e.target.closest('.detail-chat-btn');
+        //     if (chatBtn) {
+        //         e.preventDefault();
+        //         e.stopPropagation();
+
+        //         // Find the parent item card to get seller info
+        //         const itemCard = chatBtn.closest('.item-card');
+        //         if (itemCard) {
+        //             const sellerId = itemCard.dataset.sellerId;
+        //             const sellerName = itemCard.dataset.sellerName;
+
+        //             // Don't chat with yourself
+        //             if (currentUserId && String(currentUserId) === String(sellerId)) {
+        //                 return;
+        //             }
+
+        //             openChatPanel(sellerId, sellerName);
+        //         }
+        //     }
+        // });
+
+        /*]]>*/
+    </script>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+</body>
+
+</html>

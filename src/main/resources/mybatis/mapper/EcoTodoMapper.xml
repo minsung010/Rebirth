@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.mapper.EcoTodoMapper">
+
+    <select id="findAllActiveTasks" resultType="com.rebirth.my.domain.EcoTodoTask">
+        SELECT * FROM ECO_TODO_TASKS 
+        WHERE IS_ACTIVE = 'Y' 
+        ORDER BY SORT_ORDER ASC
+    </select>
+
+    <select id="findUserChecks" resultType="com.rebirth.my.domain.UserTodoCheck">
+        SELECT * FROM USER_TODO_CHECKS
+        WHERE USER_ID = #{userId} AND CHECK_DATE = #{checkDate}
+    </select>
+
+    <insert id="insertCheck" parameterType="com.rebirth.my.domain.UserTodoCheck">
+        INSERT INTO USER_TODO_CHECKS (USER_ID, TASK_ID, CHECK_DATE, CHECKED, POINTS_EARNED)
+        VALUES (#{userId}, #{taskId}, #{checkDate}, 'Y', #{pointsEarned})
+    </insert>
+
+    <delete id="deleteCheck">
+        DELETE FROM USER_TODO_CHECKS
+        WHERE USER_ID = #{userId} AND TASK_ID = #{taskId} AND CHECK_DATE = #{checkDate}
+    </delete>
+
+    <select id="countTotalUserChecks" resultType="int">
+        SELECT COUNT(*) FROM USER_TODO_CHECKS
+        WHERE USER_ID = #{userId} AND CHECKED = 'Y'
+    </select>
+
+    <select id="countTasks" resultType="int">
+        SELECT COUNT(*) FROM ECO_TODO_TASKS
+    </select>
+
+    <insert id="insertTask" parameterType="com.rebirth.my.domain.EcoTodoTask">
+        INSERT INTO ECO_TODO_TASKS (ID, CODE, TITLE, DEFAULT_POINTS, IS_ACTIVE, SORT_ORDER, CREATED_AT)
+        VALUES (#{id}, #{code}, #{title}, #{defaultPoints}, #{isActive}, #{sortOrder}, SYSTIMESTAMP)
+    </insert>
+
+</mapper>

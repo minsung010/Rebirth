@@ -1,0 +1,7 @@
+tunnel: my-tunnel
+credentials-file: C:\Users\202-18\.cloudflared\44d5bf6f-3895-4d87-94a0-0b8655fcbc8e.json
+
+ingress:
+  - hostname: test.dev
+    service: http://192.168.0.2:8080
+  - service: http_status:404

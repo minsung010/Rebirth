@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col">
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-24 pb-10 flex flex-col items-center">
+        <div class="w-full max-w-3xl mx-auto px-4 md:px-6">
+
+            <!-- Chat Room (Fixed Height with Page Scroll) -->
+            <div
+                class="flex flex-col h-[80vh] bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden relative">
+                <!-- Chat Header -->
+                <div
+                    class="p-4 border-b border-border-light dark:border-border-dark flex justify-between items-center bg-card-light/95 dark:bg-card-dark/95 backdrop-blur-md absolute top-0 left-0 right-0 z-10">
+                    <div class="flex items-center gap-3">
+                        <a href="/chat/list"
+                            class="size-8 rounded-full hover:bg-background-light dark:hover:bg-background-dark flex items-center justify-center transition-colors mr-1">
+                            <span
+                                class="material-symbols-outlined text-text-light/60 dark:text-text-dark/60">arrow_back</span>
+                        </a>
+                        <div
+                            class="size-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border border-gray-300 dark:border-white/10">
+                            <img src="/img/bot_icon.jpg" alt="Bot" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <p class="font-bold">리버스 AI 챗봇</p>
+                            <p class="text-xs text-green-500 font-medium">● 온라인</p>
+                        </div>
+                    </div>
+                    <button
+                        class="size-8 rounded-full hover:bg-background-light dark:hover:bg-background-dark flex items-center justify-center transition-colors">
+                        <span
+                            class="material-symbols-outlined text-text-light/60 dark:text-text-dark/60">more_vert</span>
+                    </button>
+                </div>
+
+                <!-- Messages -->
+                <div class="flex-grow overflow-y-auto p-6 pt-24 space-y-6 bg-background-light/30 dark:bg-background-dark/30 scroll-smooth"
+                    id="chat-messages">
+                    <!-- Date Divider -->
+                    <div class="flex justify-center">
+                        <span
+                            class="px-3 py-1 rounded-full bg-border-light/50 dark:bg-border-dark/50 text-xs font-bold text-text-light/50 dark:text-text-dark/50">오늘</span>
+                    </div>
+
+                    <!-- Bot Message -->
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="size-8 rounded-full bg-gray-200 flex shrink-0 items-center justify-center overflow-hidden border border-gray-300 dark:border-white/10">
+                            <img src="/img/bot_icon.jpg" alt="Bot" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex flex-col gap-1 max-w-[80%] md:max-w-[70%]">
+                            <div
+                                class="p-3 bg-white dark:bg-border-dark rounded-2xl rounded-tl-none shadow-sm text-sm dark:text-white">
+                                안녕하세요! 리버스 고객센터 챗봇입니다.<br>
+                                사이트 이용 방법이나 서비스에 대해 궁금한 점이 있으신가요?
+                            </div>
+                            <span class="text-[10px] text-text-light/40 dark:text-text-dark/40 ml-1"
+                                id="initial-bot-time"></span>
+                            <script>
+                                document.getElementById('initial-bot-time').textContent = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+                            </script>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div
+                    class="p-4 bg-card-light dark:bg-card-dark border-t border-border-light dark:border-border-dark z-20">
+                    <div id="chat-form" class="flex items-center gap-2 w-full">
+                        <div class="flex-grow relative z-50">
+                            <input type="text" id="message-input" placeholder="메시지를 입력하세요..."
+                                class="w-full h-10 px-4 rounded-full bg-background-light dark:bg-background-dark border-none focus:ring-2 focus:ring-primary/50 text-sm transition-all shadow-inner relative z-50"
+                                autocomplete="off">
+                        </div>
+                        <button type="button" onclick="window.sendMessage()"
+                            class="size-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-transform hover:scale-105 shadow-md shrink-0">
+                            <span class="material-symbols-outlined text-sm">send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <style>
+        /* 이 페이지에서만 플로팅 챗봇 숨기기 (강제) */
+        #chatbot-widget {
+            display: none !important;
+        }
+    </style>
+
+    <script th:inline="none">
+        (function () {
+            // 전역 변수 및 상수 (IIFE로 스코프 분리하여 플로팅 위젯과 충돌 방지)
+            let chatMessages = null;
+            const BOT_PAGE_HISTORY_KEY = 'rebirth_chatbot_history';
+
+            // DOM 로드 완료 후 초기화
+            document.addEventListener('DOMContentLoaded', function () {
+                try {
+                    chatMessages = document.getElementById('chat-messages');
+                    const chatForm = document.getElementById('chat-form');
+                    const messageInput = document.getElementById('message-input');
+
+                    // 엔터 키 이벤트 추가 (보험용)
+                    if (messageInput) {
+                        messageInput.addEventListener('keypress', function (e) {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                window.sendMessage();
+                            }
+                        });
+                        // 입력창에 포커스
+                        messageInput.focus();
+                    }
+
+                    // 히스토리 복원
+                    restoreMainChatHistory();
+                    console.log('[챗봇] 초기화 완료');
+                } catch (err) {
+                    console.error('[챗봇] 초기화 오류:', err);
+                }
+            });
+
+            function restoreMainChatHistory() {
+                const saved = sessionStorage.getItem(BOT_PAGE_HISTORY_KEY);
+                if (saved) {
+                    try {
+                        const history = JSON.parse(saved);
+                        if (Array.isArray(history)) {
+                            history.forEach(msg => {
+                                if (msg && msg.text) {
+                                    appendMainMessageWithoutSave(msg.text, msg.sender, msg.timestamp);
+                                }
+                            });
+                            setTimeout(() => {
+                                if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+                            }, 100);
+                        }
+                    } catch (e) {
+                        console.error('[챗봇] 히스토리 복원 실패:', e);
+                    }
+                }
+            }
+
+            function saveMainChatHistory(text, sender) {
+                let history = [];
+                const saved = sessionStorage.getItem(BOT_PAGE_HISTORY_KEY);
+                if (saved) {
+                    try {
+                        history = JSON.parse(saved);
+                        if (!Array.isArray(history)) history = [];
+                    } catch (e) { history = []; }
+                }
+                history.push({ text, sender, timestamp: Date.now() });
+                if (history.length > 50) history = history.slice(-50);
+                sessionStorage.setItem(BOT_PAGE_HISTORY_KEY, JSON.stringify(history));
+            }
+
+            // 전역 함수로 등록 (다른 스크립트 오류의 영향을 덜 받도록)
+            window.sendMessage = function () {
+                try {
+                    const input = document.getElementById('message-input');
+                    if (!input) {
+                        console.error('[챗봇] 입력창을 찾을 수 없습니다.');
+                        return;
+                    }
+                    const message = input.value.trim();
+                    if (!message) return;
+
+                    // 1. 사용자 메시지 표시
+                    appendMainMessage(message, 'user');
+                    input.value = '';
+                    input.focus();
+
+                    // 2. API 호출
+                    fetch('/chat/api/message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ 'message': message })
+                    })
+                        .then(response => {
+                            if (!response.ok) throw new Error('서버 응답 오류: ' + response.status);
+                            return response.text();
+                        })
+                        .then(data => {
+                            appendMainMessage(data, 'bot');
+                        })
+                        .catch(error => {
+                            console.error('[챗봇] API 오류:', error);
+                            appendMainMessage("죄송합니다. 서버 연결에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.", 'bot');
+                        });
+                } catch (err) {
+                    console.error('[챗봇] sendMessage 오류:', err);
+                    alert('메시지 전송 중 오류가 발생했습니다: ' + err.message);
+                }
+            };
+
+            // 메시지 추가 (저장 포함)
+            function appendMainMessage(text, sender) {
+                appendMainMessageWithoutSave(text, sender);
+                saveMainChatHistory(text, sender);
+            }
+
+            // 메시지 추가 (저장 없이 - 복원용)
+            function appendMainMessageWithoutSave(text, sender, timestamp) {
+                if (!text) return;
+                if (!chatMessages) {
+                    chatMessages = document.getElementById('chat-messages');
+                }
+                if (!chatMessages) return;
+
+                const isUser = sender === 'user';
+                const timeStr = timestamp
+                    ? new Date(timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                    : new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+
+                // Simple Markdown Parser
+                const parseMarkdown = (txt) => {
+                    if (!txt) return '';
+                    return txt
+                        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary underline font-bold">$1</a>')
+                        .replace(/\n/g, '<br>');
+                };
+
+                const content = isUser ? text.replace(/</g, "&lt;").replace(/>/g, "&gt;") : parseMarkdown(text);
+
+                const html = `
+                <div class="flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}">
+                    ${!isUser ? `
+                    <div class="size-8 rounded-full bg-gray-200 flex shrink-0 items-center justify-center overflow-hidden border border-gray-300 dark:border-white/10">
+                        <img src="/img/bot_icon.jpg" alt="Bot" class="w-full h-full object-cover">
+                    </div>` : ''}
+                    
+                    <div class="flex flex-col gap-1 max-w-[80%] md:max-w-[70%] ${isUser ? 'items-end' : ''}">
+                        <div class="p-3 ${isUser ? 'bg-primary text-white rounded-tr-none' : 'bg-white dark:bg-border-dark rounded-tl-none dark:text-white'} rounded-2xl shadow-sm text-sm">
+                            ${content}
+                        </div>
+                        <span class="text-[10px] text-text-light/40 dark:text-text-dark/40 ${isUser ? 'mr-1' : 'ml-1'}">${timeStr}</span>
+                    </div>
+                </div>
+            `;
+                chatMessages.insertAdjacentHTML('beforeend', html);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        })();
+    </script>
+</body>
+
+</html>

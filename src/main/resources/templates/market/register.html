@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark overflow-x-hidden">
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <main class="pt-24 min-h-screen px-4 max-w-3xl mx-auto">
+        <div class="mb-10 text-center">
+            <h1 class="text-3xl font-bold mb-2 dark:text-white" th:text="${item != null ? '상품 정보 수정' : '판매 상품 등록'}">판매
+                상품 등록</h1>
+            <p class="text-text-light/60 dark:text-text-dark/60">더 이상 입지 않는 옷을 새로운 주인에게 보내주세요.</p>
+        </div>
+
+        <div class="bg-white dark:bg-card-dark rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
+            <form th:action="${item != null ? '/market/edit' : '/market/register'}" method="post" class="space-y-6">
+                <!-- Hidden ID for Edit Mode -->
+                <input type="hidden" name="id" th:if="${item != null}" th:value="${item.id}">
+                <!-- Hidden Clothes ID (from wardrobe) -->
+                <input type="hidden" name="clothesId" th:value="${clothesInfo != null ? clothesInfo.clothesId : ''}">
+                <!-- Hidden Image URL -->
+                <input type="hidden" name="imageUrl" th:value="${clothesInfo != null ? clothesInfo.imageUrl : ''}">
+                <!-- Hidden Coordinates for exact location -->
+                <input type="hidden" id="latitude" name="latitude">
+                <input type="hidden" id="longitude" name="longitude">
+
+                <!-- Preview Image if exists -->
+                <div id="previewImageSection" class="space-y-2"
+                    th:classappend="${(clothesInfo == null && item == null) ? 'hidden' : ''}">
+                    <label class="block text-sm font-bold dark:text-white">상품 이미지</label>
+                    <div class="flex justify-center">
+                        <img id="previewImage"
+                            th:src="${item != null ? item.imageUrl : (clothesInfo != null ? clothesInfo.imageUrl : '')}"
+                            class="max-w-sm max-h-64 object-contain rounded-2xl border border-gray-200 dark:border-gray-700">
+                    </div>
+                </div>
+
+                <!-- AI Analysis & Wardrobe Import Buttons -->
+                <div class="flex gap-2 mb-2">
+                    <a href="/analysis"
+                        class="flex-1 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg hover:scale-[1.02] transition-all">
+                        <span class="material-symbols-outlined">psychology</span>
+                        AI 분석하러가기
+                    </a>
+                    <button type="button" onclick="openWardrobeModal()"
+                        class="flex-1 py-3 bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-700 text-text-light dark:text-text-dark rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
+                        <span class="material-symbols-outlined">checkroom</span>
+                        옷장에서 가져오기
+                    </button>
+                </div>
+
+                <!-- Title -->
+                <div class="space-y-2">
+                    <label for="name" class="block text-sm font-bold dark:text-white">상품명 <span
+                            class="text-red-500 ml-1 font-normal">(필수)</span></label>
+                    <input type="text" id="name" name="name" required placeholder="상품명을 입력하세요"
+                        th:value="${item != null ? item.name : (clothesInfo != null ? (clothesInfo.brand != null ? clothesInfo.brand + ' ' : '') + (clothesInfo.name != null ? clothesInfo.name : clothesInfo.category) : '')}"
+                        class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                </div>
+
+                <!-- Product Details Grid -->
+                <div id="clothesDetailsGrid" class="grid grid-cols-2 gap-4"
+                    th:classappend="${(clothesInfo == null && item == null) ? 'hidden' : ''}">
+                    <!-- Category -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold dark:text-white">카테고리</label>
+                        <input type="text" id="detailCategory" readonly
+                            th:value="${item != null ? item.category : (clothesInfo != null ? clothesInfo.category : '')}"
+                            class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400">
+                    </div>
+                    <!-- Color -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold dark:text-white">색상</label>
+                        <input type="text" id="detailColor" readonly
+                            th:value="${clothesInfo != null && clothesInfo.color != null ? clothesInfo.color : '-'}"
+                            class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400">
+                    </div>
+                    <!-- Size -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold dark:text-white">사이즈</label>
+                        <input type="text" id="detailSize" readonly
+                            th:value="${clothesInfo != null && clothesInfo.itemSize != null ? clothesInfo.itemSize : '-'}"
+                            class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400">
+                    </div>
+                    <!-- Condition -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold dark:text-white">상태</label>
+                        <input type="text" id="detailCondition" readonly
+                            th:value="${clothesInfo != null && clothesInfo.conditionGrade != null ? clothesInfo.conditionGrade : '-'}"
+                            class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400">
+                    </div>
+                </div>
+
+                <!-- Price -->
+                <div class="space-y-2">
+                    <label for="targetPrice" class="block text-sm font-bold dark:text-white">판매 가격 <span
+                            class="text-red-500 ml-1 font-normal">(필수)</span></label>
+                    <div class="relative">
+                        <input type="number" id="targetPrice" name="targetPrice" required placeholder="가격을 입력하세요"
+                            th:value="${item != null ? item.targetPrice : ''}"
+                            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all pr-12">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">원</span>
+                    </div>
+                </div>
+
+                <!-- Trade Location -->
+                <div class="space-y-2">
+                    <label for="tradeLocation" class="block text-sm font-bold dark:text-white">희망 거래 장소</label>
+                    <div class="flex gap-2">
+                        <div class="relative flex-1">
+                            <span
+                                class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">location_on</span>
+                            <input type="text" id="tradeLocation" name="tradeLocation" placeholder="예: 강남역 2번 출구"
+                                th:value="${item != null ? item.tradeLocation : ''}"
+                                class="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                        </div>
+                        <button type="button" onclick="openMapModal()"
+                            class="px-4 py-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition-colors flex items-center gap-2 whitespace-nowrap">
+                            <span class="material-symbols-outlined text-lg">map</span>
+                            지도에서 선택
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400">직거래를 원하시면 희망 장소를 입력하거나 지도에서 선택해주세요 (선택사항)</p>
+                </div>
+
+                <!-- Additional Images (Optional) -->
+                <div class="space-y-3">
+                    <label class="block text-sm font-bold dark:text-white">추가 이미지 <span
+                            class="text-gray-400 font-normal">(선택사항)</span></label>
+                    <p class="text-xs text-gray-400">뒷면, 디테일, 라벨 등 추가 사진을 업로드하면 구매자가 더 자세히 확인할 수 있어요.</p>
+
+                    <input type="hidden" id="additionalImagesJson" name="additionalImagesJson">
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <!-- 이미지 1: 뒷면 -->
+                        <div class="relative group">
+                            <input type="file" id="addImg1" accept="image/*" class="hidden"
+                                onchange="previewAdditionalImage(this, 1)">
+                            <div id="addImgPreview1"
+                                class="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary cursor-pointer flex flex-col items-center justify-center gap-2 bg-gray-50 dark:bg-white/5 transition-all"
+                                onclick="document.getElementById('addImg1').click()">
+                                <span class="material-symbols-outlined text-2xl text-gray-400">photo_camera</span>
+                                <span class="text-xs text-gray-400">뒷면</span>
+                            </div>
+                            <button type="button" id="addImgRemove1"
+                                class="hidden absolute -top-2 -right-2 size-6 bg-red-500 text-white rounded-full text-sm shadow-lg hover:bg-red-600"
+                                onclick="removeAdditionalImage(1)">×</button>
+                        </div>
+
+                        <!-- 이미지 2: 디테일 -->
+                        <div class="relative group">
+                            <input type="file" id="addImg2" accept="image/*" class="hidden"
+                                onchange="previewAdditionalImage(this, 2)">
+                            <div id="addImgPreview2"
+                                class="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary cursor-pointer flex flex-col items-center justify-center gap-2 bg-gray-50 dark:bg-white/5 transition-all"
+                                onclick="document.getElementById('addImg2').click()">
+                                <span class="material-symbols-outlined text-2xl text-gray-400">search</span>
+                                <span class="text-xs text-gray-400">디테일</span>
+                            </div>
+                            <button type="button" id="addImgRemove2"
+                                class="hidden absolute -top-2 -right-2 size-6 bg-red-500 text-white rounded-full text-sm shadow-lg hover:bg-red-600"
+                                onclick="removeAdditionalImage(2)">×</button>
+                        </div>
+
+                        <!-- 이미지 3: 라벨 -->
+                        <div class="relative group">
+                            <input type="file" id="addImg3" accept="image/*" class="hidden"
+                                onchange="previewAdditionalImage(this, 3)">
+                            <div id="addImgPreview3"
+                                class="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary cursor-pointer flex flex-col items-center justify-center gap-2 bg-gray-50 dark:bg-white/5 transition-all"
+                                onclick="document.getElementById('addImg3').click()">
+                                <span class="material-symbols-outlined text-2xl text-gray-400">sell</span>
+                                <span class="text-xs text-gray-400">라벨</span>
+                            </div>
+                            <button type="button" id="addImgRemove3"
+                                class="hidden absolute -top-2 -right-2 size-6 bg-red-500 text-white rounded-full text-sm shadow-lg hover:bg-red-600"
+                                onclick="removeAdditionalImage(3)">×</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-2">
+                    <label for="detailDesc" class="block text-sm font-bold dark:text-white">상세 설명 <span
+                            class="text-red-500 ml-1 font-normal">(필수)</span></label>
+                    <textarea id="detailDesc" name="detailDesc" rows="6" required
+                        placeholder="구매 시기, 착용 횟수, 상태 등 상세 정보를 입력해주세요."
+                        class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
+                        th:text="${item != null ? item.detailDesc : (clothesInfo != null && clothesInfo.detailDesc != null ? clothesInfo.detailDesc : '')}"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+                        th:text="${item != null ? '수정 완료' : '상품 등록 완료'}">
+                        상품 등록 완료
+                    </button>
+                    <a th:href="${item != null ? '/market/detail/' + item.id : '/market/list'}"
+                        class="block text-center mt-4 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                        th:text="${item != null ? '취소하고 상세 화면으로 돌아가기' : '취소하고 목록으로 돌아가기'}">취소하고 목록으로 돌아가기</a>
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- Map Modal for Location Selection -->
+    <div id="mapModal" class="fixed inset-0 z-50 hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeMapModal()"></div>
+
+        <!-- Modal Content -->
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-card-dark rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="text-lg font-bold dark:text-white">거래 장소 선택</h3>
+                <button onclick="closeMapModal()"
+                    class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                    <input type="text" id="mapSearchInput" placeholder="장소명 또는 주소 검색..."
+                        class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();searchPlace();}">
+                    <button onclick="searchPlace()"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary/90">
+                        검색
+                    </button>
+                </div>
+            </div>
+
+            <!-- Map Container -->
+            <div id="locationMap" class="w-full h-[350px]"></div>
+
+            <!-- Selected Location Info -->
+            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <span class="material-symbols-outlined text-primary">location_on</span>
+                    <span id="selectedLocationText" class="flex-1">지도에서 위치를 클릭하거나 검색하세요</span>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="closeMapModal()"
+                        class="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        취소
+                    </button>
+                    <button onclick="confirmLocation()"
+                        class="flex-1 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors">
+                        이 위치로 선택
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wardrobe Drawer (Side Layer) -->
+    <div id="wardrobeDrawer" class="fixed inset-0 z-50 pointer-events-none">
+        <!-- Backdrop (click to close) -->
+        <div id="wardrobeBackdrop"
+            class="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-300 ease-in-out pointer-events-none"
+            onclick="closeWardrobeDrawer()"></div>
+
+        <!-- Drawer Panel -->
+        <div id="wardrobePanel"
+            class="absolute top-0 right-0 h-full w-[400px] max-w-[90%] bg-white dark:bg-card-dark shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out pointer-events-auto flex flex-col">
+            <!-- Header -->
+            <div
+                class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-card-dark z-10">
+                <h3 class="text-xl font-bold dark:text-white">옷장에서 가져오기</h3>
+                <button onclick="closeWardrobeDrawer()"
+                    class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- List Container -->
+            <div id="wardrobeListContainer" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-black/20">
+                <!-- Items will be injected here -->
+                <div class="flex justify-center py-20">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <!-- Kakao Map SDK -->
+    <script th:src="@{'//dapi.kakao.com/v2/maps/sdk.js?appkey=' + ${kakaoMapsAppKey} + '&libraries=services'}"></script>
+
+    <script>
+        let locationMap = null;
+        let locationMarker = null;
+        let selectedAddress = '';
+        let selectedLatitude = null;
+        let selectedLongitude = null;
+        let ps = null; // Kakao Places service
+        let geocoder = null;
+
+        function openMapModal() {
+            document.getElementById('mapModal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+
+            // Initialize map if not already
+            if (!locationMap) {
+                setTimeout(() => {
+                    initLocationMap();
+                }, 100);
+            }
+        }
+
+        function closeMapModal() {
+            document.getElementById('mapModal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function initLocationMap() {
+            const container = document.getElementById('locationMap');
+            const options = {
+                center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울 시청 기본 위치
+                level: 5
+            };
+
+            locationMap = new kakao.maps.Map(container, options);
+            ps = new kakao.maps.services.Places();
+            geocoder = new kakao.maps.services.Geocoder();
+
+            // 마커 생성
+            locationMarker = new kakao.maps.Marker({
+                map: locationMap
+            });
+            locationMarker.setVisible(false);
+
+            // 지도 클릭 이벤트
+            kakao.maps.event.addListener(locationMap, 'click', function (mouseEvent) {
+                const latlng = mouseEvent.latLng;
+                setMarkerPosition(latlng);
+
+                // 정확한 클릭 좌표 저장
+                selectedLatitude = latlng.getLat();
+                selectedLongitude = latlng.getLng();
+
+                // 주소 검색 (표시용)
+                geocoder.coord2Address(latlng.getLng(), latlng.getLat(), function (result, status) {
+                    if (status === kakao.maps.services.Status.OK) {
+                        const address = result[0].address.address_name;
+                        selectedAddress = address;
+                        document.getElementById('selectedLocationText').textContent = address;
+                    }
+                });
+            });
+        }
+
+        function setMarkerPosition(latlng) {
+            locationMarker.setPosition(latlng);
+            locationMarker.setVisible(true);
+            locationMap.setCenter(latlng);
+        }
+
+        function searchPlace() {
+            const keyword = document.getElementById('mapSearchInput').value.trim();
+            if (!keyword) return;
+
+            ps.keywordSearch(keyword, function (data, status) {
+                if (status === kakao.maps.services.Status.OK) {
+                    const place = data[0]; // 첫 번째 결과
+                    const latlng = new kakao.maps.LatLng(place.y, place.x);
+
+                    setMarkerPosition(latlng);
+                    locationMap.setLevel(3);
+
+                    // 검색 결과의 정확한 좌표 저장
+                    selectedLatitude = parseFloat(place.y);
+                    selectedLongitude = parseFloat(place.x);
+
+                    selectedAddress = place.place_name + ' (' + place.address_name + ')';
+                    document.getElementById('selectedLocationText').textContent = selectedAddress;
+                } else {
+                    alert('검색 결과가 없습니다.');
+                }
+            });
+        }
+
+        function confirmLocation() {
+            if (selectedAddress) {
+                document.getElementById('tradeLocation').value = selectedAddress;
+                // 정확한 좌표를 hidden input에 저장
+                if (selectedLatitude && selectedLongitude) {
+                    document.getElementById('latitude').value = selectedLatitude;
+                    document.getElementById('longitude').value = selectedLongitude;
+                }
+            }
+            closeMapModal();
+        }
+
+        // ========== 추가 이미지 관련 ==========
+        const additionalImagesData = {}; // {1: base64, 2: base64, 3: base64}
+
+        function previewAdditionalImage(input, index) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const base64 = e.target.result;
+                    additionalImagesData[index] = base64;
+
+                    // 미리보기 표시
+                    const previewDiv = document.getElementById('addImgPreview' + index);
+                    previewDiv.innerHTML = `<img src="${base64}" class="w-full h-full object-cover rounded-xl">`;
+                    previewDiv.classList.remove('border-dashed');
+                    previewDiv.classList.add('border-solid', 'border-primary');
+
+                    // 삭제 버튼 표시
+                    document.getElementById('addImgRemove' + index).classList.remove('hidden');
+
+                    // hidden input 업데이트
+                    updateAdditionalImagesJson();
+                };
+
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeAdditionalImage(index) {
+            delete additionalImagesData[index];
+
+            // 미리보기 초기화
+            const labels = { 1: '뒷면', 2: '디테일', 3: '라벨' };
+            const icons = { 1: 'photo_camera', 2: 'search', 3: 'sell' };
+            const previewDiv = document.getElementById('addImgPreview' + index);
+            previewDiv.innerHTML = `
+                <span class="material-symbols-outlined text-2xl text-gray-400">${icons[index]}</span>
+                <span class="text-xs text-gray-400">${labels[index]}</span>
+            `;
+            previewDiv.classList.add('border-dashed');
+            previewDiv.classList.remove('border-solid', 'border-primary');
+
+            // 삭제 버튼 숨김
+            document.getElementById('addImgRemove' + index).classList.add('hidden');
+
+            // 파일 input 초기화
+            document.getElementById('addImg' + index).value = '';
+
+            // hidden input 업데이트
+            updateAdditionalImagesJson();
+        }
+
+        function updateAdditionalImagesJson() {
+            const images = Object.values(additionalImagesData);
+            document.getElementById('additionalImagesJson').value = JSON.stringify(images);
+        }
+
+        // ========== 옷장 관련 기능 (Drawer) ==========
+        function openWardrobeModal() {
+            // "Modal" implies popup, keeping naming consistent with button triggers,
+            // but implementation is now drawer opening
+            const backdrop = document.getElementById('wardrobeBackdrop');
+            const panel = document.getElementById('wardrobePanel');
+
+            // Toggle pointer events to allow clicking backdrop to close
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            backdrop.classList.add('pointer-events-auto');
+
+            panel.classList.remove('translate-x-full');
+
+            document.body.classList.add('overflow-hidden');
+            fetchWardrobeList();
+        }
+
+        function closeWardrobeDrawer() {
+            const backdrop = document.getElementById('wardrobeBackdrop');
+            const panel = document.getElementById('wardrobePanel');
+
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            backdrop.classList.remove('pointer-events-auto');
+
+            panel.classList.add('translate-x-full');
+
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        // Alias for compatibility if button calls closeWardrobeModal
+        function closeWardrobeModal() {
+            closeWardrobeDrawer();
+        }
+
+        function fetchWardrobeList() {
+            fetch('/api/wardrobe/list?mode=sale')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        renderWardrobeList(result.data);
+                    } else {
+                        alert("옷장 목록을 불러오는데 실패했습니다: " + (result.message || '로그인 필요'));
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("오류가 발생했습니다.");
+                });
+        }
+
+        function renderWardrobeList(items) {
+            const listContainer = document.getElementById('wardrobeListContainer');
+            listContainer.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                listContainer.innerHTML = '<div class="text-center py-10 text-gray-500">등록된 의류가 없습니다.</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "flex items-center gap-4 p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary dark:hover:border-primary cursor-pointer transition-colors";
+                div.onclick = () => selectWardrobeItem(item);
+
+                const imgUrl = item.imageUrl || '/images/no-image.png'; // Fallback
+
+                div.innerHTML = `
+                    <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-white dark:bg-black/20">
+                        <img src="${imgUrl}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-gray-900 dark:text-white truncate">${item.brand ? item.brand + ' ' : ''}${item.name || item.category}</h4>
+                        <p class="text-sm text-gray-500 truncate">${item.category} | ${item.color || '-'} | ${item.itemSize || '-'}</p>
+                    </div>
+                    <button class="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-bold whitespace-nowrap">선택</button>
+                `;
+                listContainer.appendChild(div);
+            });
+        }
+
+        function selectWardrobeItem(item) {
+            // Hidden fields
+            const clothesIdInput = document.querySelector('input[name="clothesId"]');
+            if (clothesIdInput) clothesIdInput.value = item.clothesId;
+
+            const imageUrlInput = document.querySelector('input[name="imageUrl"]');
+            if (imageUrlInput) imageUrlInput.value = item.imageUrl;
+
+            // Image Preview
+            const previewSection = document.getElementById('previewImageSection');
+            const previewImg = document.getElementById('previewImage');
+            if (previewImg && item.imageUrl) {
+                previewImg.src = item.imageUrl;
+                previewSection.classList.remove('hidden');
+            }
+
+            // Name
+            const nameInput = document.getElementById('name');
+            const name = (item.brand ? item.brand + ' ' : '') + (item.name || item.category);
+            if (nameInput) nameInput.value = name;
+
+            // Details Grid
+            const detailCategory = document.getElementById('detailCategory');
+            if (detailCategory) detailCategory.value = item.category || '';
+
+            const detailColor = document.getElementById('detailColor');
+            if (detailColor) detailColor.value = item.color || '-';
+
+            const detailSize = document.getElementById('detailSize');
+            if (detailSize) detailSize.value = item.itemSize || '-';
+
+            const detailCondition = document.getElementById('detailCondition');
+            if (detailCondition) detailCondition.value = item.conditionGrade || '-';
+
+            const grid = document.getElementById('clothesDetailsGrid');
+            if (grid) grid.classList.remove('hidden');
+
+            // Description if available
+            const descInput = document.getElementById('detailDesc');
+            if (descInput && item.detailDesc) {
+                descInput.value = item.detailDesc;
+            }
+
+            closeWardrobeDrawer();
+        }
+    </script>
+
+</body>
+
+</html>

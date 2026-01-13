@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body
+    class="font-display bg-[#f8f8f8] dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col">
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-28 pb-16">
+        <div class="max-w-[1400px] mx-auto px-6">
+
+            <!-- Hero Section - Left Aligned -->
+            <div class="mb-8">
+                <h1 class="text-4xl font-bold tracking-tight">나의 옷장</h1>
+            </div>
+
+            <!-- Filter Bar - Modern Card Style -->
+            <div
+                class="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4 mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+
+                    <!-- Category Filter -->
+                    <div class="flex items-center gap-3">
+                        <span
+                            class="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">카테고리</span>
+                        <div class="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                            <button onclick="filterByCategory('전체')" data-category="전체"
+                                class="category-btn active px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-primary text-white shadow-sm">전체</button>
+                            <button onclick="filterByCategory('상의')" data-category="상의"
+                                class="category-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-primary hover:shadow-sm">상의</button>
+                            <button onclick="filterByCategory('하의')" data-category="하의"
+                                class="category-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-primary hover:shadow-sm">하의</button>
+                            <button onclick="filterByCategory('아우터')" data-category="아우터"
+                                class="category-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-primary hover:shadow-sm">아우터</button>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="hidden lg:block w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
+
+                    <!-- Status Filter -->
+                    <div class="flex items-center gap-3">
+                        <span
+                            class="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">상태</span>
+                        <div class="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl flex-wrap">
+                            <button onclick="filterByStatus('전체')" data-status="전체"
+                                class="status-btn active px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800 shadow-sm">전체</button>
+                            <button onclick="filterByStatus('IN_CLOSET')" data-status="IN_CLOSET"
+                                class="status-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-gray-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600">
+                                <span class="flex items-center gap-1"><span
+                                        class="material-symbols-outlined text-xs">checkroom</span>보유중</span>
+                            </button>
+                            <button onclick="filterByStatus('SELLING')" data-status="SELLING"
+                                class="status-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-gray-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600">
+                                <span class="flex items-center gap-1"><span
+                                        class="material-symbols-outlined text-xs">storefront</span>판매중</span>
+                            </button>
+                            <button onclick="filterByStatus('SOLD')" data-status="SOLD"
+                                class="status-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-gray-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500">
+                                <span class="flex items-center gap-1"><span
+                                        class="material-symbols-outlined text-xs">sell</span>판매완료</span>
+                            </button>
+                            <button onclick="filterByStatus('DONATED')" data-status="DONATED"
+                                class="status-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-gray-500 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-600">
+                                <span class="flex items-center gap-1"><span
+                                        class="material-symbols-outlined text-xs">volunteer_activism</span>기부완료</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Header with Item Count -->
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">아이템 목록</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    총 <span th:text="${totalCount}" class="text-primary font-bold">0</span>개
+                </p>
+            </div>
+
+            <!-- Product Grid -->
+            <div id="clothes-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+
+                <!-- Add New Item Card -->
+                <a href="/analysis" class="group block">
+                    <div
+                        class="aspect-[3/5] rounded-2xl bg-white dark:bg-card-dark border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center gap-3 transition-all hover:border-primary hover:bg-primary/5 cursor-pointer">
+                        <!-- T-Shirt Shape Icon -->
+                        <div class="relative group-hover:scale-110 transition-all">
+                            <svg class="w-24 h-24 text-gray-300 group-hover:text-primary transition-colors"
+                                viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <!-- T-Shirt outline -->
+                                <path
+                                    d="M20 8 L12 12 L4 20 L10 26 L14 22 L14 56 L50 56 L50 22 L54 26 L60 20 L52 12 L44 8 L40 14 C38 16 26 16 24 14 L20 8 Z"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                    stroke-linejoin="round" fill="none" />
+                                <!-- Collar curve -->
+                                <path d="M24 14 C26 18 38 18 40 14" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" fill="none" />
+                            </svg>
+                            <!-- Plus icon in the center -->
+                            <div class="absolute inset-0 flex items-center justify-center mt-6">
+                                <span
+                                    class="material-symbols-outlined text-3xl text-gray-400 group-hover:text-primary transition-colors">add</span>
+                            </div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-400 group-hover:text-primary">새 아이템 등록</span>
+                    </div>
+                </a>
+
+                <!-- Dynamic Clothes Items -->
+                <div th:each="item : ${clothesList}" th:data-category="${item.category}"
+                    th:data-status="${item.status != null ? item.status : 'IN_CLOSET'}" th:data-id="${item.clothesId}"
+                    th:data-name="${item.name != null ? item.name : (item.color != null ? item.color + ' ' + item.category : item.category)}"
+                    th:data-brand="${item.brand}" th:data-color="${item.color}" th:data-season="${item.season}"
+                    th:data-size="${item.itemSize}" th:data-condition="${item.conditionGrade}"
+                    th:data-image="${item.imageUrl}" th:data-desc="${item.detailDesc}"
+                    th:data-date="${item.purchaseDate}" th:data-forsale="${item.isForSale}"
+                    th:data-personalnote="${item.personalNote}" onclick="openDetailModal(this)"
+                    class="clothes-item group cursor-pointer">
+
+                    <!-- Card Container -->
+                    <div
+                        class="relative bg-white dark:bg-card-dark rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
+
+                        <!-- Image Container -->
+                        <div class="relative aspect-[3/4] overflow-hidden bg-gray-50 dark:bg-gray-900">
+                            <img th:if="${item.imageUrl != null}" th:src="${item.imageUrl}"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                            <!-- Placeholder -->
+                            <div th:if="${item.imageUrl == null}"
+                                class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900">
+                                <span
+                                    class="material-symbols-outlined text-7xl text-gray-300 dark:text-gray-700">checkroom</span>
+                            </div>
+
+                            <!-- Category Badge -->
+                            <div class="absolute top-3 left-3 flex flex-col gap-1">
+                                <span
+                                    class="inline-block px-2.5 py-1 bg-black/80 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider rounded"
+                                    th:text="${item.category}">카테고리</span>
+                                <!-- Status Badge -->
+                                <span th:if="${item.isForSale == 'Y'}"
+                                    class="inline-block px-2.5 py-1 bg-purple-500/90 backdrop-blur-sm text-white text-[10px] font-bold tracking-wider rounded">판매중</span>
+                                <span th:if="${item.status == 'SOLD'}"
+                                    class="inline-block px-2.5 py-1 bg-red-500/90 backdrop-blur-sm text-white text-[10px] font-bold tracking-wider rounded">판매완료</span>
+                                <span th:if="${item.status == 'DONATED'}"
+                                    class="inline-block px-2.5 py-1 bg-green-500/90 backdrop-blur-sm text-white text-[10px] font-bold tracking-wider rounded">기부완료</span>
+                            </div>
+
+                            <!-- Sold/Donated Overlay -->
+                            <div th:if="${item.status == 'SOLD' || item.status == 'DONATED'}"
+                                class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            </div>
+
+
+
+                            <!-- Delete Button -->
+                            <button th:data-id="${item.clothesId}" onclick="deleteClothes(this.getAttribute('data-id'))"
+                                class="absolute top-3 right-3 size-9 rounded-full bg-red-500/90 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 hover:scale-110 shadow-sm">
+                                <span class="material-symbols-outlined text-lg text-white">close</span>
+                            </button>
+                        </div>
+
+                        <!-- Info Section -->
+                        <div class="p-4">
+                            <!-- Brand -->
+                            <p th:if="${item.brand != null}"
+                                class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1"
+                                th:text="${item.brand}">BRAND</p>
+
+                            <!-- Name -->
+                            <h3 class="font-medium text-gray-900 dark:text-gray-100 text-sm leading-snug line-clamp-2 mb-3"
+                                th:text="${item.name != null ? item.name : (item.color != null ? item.color + ' ' + item.category : item.category)}">
+                                상품명
+                            </h3>
+
+                            <!-- Tags -->
+                            <div class="flex flex-wrap gap-1.5">
+                                <span th:if="${item.color != null}"
+                                    class="inline-block px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-[10px] font-medium rounded-full"
+                                    th:text="'#' + ${item.color}">#컬러</span>
+                                <span th:if="${item.season != null}"
+                                    class="inline-block px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-[10px] font-medium rounded-full"
+                                    th:text="'#' + ${item.season}">#시즌</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div th:if="${#lists.isEmpty(clothesList)}" class="col-span-full py-24 text-center">
+                    <div class="inline-flex flex-col items-center">
+                        <div
+                            class="size-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6">
+                            <span class="material-symbols-outlined text-4xl text-gray-400">checkroom</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">아직 등록된 옷이 없습니다</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mb-6">첫 번째 아이템을 등록해보세요</p>
+                        <a href="/analysis"
+                            class="inline-flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full font-semibold hover:bg-gray-800 transition-colors">
+                            <span class="material-symbols-outlined text-lg">add</span>
+                            아이템 등록하기
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div onclick="closeDetailModal()"
+            class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        </div>
+
+        <!-- Modal Card - Horizontal Layout -->
+        <div
+            class="modal-card relative bg-white dark:bg-card-dark rounded-3xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden transform scale-95 opacity-0 transition-all duration-300">
+
+            <!-- Close Button -->
+            <button onclick="closeDetailModal()"
+                class="absolute top-4 right-4 z-20 size-10 rounded-full bg-black/10 dark:bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-black/20 dark:hover:bg-white/20 transition-all">
+                <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">close</span>
+            </button>
+
+            <!-- Flex Container: Image Left, Info Right -->
+            <div class="flex flex-col md:flex-row h-full">
+
+                <!-- Left: Image Section -->
+                <div id="modal-image-container"
+                    class="relative w-full md:w-1/2 bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-[250px] md:min-h-[550px]">
+                    <img id="modal-image" src="" alt=""
+                        class="w-full h-full object-contain max-h-[350px] md:max-h-[700px]">
+                    <!-- Placeholder when no image -->
+                    <div id="modal-image-placeholder"
+                        class="hidden absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900">
+                        <span
+                            class="material-symbols-outlined text-8xl text-gray-300 dark:text-gray-700">checkroom</span>
+                    </div>
+                    <!-- Status Badge -->
+                    <div id="modal-status-badge" class="absolute top-4 left-4 hidden">
+                        <span class="inline-block px-3 py-1.5 rounded-full text-xs font-bold text-white"></span>
+                    </div>
+                </div>
+
+                <!-- Right: Info Section -->
+                <div class="w-full md:w-1/2 p-6 overflow-y-auto max-h-[60vh] md:max-h-[700px]">
+                    <!-- Brand & Name -->
+                    <p id="modal-brand" class="text-xs font-semibold text-primary uppercase tracking-wider mb-1"></p>
+                    <h2 id="modal-name" class="text-2xl font-bold text-gray-900 dark:text-white mb-6"></h2>
+
+                    <!-- Details Grid -->
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <span class="material-symbols-outlined text-primary text-lg">category</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase">카테고리</p>
+                                <p id="modal-category" class="text-sm font-medium text-gray-700 dark:text-gray-300">-
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <span class="material-symbols-outlined text-primary text-lg">palette</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase">색상</p>
+                                <p id="modal-color" class="text-sm font-medium text-gray-700 dark:text-gray-300">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <span class="material-symbols-outlined text-primary text-lg">ac_unit</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase">계절</p>
+                                <p id="modal-season" class="text-sm font-medium text-gray-700 dark:text-gray-300">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <span class="material-symbols-outlined text-primary text-lg">straighten</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase">사이즈</p>
+                                <p id="modal-size" class="text-sm font-medium text-gray-700 dark:text-gray-300">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <span class="material-symbols-outlined text-primary text-lg">verified</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase">상태</p>
+                                <p id="modal-condition" class="text-sm font-medium text-gray-700 dark:text-gray-300">-
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <span class="material-symbols-outlined text-primary text-lg">calendar_month</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase">등록일</p>
+                                <p id="modal-date" class="text-sm font-medium text-gray-700 dark:text-gray-300">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div id="modal-desc-container" class="hidden mb-6">
+                        <p class="text-xs text-gray-400 uppercase mb-1">상세 설명</p>
+                        <p id="modal-desc" class="text-sm text-gray-600 dark:text-gray-400"></p>
+                    </div>
+
+                    <!-- 선호도 (별점) -->
+                    <div id="modal-rating-container" class="hidden mb-6">
+                        <p class="text-xs text-gray-400 uppercase mb-2 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-xs text-yellow-500">star</span>
+                            선호도
+                        </p>
+                        <div id="modal-rating" class="flex items-center gap-1">
+                            <!-- 별점이 여기에 렌더링됩니다 -->
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div id="modal-actions" class="space-y-3 mt-auto">
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="modal-sell-btn" onclick="goToSell()"
+                                class="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-0.5">
+                                <span class="material-symbols-outlined text-lg">sell</span>
+                                판매하기
+                            </button>
+                            <button onclick="goToDonate()"
+                                class="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-green-700 transition-all hover:shadow-lg hover:shadow-green-500/25 hover:-translate-y-0.5">
+                                <span class="material-symbols-outlined text-lg">volunteer_activism</span>
+                                기부하기
+                            </button>
+                        </div>
+                        <button onclick="deleteFromModal()"
+                            class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl font-medium hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-all">
+                            <span class="material-symbols-outlined text-lg">delete</span>
+                            삭제하기
+                        </button>
+                    </div>
+
+                    <!-- Completed Status Message -->
+                    <div id="modal-completed-msg" class="hidden text-center py-4">
+                        <p class="text-gray-500 dark:text-gray-400">이미 처리 완료된 아이템입니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Animation Styles -->
+    <style>
+        #detail-modal.show {
+            display: flex;
+        }
+
+        #detail-modal.show .modal-backdrop {
+            opacity: 1;
+        }
+
+        #detail-modal.show .modal-card {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .modal-card {
+            animation: modalSlideUp 0.3s ease-out forwards;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+    </style>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <script>
+        // 현재 선택된 필터 상태
+        let currentCategory = '전체';
+        let currentStatus = '전체';
+
+        // 복합 필터 적용 함수
+        function applyFilters() {
+            const items = document.querySelectorAll('.clothes-item');
+            items.forEach(item => {
+                const categoryMatch = currentCategory === '전체' || item.dataset.category === currentCategory;
+
+                // 상태 필터 - SELLING은 isForSale = 'Y'인 항목
+                let statusMatch = false;
+                if (currentStatus === '전체') {
+                    statusMatch = true;
+                } else if (currentStatus === 'SELLING') {
+                    statusMatch = item.dataset.forsale === 'Y';
+                } else {
+                    statusMatch = item.dataset.status === currentStatus && item.dataset.forsale !== 'Y';
+                }
+
+                if (categoryMatch && statusMatch) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // 카테고리 필터링
+        function filterByCategory(category) {
+            currentCategory = category;
+
+            // 버튼 상태 업데이트
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-primary', 'text-white', 'shadow-sm');
+                btn.classList.add('text-gray-500');
+            });
+            const activeBtn = document.querySelector(`.category-btn[data-category="${category}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'bg-primary', 'text-white', 'shadow-sm');
+                activeBtn.classList.remove('text-gray-500');
+            }
+
+            // 필터링 적용
+            applyFilters();
+        }
+
+        // 상태 필터링
+        function filterByStatus(status) {
+            currentStatus = status;
+
+            // 버튼 상태 업데이트
+            document.querySelectorAll('.status-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-gray-800', 'dark:bg-gray-200', 'text-white', 'dark:text-gray-800', 'shadow-sm');
+                btn.classList.add('text-gray-500');
+            });
+            const activeBtn = document.querySelector(`.status-btn[data-status="${status}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'bg-gray-800', 'dark:bg-gray-200', 'text-white', 'dark:text-gray-800', 'shadow-sm');
+                activeBtn.classList.remove('text-gray-500');
+            }
+
+            // 필터링 적용
+            applyFilters();
+        }
+
+        // ============================================
+        // 상세 모달 관련 함수
+        // ============================================
+        let currentClothesId = null;
+        let currentClothesStatus = null;
+
+        // 별점 렌더링 함수
+        function renderStars(rating, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const numRating = parseInt(rating) || 0;
+            let starsHtml = '';
+
+            for (let i = 1; i <= 5; i++) {
+                if (i <= numRating) {
+                    starsHtml += '<span class="material-symbols-outlined text-2xl text-yellow-400">star</span>';
+                } else {
+                    starsHtml += '<span class="material-symbols-outlined text-2xl text-gray-300">star</span>';
+                }
+            }
+
+            if (numRating > 0) {
+                starsHtml += `<span class="ml-2 text-sm text-gray-500">(${numRating}/5)</span>`;
+            }
+
+            container.innerHTML = starsHtml;
+        }
+
+        function openDetailModal(element) {
+            const modal = document.getElementById('detail-modal');
+
+            // 데이터 추출
+            currentClothesId = element.dataset.id;
+            currentClothesStatus = element.dataset.status;
+            const name = element.dataset.name || '-';
+            const brand = element.dataset.brand || '';
+            const category = element.dataset.category || '-';
+            const color = element.dataset.color || '-';
+            const season = element.dataset.season || '-';
+            const size = element.dataset.size || '-';
+            const condition = element.dataset.condition || '-';
+            const imageUrl = element.dataset.image || '';
+            const desc = element.dataset.desc || '';
+            const status = element.dataset.status || 'IN_CLOSET';
+            const date = element.dataset.date || '-';
+            const forsale = element.dataset.forsale || 'N';
+            const personalNote = element.dataset.personalnote || '';
+
+            // 모달에 데이터 적용
+            document.getElementById('modal-name').textContent = name;
+            document.getElementById('modal-brand').textContent = brand;
+            document.getElementById('modal-brand').style.display = brand ? 'block' : 'none';
+            document.getElementById('modal-category').textContent = category;
+            document.getElementById('modal-color').textContent = color;
+            document.getElementById('modal-season').textContent = season;
+            document.getElementById('modal-size').textContent = size;
+            document.getElementById('modal-condition').textContent = condition;
+            document.getElementById('modal-date').textContent = date;
+
+            // 이미지
+            const imgEl = document.getElementById('modal-image');
+            const placeholderEl = document.getElementById('modal-image-placeholder');
+            if (imageUrl) {
+                imgEl.src = imageUrl;
+                imgEl.style.display = 'block';
+                placeholderEl.classList.add('hidden');
+            } else {
+                imgEl.style.display = 'none';
+                placeholderEl.classList.remove('hidden');
+            }
+
+            // 상세 설명
+            const descContainer = document.getElementById('modal-desc-container');
+            if (desc) {
+                document.getElementById('modal-desc').textContent = desc;
+                descContainer.classList.remove('hidden');
+            } else {
+                descContainer.classList.add('hidden');
+            }
+
+            // 선호도 (별점) - 항상 표시
+            const ratingContainer = document.getElementById('modal-rating-container');
+            ratingContainer.classList.remove('hidden');
+            if (personalNote && !isNaN(parseInt(personalNote))) {
+                renderStars(personalNote, 'modal-rating');
+            } else {
+                // 미설정 시 회색 별 5개 + 안내 문구
+                document.getElementById('modal-rating').innerHTML = `
+                    <span class="material-symbols-outlined text-2xl text-gray-300">star</span>
+                    <span class="material-symbols-outlined text-2xl text-gray-300">star</span>
+                    <span class="material-symbols-outlined text-2xl text-gray-300">star</span>
+                    <span class="material-symbols-outlined text-2xl text-gray-300">star</span>
+                    <span class="material-symbols-outlined text-2xl text-gray-300">star</span>
+                    <span class="ml-2 text-sm text-gray-400">미설정</span>
+                `;
+            }
+
+            // 상태 배지
+            const statusBadge = document.getElementById('modal-status-badge');
+            const badgeSpan = statusBadge.querySelector('span');
+            if (forsale === 'Y') {
+                badgeSpan.textContent = '판매중';
+                badgeSpan.className = 'inline-block px-3 py-1.5 rounded-full text-xs font-bold text-white bg-purple-500';
+                statusBadge.classList.remove('hidden');
+            } else if (status === 'SOLD') {
+                badgeSpan.textContent = '판매완료';
+                badgeSpan.className = 'inline-block px-3 py-1.5 rounded-full text-xs font-bold text-white bg-red-500';
+                statusBadge.classList.remove('hidden');
+            } else if (status === 'DONATED') {
+                badgeSpan.textContent = '기부완료';
+                badgeSpan.className = 'inline-block px-3 py-1.5 rounded-full text-xs font-bold text-white bg-green-500';
+                statusBadge.classList.remove('hidden');
+            } else {
+                statusBadge.classList.add('hidden');
+            }
+
+            // 액션 버튼 표시/숨김
+            const actionsDiv = document.getElementById('modal-actions');
+            const completedMsg = document.getElementById('modal-completed-msg');
+            const sellBtn = document.getElementById('modal-sell-btn');
+
+            if (status === 'SOLD' || status === 'DONATED') {
+                // 완료된 아이템은 액션 숨김
+                actionsDiv.classList.add('hidden');
+                completedMsg.classList.remove('hidden');
+            } else if (forsale === 'Y') {
+                // 판매중인 아이템: 판매글 보러가기 버튼으로 변경
+                actionsDiv.classList.remove('hidden');
+                completedMsg.classList.add('hidden');
+                sellBtn.innerHTML = '<span class="material-symbols-outlined text-lg">storefront</span>판매글 보러가기';
+                sellBtn.onclick = function () { goToListing(); };
+            } else {
+                // 일반 아이템: 판매하기 버튼
+                actionsDiv.classList.remove('hidden');
+                completedMsg.classList.add('hidden');
+                sellBtn.innerHTML = '<span class="material-symbols-outlined text-lg">sell</span>판매하기';
+                sellBtn.onclick = function () { goToSell(); };
+            }
+
+            // 모달 표시
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detail-modal');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+            currentClothesId = null;
+        }
+
+        // 판매하기
+        function goToSell() {
+            if (currentClothesId) {
+                window.location.href = '/market/register?clothesId=' + currentClothesId;
+            }
+        }
+
+        // 판매글 보러가기 (마켓 상세 페이지로 이동)
+        function goToListing() {
+            if (currentClothesId) {
+                window.location.href = '/market/detail/' + currentClothesId;
+            }
+        }
+
+        // 기부하기
+        function goToDonate() {
+            window.location.href = '/donation/record';
+        }
+
+        // 모달에서 삭제
+        function deleteFromModal() {
+            if (currentClothesId) {
+                deleteClothes(currentClothesId);
+            }
+        }
+
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeDetailModal();
+            }
+        });
+
+        // ============================================
+        // 옷 삭제 함수
+        // ============================================
+        async function deleteClothes(clothesId) {
+            if (!confirm('이 옷을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/wardrobe/' + clothesId, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ 삭제되었습니다.');
+                    closeDetailModal();
+                    location.reload();
+                } else {
+                    alert('삭제 실패: ' + result.message);
+                }
+            } catch (error) {
+                console.error('삭제 오류:', error);
+                alert('서버 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rebirth.my.mypage.MypageDao">
+
+    <select id="selectUserInfo" parameterType="String" resultType="com.rebirth.my.mypage.MypageVo">
+        /* MypageDao.selectUserInfo */
+        SELECT
+            USER_ID,
+            USER_NAME,
+            EMAIL,
+            PHONE
+        FROM USER_TB
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <update id="updateUserInfo" parameterType="com.rebirth.my.mypage.MypageVo">
+        /* MypageDao.updateUserInfo */
+        UPDATE USER_TB
+        SET
+            USER_NAME = #{userName},
+            EMAIL = #{email},
+            PHONE = #{phone}
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <!-- 통합 활동내역 조회 -->
+    <select id="selectActivityHistory" parameterType="long" resultType="com.rebirth.my.mypage.ActivityVo">
+        /* MypageDao.selectActivityHistory */
+        SELECT * FROM (
+            -- [판매] 내 옷장 아이템을 마켓에 판매 등록한 내역
+            SELECT CREATED_AT AS ACT_DATE, 'SALE' AS ACT_TYPE, NAME AS ACT_TITLE, '판매 가격: ' || TO_CHAR(TARGET_PRICE, 'FM999,999,999') || '원' AS ACT_DETAIL
+            FROM CLOTHING_ITEMS
+            WHERE USER_ID = #{userId} AND IS_FOR_SALE = 'Y'
+
+            UNION ALL
+
+            -- [구매] 내가 타인에게 구매한 아이템
+            SELECT UPDATED_AT AS ACT_DATE, 'PURCHASE' AS ACT_TYPE, NAME AS ACT_TITLE, '구매 완료' AS ACT_DETAIL
+            FROM CLOTHING_ITEMS
+            WHERE BUYER_ID = #{userId} AND STATUS = 'SOLD'
+
+            UNION ALL
+
+            -- [뱃지] 뱃지 획득 내역
+            SELECT UB.AWARDED_AT AS ACT_DATE, 'BADGE' AS ACT_TYPE, B.NAME AS ACT_TITLE, B.DESCRIPTION AS ACT_DETAIL
+            FROM USER_BADGES UB
+            JOIN BADGES B ON UB.BADGE_ID = B.ID
+            WHERE UB.USER_ID = #{userId}
+
+            UNION ALL
+
+            -- [기부] 의류 수거 및 기부 신청 이력
+            SELECT CREATED_AT AS ACT_DATE, 'DONATION' AS ACT_TYPE, REQUEST_TYPE AS ACT_TITLE, PICKUP_ADDRESS AS ACT_DETAIL
+            FROM PICKUP_REQUESTS
+            WHERE USER_ID = #{userId}
+
+            UNION ALL
+
+            -- [미션] 일일 에코 미션 수행 이력 (일별 합산)
+            SELECT CAST(CHECK_DATE AS TIMESTAMP) AS ACT_DATE, 'MISSION' AS ACT_TYPE, '오늘의 미션 완료' AS ACT_TITLE, '총 ' || COUNT(*) || '개 미션 수행 / ' || SUM(POINTS_EARNED) || 'P 적립' AS ACT_DETAIL
+            FROM USER_TODO_CHECKS
+            WHERE USER_ID = #{userId}
+            GROUP BY CHECK_DATE
+        ) 
+        ORDER BY ACT_DATE DESC
+    </select>
+
+    <!-- 나의 랭킹 정보 조회 (에코포인트, 수거/기부, 판매) -->
+    <select id="selectMyRanking" parameterType="long" resultType="com.rebirth.my.mypage.MypageVo">
+        /* MypageDao.selectMyRanking */
+        WITH ECO_RANK AS (
+            SELECT USER_ID, RANK() OVER (ORDER BY ECO_POINTS DESC) AS R, COUNT(*) OVER () AS T
+            FROM USER_PROFILES
+        ),
+        DONATE_RANK AS (
+            SELECT U.ID AS USER_ID, RANK() OVER (ORDER BY NVL(DR.CNT, 0) DESC) AS R, NVL(DR.CNT, 0) AS C
+            FROM USERS U
+            LEFT JOIN (
+                SELECT USER_ID, COUNT(*) AS CNT 
+                FROM CLOTHING_ITEMS 
+                WHERE STATUS = 'DONATED' 
+                GROUP BY USER_ID
+            ) DR ON U.ID = DR.USER_ID
+        ),
+        SALE_RANK AS (
+            SELECT U.ID AS USER_ID, RANK() OVER (ORDER BY NVL(CI.CNT, 0) DESC) AS R, NVL(CI.CNT, 0) AS C
+            FROM USERS U
+            LEFT JOIN (SELECT USER_ID, COUNT(*) AS CNT FROM CLOTHING_ITEMS WHERE STATUS = 'SOLD' GROUP BY USER_ID) CI ON U.ID = CI.USER_ID
+        )
+        SELECT 
+            E.R AS ecoPointRank,
+            D.R AS donationRank,
+            S.R AS salesRank,
+            E.T AS totalUsers,
+            D.C AS donationCount,
+            S.C AS salesCount
+        FROM ECO_RANK E
+        JOIN DONATE_RANK D ON E.USER_ID = D.USER_ID
+        JOIN SALE_RANK S ON E.USER_ID = S.USER_ID
+        WHERE E.USER_ID = #{userId}
+    </select>
+    <select id="selectWishlist" parameterType="long" resultType="com.rebirth.my.mypage.WishlistItemVo">
+        /* MypageDao.selectWishlist */
+        SELECT 
+            CI.ID,
+            CI.NAME,
+            CI.TARGET_PRICE AS PRICE,
+            CI.CATEGORY,
+            CIMG.IMAGE_URL
+        FROM CLOTHING_FAVORITES CF
+        JOIN CLOTHING_ITEMS CI ON CF.CLOTHING_ITEM_ID = CI.ID
+        LEFT JOIN (
+            -- 대표 이미지 1장만 조인
+            SELECT CLOTHING_ITEM_ID, MAX(IMAGE_URL) KEEP (DENSE_RANK FIRST ORDER BY IS_MAIN DESC, CREATED_AT DESC) AS IMAGE_URL
+            FROM CLOTHING_IMAGES
+            GROUP BY CLOTHING_ITEM_ID
+        ) CIMG ON CI.ID = CIMG.CLOTHING_ITEM_ID
+        WHERE CF.USER_ID = #{userId}
+        ORDER BY CF.CREATED_AT DESC
+    </select>
+    <insert id="insertOwnedDecoration">
+        INSERT INTO USER_DECORATIONS (USER_ID, ITEM_CODE)
+        VALUES (#{userId}, #{itemCode})
+    </insert>
+
+    <select id="selectOwnedItemCodes" resultType="string">
+        SELECT ITEM_CODE FROM USER_DECORATIONS
+        WHERE USER_ID = #{userId}
+    </select>
+</mapper>

@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/head :: headFragment}"></head>
+
+<body class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen">
+
+    <!-- 예시 이미지 Tooltip 스타일 -->
+    <style>
+        .example-tooltip-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .example-tooltip {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 100;
+            white-space: nowrap;
+        }
+
+        .example-tooltip-right {
+            left: auto;
+            right: 0;
+            transform: translateX(0);
+        }
+
+        .example-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: white;
+        }
+
+        .example-tooltip-right::after {
+            left: auto;
+            right: 12px;
+            transform: none;
+        }
+
+        .example-tooltip-wrapper:hover .example-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .example-tooltip {
+                background: #1f2937;
+                color: white;
+            }
+
+            .example-tooltip::after {
+                border-top-color: #1f2937;
+            }
+        }
+    </style>
+
+    <!-- Header -->
+    <header th:replace="~{fragments/header :: headerFragment}"></header>
+
+    <!-- Main Content -->
+    <main class="pt-20 pb-16 px-4">
+        <div class="max-w-4xl mx-auto">
+
+            <!-- Hero Section -->
+            <section class="text-center py-12">
+                <div
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary text-sm font-medium mb-6">
+                    <span class="material-symbols-outlined text-lg">auto_awesome</span>
+                    AI 스마트 분석
+                </div>
+                <h1
+                    class="text-4xl md:text-5xl font-black mb-4 bg-gradient-to-r from-primary via-violet-500 to-purple-600 bg-clip-text text-transparent">
+                    의류 상태 분석
+                </h1>
+                <p class="text-text-light/60 dark:text-text-dark/60 max-w-md mx-auto">
+                    AI가 의류 상태를 분석하고 등급을 판정합니다
+                </p>
+            </section>
+
+            <!-- Upload Section - 2 Column Grid (66/33) -->
+            <section id="upload-section" class="mb-8">
+                <!-- Main Card Container -->
+                <div
+                    class="bg-white dark:bg-card-dark rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                    <div class="grid lg:grid-cols-3 gap-0">
+
+                        <!-- Left Column (66%) - Upload Zones -->
+                        <div class="lg:col-span-2 p-5 lg:p-6">
+                            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-2xl">cloud_upload</span>
+                                사진 업로드
+                            </h3>
+
+                            <!-- Upload Boxes - Vertical Stack -->
+                            <div class="space-y-4">
+                                <!-- 의류 사진 -->
+                                <div id="clothing-drop-zone"
+                                    class="group relative bg-gray-50 dark:bg-white/5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer overflow-hidden h-40">
+                                    <!-- Ghost Placeholder -->
+                                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <span
+                                            class="material-symbols-outlined text-[100px] text-gray-200 dark:text-gray-700">checkroom</span>
+                                    </div>
+                                    <input type="file" id="clothing-input" accept="image/*" class="hidden">
+                                    <div id="clothing-placeholder"
+                                        class="relative z-10 h-full flex flex-col items-center justify-center p-4">
+                                        <div
+                                            class="size-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform mb-3">
+                                            <span
+                                                class="material-symbols-outlined text-3xl text-primary">add_photo_alternate</span>
+                                        </div>
+                                        <p class="text-lg font-bold text-gray-800 dark:text-white mb-1">의류 사진</p>
+                                        <p class="text-sm text-gray-500">클릭 또는 드래그하여 업로드</p>
+                                        <div
+                                            class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full">
+                                            <span
+                                                class="material-symbols-outlined text-sm text-primary">check_circle</span>
+                                            <span class="text-sm font-medium text-primary">필수</span>
+                                        </div>
+                                    </div>
+                                    <div id="clothing-preview"
+                                        class="hidden relative z-10 h-full flex items-center justify-center p-4">
+                                        <img id="clothing-img" class="max-h-full max-w-full object-contain rounded-xl">
+                                        <button type="button" id="clothing-remove"
+                                            class="absolute top-4 right-4 size-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center z-20 shadow-lg">
+                                            <span class="material-symbols-outlined text-lg">close</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 케어라벨 -->
+                                <div id="label-drop-zone"
+                                    class="group relative bg-gray-50 dark:bg-white/5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-all cursor-pointer overflow-hidden h-40">
+                                    <!-- Ghost Placeholder -->
+                                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <span
+                                            class="material-symbols-outlined text-[100px] text-gray-200 dark:text-gray-700">sell</span>
+                                    </div>
+                                    <input type="file" id="label-input" accept="image/*" class="hidden">
+                                    <div id="label-placeholder"
+                                        class="relative z-10 h-full flex flex-col items-center justify-center p-4">
+                                        <div
+                                            class="size-14 rounded-2xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center group-hover:scale-110 transition-transform mb-3">
+                                            <span
+                                                class="material-symbols-outlined text-3xl text-violet-500">add_photo_alternate</span>
+                                        </div>
+                                        <p class="text-lg font-bold text-gray-800 dark:text-white mb-1">케어라벨 <span
+                                                class="text-base font-normal text-gray-400">(선택)</span></p>
+                                        <p class="text-sm text-gray-500">소재/세탁 정보를 자동으로 추출</p>
+                                    </div>
+                                    <div id="label-preview"
+                                        class="hidden relative z-10 h-full flex items-center justify-center p-4">
+                                        <img id="label-img" class="max-h-full max-w-full object-contain rounded-xl">
+                                        <button type="button" id="label-remove"
+                                            class="absolute top-4 right-4 size-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center z-20 shadow-lg">
+                                            <span class="material-symbols-outlined text-lg">close</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Analyze Button (Full Width) -->
+                            <button id="analyze-btn"
+                                class="w-full mt-4 py-3 bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-600/90 text-white font-bold text-lg rounded-2xl shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="material-symbols-outlined text-2xl">rocket_launch</span>
+                                분석 시작
+                            </button>
+                        </div>
+
+                        <!-- Right Column (33%) - Instruction Panel -->
+                        <div
+                            class="lg:col-span-1 bg-gradient-to-br from-primary/5 to-violet-500/5 dark:from-primary/10 dark:to-violet-500/10 p-5 lg:p-6 border-t lg:border-t-0 lg:border-l border-gray-100 dark:border-gray-800">
+                            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-2xl">lightbulb</span>
+                                좋은 결과를 위한 팁
+                            </h3>
+
+                            <!-- Good Examples -->
+                            <div class="space-y-4">
+                                <!-- Example 1: Clothing -->
+                                <div class="flex items-start gap-3">
+                                    <div
+                                        class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 border-green-400 shadow-sm">
+                                        <img src="/images/examples/example_clothing.jpg" alt="좋은 예시"
+                                            class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="flex-1">
+                                        <p
+                                            class="font-bold text-base text-gray-800 dark:text-white flex items-center gap-2 mb-1">
+                                            <span class="text-green-500 text-lg">✓</span> 평평하게 펼쳐서
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">옷 전체가 보이게, 밝은 조명에서 촬영하세요</p>
+                                    </div>
+                                </div>
+
+                                <!-- Example 2: Label -->
+                                <div class="flex items-start gap-3">
+                                    <div
+                                        class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 border-green-400 shadow-sm bg-white">
+                                        <img src="/images/examples/example_label.jpg" alt="좋은 예시"
+                                            class="w-full h-full object-contain">
+                                    </div>
+                                    <div class="flex-1">
+                                        <p
+                                            class="font-bold text-base text-gray-800 dark:text-white flex items-center gap-2 mb-1">
+                                            <span class="text-green-500 text-lg">✓</span> 글씨가 선명하게
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">라벨 전체가 보이도록 가까이에서 촬영하세요</p>
+                                    </div>
+                                </div>
+
+                                <!-- Divider -->
+                                <hr class="border-gray-200 dark:border-gray-700 my-4">
+
+                                <!-- Tips - Avoid -->
+                                <div class="space-y-3">
+                                    <p
+                                        class="text-base font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-red-400 text-xl">block</span>
+                                        피해야 할 것
+                                    </p>
+                                    <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-2 ml-1">
+                                        <li class="flex items-center gap-2">
+                                            <span class="text-red-400 text-base">✗</span> 어두운 곳에서 촬영
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="text-red-400 text-base">✗</span> 옷이 구겨진 상태
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="text-red-400 text-base">✗</span> 라벨 글씨가 흐릿함
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Bottom Note -->
+                                <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        <span
+                                            class="material-symbols-outlined text-primary text-sm align-middle mr-1">tips_and_updates</span>
+                                        <span class="text-primary font-medium">고화질 사진</span>으로 AI 분석 정확도 30%↑
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading -->
+            <section id="loading-section" class="hidden text-center py-20">
+                <div class="size-20 mx-auto border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-6">
+                </div>
+                <p class="font-bold text-primary animate-pulse">AI가 의류를 분석 중입니다...</p>
+                <p class="text-sm text-text-light/50 dark:text-text-dark/50 mt-2">결함 탐지 및 스타일 분류 중</p>
+            </section>
+
+            <!-- Results Section -->
+            <section id="result-section" class="hidden space-y-8">
+
+                <!-- Grade & Images Row -->
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- AI 등급 -->
+                    <div class="bg-card-light dark:bg-card-dark rounded-3xl p-6 text-center">
+                        <p class="text-sm text-text-light/60 dark:text-text-dark/60 mb-3">AI 등급 판정</p>
+                        <div id="grade-badge"
+                            class="inline-flex items-center justify-center size-24 rounded-full text-4xl font-black text-white shadow-xl mb-3">
+                            S
+                        </div>
+                        <p id="grade-score" class="text-2xl font-bold">100점</p>
+                        <p id="grade-recommendation" class="text-sm text-text-light/60 dark:text-text-dark/60">거의 새것</p>
+                    </div>
+
+                    <!-- 결함 분석 이미지 -->
+                    <div class="bg-card-light dark:bg-card-dark rounded-3xl p-6">
+                        <p class="text-sm text-text-light/60 dark:text-text-dark/60 mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg text-orange-500">search</span>
+                            결함 분석
+                        </p>
+                        <img id="defect-img"
+                            class="w-full aspect-square object-contain rounded-2xl bg-gray-100 dark:bg-gray-800">
+                    </div>
+
+                    <!-- 배경 제거 이미지 -->
+                    <div class="bg-card-light dark:bg-card-dark rounded-3xl p-6">
+                        <p class="text-sm text-text-light/60 dark:text-text-dark/60 mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg text-green-500">content_cut</span>
+                            배경 제거
+                        </p>
+                        <div
+                            class="w-full aspect-square rounded-2xl bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22%3E%3Crect width=%2210%22 height=%2210%22 fill=%22%23ccc%22/%3E%3Crect x=%2210%22 y=%2210%22 width=%2210%22 height=%2210%22 fill=%22%23ccc%22/%3E%3C/svg%3E')]">
+                            <img id="nobg-img" class="w-full h-full object-contain">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Details Row -->
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- 발견된 결함 -->
+                    <div class="bg-card-light dark:bg-card-dark rounded-3xl p-6">
+                        <p class="text-sm text-text-light/60 dark:text-text-dark/60 mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg text-red-500">warning</span>
+                            발견된 결함
+                        </p>
+                        <ul id="defect-list" class="space-y-2">
+                            <li class="text-text-light/40">결함 없음</li>
+                        </ul>
+                        <p class="text-xs text-text-light/30 dark:text-text-dark/30 mt-4">신뢰도 기준: conf ≥ 0.15</p>
+                    </div>
+
+                    <!-- K-Fashion 스타일 -->
+                    <div class="bg-card-light dark:bg-card-dark rounded-3xl p-6">
+                        <p class="text-sm text-text-light/60 dark:text-text-dark/60 mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg text-purple-500">style</span>
+                            K-Fashion 스타일
+                        </p>
+                        <div id="style-tags" class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">분석
+                                중</span>
+                        </div>
+                    </div>
+
+                    <!-- 케어라벨 정보 -->
+                    <div class="bg-card-light dark:bg-card-dark rounded-3xl p-6">
+                        <p class="text-sm text-text-light/60 dark:text-text-dark/60 mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg text-blue-500">label</span>
+                            케어라벨 정보
+                        </p>
+                        <div id="tag-info" class="space-y-2 text-sm">
+                            <p>케어라벨 이미지를 업로드하면 분석됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 세부 속성 -->
+                <div class="bg-card-light dark:bg-card-dark rounded-3xl p-6">
+                    <p class="text-sm text-text-light/60 dark:text-text-dark/60 mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg text-teal-500">category</span>
+                        세부 속성
+                    </p>
+                    <div id="attributes-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- 동적으로 채워짐 -->
+                    </div>
+                </div>
+
+                <!-- 옷장 등록 폼 -->
+                <div class="bg-gradient-to-br from-primary/5 to-violet-500/5 rounded-3xl p-8 border border-primary/20">
+                    <h3 class="font-bold text-lg mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">edit_note</span>
+                        옷장에 등록하기
+                    </h3>
+
+                    <div class="grid md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label
+                                class="text-xs font-medium text-text-light/60 dark:text-text-dark/60 mb-1 block">의류명</label>
+                            <input type="text" id="input-name"
+                                class="w-full px-4 py-3 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                placeholder="예: 데일리 니트">
+                        </div>
+                        <div>
+                            <label
+                                class="text-xs font-medium text-text-light/60 dark:text-text-dark/60 mb-1 block">카테고리</label>
+                            <select id="input-category"
+                                class="w-full px-4 py-3 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                <option value="상의">상의</option>
+                                <option value="하의">하의</option>
+                                <option value="아우터">아우터</option>
+                                <option value="원피스">원피스</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label
+                                class="text-xs font-medium text-text-light/60 dark:text-text-dark/60 mb-1 block">색상</label>
+                            <input type="text" id="input-color"
+                                class="w-full px-4 py-3 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                placeholder="예: 블랙">
+                        </div>
+                        <div>
+                            <label
+                                class="text-xs font-medium text-text-light/60 dark:text-text-dark/60 mb-1 block">사이즈</label>
+                            <select id="input-size"
+                                class="w-full px-4 py-3 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                <option value="">선택 안함</option>
+                                <option value="XS">XS (85)</option>
+                                <option value="S">S (90)</option>
+                                <option value="M">M (95)</option>
+                                <option value="L">L (100)</option>
+                                <option value="XL">XL (105)</option>
+                                <option value="XXL">XXL (110)</option>
+                                <option value="FREE">FREE</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label
+                                class="text-xs font-medium text-text-light/60 dark:text-text-dark/60 mb-1 block">시즌</label>
+                            <select id="input-season"
+                                class="w-full px-4 py-3 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                <option value="사계절">사계절</option>
+                                <option value="봄/가을">봄/가을</option>
+                                <option value="여름">여름</option>
+                                <option value="겨울">겨울</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label
+                                class="text-xs font-medium text-text-light/60 dark:text-text-dark/60 mb-1 block">스타일</label>
+                            <select id="input-style"
+                                class="w-full px-4 py-3 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                <option value="캐주얼">캐주얼</option>
+                                <option value="포멀">포멀</option>
+                                <option value="스포츠">스포츠</option>
+                                <option value="스트릿">스트릿</option>
+                                <option value="미니멀">미니멀</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="text-xs font-medium text-text-light/60 dark:text-text-dark/60 mb-2 block">선호도
+                                (별점)</label>
+                            <div id="rating-input" class="flex items-center gap-1">
+                                <span
+                                    class="rating-star material-symbols-outlined text-3xl text-gray-300 cursor-pointer hover:text-yellow-400 transition-colors"
+                                    data-value="1">star</span>
+                                <span
+                                    class="rating-star material-symbols-outlined text-3xl text-gray-300 cursor-pointer hover:text-yellow-400 transition-colors"
+                                    data-value="2">star</span>
+                                <span
+                                    class="rating-star material-symbols-outlined text-3xl text-gray-300 cursor-pointer hover:text-yellow-400 transition-colors"
+                                    data-value="3">star</span>
+                                <span
+                                    class="rating-star material-symbols-outlined text-3xl text-gray-300 cursor-pointer hover:text-yellow-400 transition-colors"
+                                    data-value="4">star</span>
+                                <span
+                                    class="rating-star material-symbols-outlined text-3xl text-gray-300 cursor-pointer hover:text-yellow-400 transition-colors"
+                                    data-value="5">star</span>
+                                <span id="rating-text" class="ml-3 text-sm text-text-light/50 dark:text-text-dark/50">클릭하여 선호도를 선택하세요</span>
+                            </div>
+                            <input type="hidden" id="input-rating" value="">
+                        </div>
+                    </div>
+
+                    <!-- C/D 등급 경고 배너 (숨김 상태, JS로 표시) -->
+                    <div id="grade-warning-section" class="hidden space-y-4">
+                        <!-- 경고 배너 -->
+                        <div
+                            class="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/30 rounded-xl p-4">
+                            <div class="flex items-start gap-3">
+                                <span class="material-symbols-outlined text-2xl text-orange-500">warning</span>
+                                <div>
+                                    <h4 class="font-bold text-orange-600 dark:text-orange-400">상태가 좋지 않은 의류입니다</h4>
+                                    <p class="text-sm text-text-light/70 dark:text-text-dark/70 mt-1">
+                                        수선이 어려운 상태예요. 업사이클링이나 폐기 수거 서비스를 이용해보세요.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 업사이클링 레시피 (Pinterest 스타일) -->
+                        <div
+                            class="bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/20 rounded-2xl p-5">
+                            <h4 class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2 mb-4">
+                                <span class="material-symbols-outlined">recycling</span>
+                                이 옷으로 만들 수 있어요!
+                            </h4>
+                            <div id="upcycling-recipes" class="grid grid-cols-2 gap-3">
+                                <!-- JavaScript로 카테고리별 레시피 카드 채움 -->
+                            </div>
+                            <p class="text-xs text-text-light/50 dark:text-text-dark/50 mt-3 text-center">
+                                🎬 클릭하면 유튜브 튜토리얼로 이동해요
+                            </p>
+                        </div>
+
+                        <!-- 폐기 서비스 링크 -->
+                        <a href="/analysis/disposal"
+                            class="block w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg transition-all hover:scale-[1.02] text-center">
+                            <span class="material-symbols-outlined align-middle mr-1">local_shipping</span>
+                            폐기 수거 서비스 알아보기
+                        </a>
+                    </div>
+
+                    <!-- 옷장 등록 버튼 (A/B 등급용) -->
+                    <button id="register-btn"
+                        class="w-full py-4 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        옷장에 추가하기
+                    </button>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footerFragment}"></footer>
+
+    <script>
+        // ===== 상태 변수 =====
+        let analysisResult = null;
+        let processedImageBase64 = null;
+
+        // ===== Elements =====
+        const clothingInput = document.getElementById('clothing-input');
+        const labelInput = document.getElementById('label-input');
+        const analyzeBtn = document.getElementById('analyze-btn');
+
+        // ===== 파일 업로드 핸들러 =====
+        function setupUpload(dropZoneId, inputId, placeholderId, previewId, imgId, removeBtnId) {
+            const dropZone = document.getElementById(dropZoneId);
+            const input = document.getElementById(inputId);
+            const placeholder = document.getElementById(placeholderId);
+            const preview = document.getElementById(previewId);
+            const img = document.getElementById(imgId);
+            const removeBtn = document.getElementById(removeBtnId);
+
+            dropZone.addEventListener('click', () => input.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-primary', 'bg-primary/5');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-primary', 'bg-primary/5');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-primary', 'bg-primary/5');
+                if (e.dataTransfer.files[0]) {
+                    input.files = e.dataTransfer.files;
+                    showPreview(input.files[0]);
+                }
+            });
+
+            input.addEventListener('change', (e) => {
+                if (e.target.files[0]) showPreview(e.target.files[0]);
+            });
+
+            function showPreview(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                    placeholder.classList.add('hidden');
+                    preview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                input.value = '';
+                placeholder.classList.remove('hidden');
+                preview.classList.add('hidden');
+            });
+        }
+
+        setupUpload('clothing-drop-zone', 'clothing-input', 'clothing-placeholder', 'clothing-preview', 'clothing-img', 'clothing-remove');
+        setupUpload('label-drop-zone', 'label-input', 'label-placeholder', 'label-preview', 'label-img', 'label-remove');
+
+        // ===== 업사이클링 레시피 데이터 =====
+        const upcyclingRecipes = {
+            '상의': [
+                { name: '에코백 만들기', time: '15분', level: '쉬움', icon: '🛍️', youtube: 'https://www.youtube.com/results?search_query=티셔츠+에코백+만들기' },
+                { name: '쿠션 커버', time: '20분', level: '보통', icon: '🛋️', youtube: 'https://www.youtube.com/results?search_query=티셔츠+쿠션커버+DIY' },
+                { name: '헤어밴드', time: '10분', level: '쉬움', icon: '🎀', youtube: 'https://www.youtube.com/results?search_query=티셔츠+헤어밴드+만들기' },
+                { name: '걸레/행주', time: '5분', level: '쉬움', icon: '🧹', youtube: 'https://www.youtube.com/results?search_query=헌옷+걸레+만들기' }
+            ],
+            '하의': [
+                { name: '토트백', time: '30분', level: '보통', icon: '👜', youtube: 'https://www.youtube.com/results?search_query=청바지+토트백+만들기' },
+                { name: '앞치마', time: '25분', level: '보통', icon: '👨‍🍳', youtube: 'https://www.youtube.com/results?search_query=청바지+앞치마+DIY' },
+                { name: '필통/파우치', time: '20분', level: '쉬움', icon: '✏️', youtube: 'https://www.youtube.com/results?search_query=청바지+파우치+만들기' },
+                { name: '컵홀더', time: '15분', level: '쉬움', icon: '☕', youtube: 'https://www.youtube.com/results?search_query=청바지+컵홀더+DIY' }
+            ],
+            '아우터': [
+                { name: '쿠션/방석', time: '30분', level: '보통', icon: '🪑', youtube: 'https://www.youtube.com/results?search_query=패딩+쿠션+만들기' },
+                { name: '담요(안감)', time: '40분', level: '어려움', icon: '🛏️', youtube: 'https://www.youtube.com/results?search_query=코트+담요+리폼' },
+                { name: '반려동물 침대', time: '35분', level: '보통', icon: '🐕', youtube: 'https://www.youtube.com/results?search_query=헌옷+강아지침대+만들기' },
+                { name: '가방 안감', time: '25분', level: '보통', icon: '👝', youtube: 'https://www.youtube.com/results?search_query=옷+가방안감+리폼' }
+            ],
+            '원피스': [
+                { name: '앞치마', time: '20분', level: '쉬움', icon: '👨‍🍳', youtube: 'https://www.youtube.com/results?search_query=원피스+앞치마+리폼' },
+                { name: '스카프', time: '15분', level: '쉬움', icon: '🧣', youtube: 'https://www.youtube.com/results?search_query=원피스+스카프+만들기' },
+                { name: '파우치', time: '20분', level: '쉬움', icon: '👛', youtube: 'https://www.youtube.com/results?search_query=원단+파우치+DIY' },
+                { name: '머리끈', time: '10분', level: '쉬움', icon: '💇', youtube: 'https://www.youtube.com/results?search_query=천+머리끈+만들기' }
+            ]
+        };
+
+        // 업사이클링 레시피 카드 생성
+        function showUpcyclingRecipes(category) {
+            const container = document.getElementById('upcycling-recipes');
+            // 카테고리 매핑 (한글/영어 변환)
+            let key = '상의';
+            if (category.includes('상의') || category.includes('Top') || category.includes('티셔츠')) key = '상의';
+            else if (category.includes('하의') || category.includes('Bottom') || category.includes('바지')) key = '하의';
+            else if (category.includes('아우터') || category.includes('Outer') || category.includes('코트') || category.includes('자켓')) key = '아우터';
+            else if (category.includes('원피스') || category.includes('Dress')) key = '원피스';
+
+            const recipes = upcyclingRecipes[key] || upcyclingRecipes['상의'];
+
+            container.innerHTML = recipes.map(r => `
+                <a href="${r.youtube}" target="_blank" 
+                   class="group bg-white dark:bg-card-dark rounded-xl p-3 border border-gray-100 dark:border-gray-700 hover:border-emerald-400 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">${r.icon}</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm text-gray-800 dark:text-gray-200 group-hover:text-emerald-600 truncate">${r.name}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-xs text-gray-400">⏱️ ${r.time}</span>
+                                <span class="text-xs px-1.5 py-0.5 rounded ${r.level === '쉬움' ? 'bg-green-100 text-green-600' : r.level === '보통' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'}">${r.level}</span>
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined text-gray-300 group-hover:text-red-500 text-lg">play_circle</span>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+
+        // ===== 사이즈 직접 입력 토글 =====
+        function toggleCustomSize() {
+            const sizeSelect = document.getElementById('input-size');
+            const customInput = document.getElementById('input-size-custom');
+            if (sizeSelect.value === 'CUSTOM') {
+                customInput.classList.remove('hidden');
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.value = '';
+            }
+        }
+        window.toggleCustomSize = toggleCustomSize; // 전역 함수로 등록
+
+        // 사이즈 값 가져오기 (드롭다운 또는 직접 입력)
+        function getSizeValue() {
+            const sizeSelect = document.getElementById('input-size');
+            const customInput = document.getElementById('input-size-custom');
+            if (sizeSelect.value === 'CUSTOM') {
+                // 직접 입력값 검증 (10자 이하, 특수문자 제거)
+                let customValue = customInput.value.trim().substring(0, 10);
+                customValue = customValue.replace(/[^a-zA-Z0-9가-힣]/g, '');
+                return customValue || null;
+            }
+            return sizeSelect.value || null;
+        }
+        window.getSizeValue = getSizeValue;
+
+
+        // ===== 별점 선택 핸들러 =====
+        const ratingStars = document.querySelectorAll('.rating-star');
+        const ratingInput = document.getElementById('input-rating');
+        const ratingText = document.getElementById('rating-text');
+        let currentRating = 0;
+
+        ratingStars.forEach(star => {
+            star.addEventListener('click', () => {
+                currentRating = parseInt(star.dataset.value);
+                ratingInput.value = currentRating;
+                updateStars(currentRating);
+                ratingText.textContent = `${currentRating}점 선택됨`;
+                ratingText.classList.remove('text-text-light/50');
+                ratingText.classList.add('text-yellow-500', 'font-medium');
+            });
+        });
+
+        function updateStars(rating) {
+            ratingStars.forEach(star => {
+                const value = parseInt(star.dataset.value);
+                if (value <= rating) {
+                    star.classList.remove('text-gray-300');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-300');
+                }
+            });
+        }
+
+        // ===== 분석 시작 =====
+        analyzeBtn.addEventListener('click', async () => {
+            if (!clothingInput.files[0]) {
+                alert('의류 사진을 선택해주세요.');
+                return;
+            }
+
+            // UI 상태 변경
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('loading-section').classList.remove('hidden');
+            document.getElementById('result-section').classList.add('hidden');
+
+            const formData = new FormData();
+            formData.append('clothingImage', clothingInput.files[0]);
+            if (labelInput.files[0]) {
+                formData.append('labelImage', labelInput.files[0]);
+            }
+
+            try {
+                const response = await fetch('http://192.168.0.2:5000/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                console.log('분석 결과:', data);
+
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    alert('분석 실패: ' + (data.error || '알 수 없는 오류'));
+                    resetUI();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('서버 연결 오류. yolo_analysis 서버가 실행 중인지 확인하세요.');
+                resetUI();
+            }
+        });
+
+        function resetUI() {
+            document.getElementById('upload-section').classList.remove('hidden');
+            document.getElementById('loading-section').classList.add('hidden');
+        }
+
+        // ===== 결과 표시 =====
+        function displayResults(data) {
+            analysisResult = data;
+            processedImageBase64 = data.clothing_image_no_bg_base64;
+
+            document.getElementById('loading-section').classList.add('hidden');
+            document.getElementById('result-section').classList.remove('hidden');
+
+            // 등급 표시
+            if (data.condition_analysis) {
+                const cond = data.condition_analysis;
+                const badge = document.getElementById('grade-badge');
+                const gradeChar = cond.grade.charAt(0);
+                badge.textContent = gradeChar;
+
+                // 등급별 색상
+                badge.className = 'inline-flex items-center justify-center size-24 rounded-full text-4xl font-black text-white shadow-xl mb-3 ';
+                if (gradeChar === 'S') badge.classList.add('bg-gradient-to-br', 'from-emerald-400', 'to-green-600');
+                else if (gradeChar === 'A') badge.classList.add('bg-gradient-to-br', 'from-blue-400', 'to-indigo-600');
+                else badge.classList.add('bg-gradient-to-br', 'from-orange-400', 'to-red-600');
+
+                document.getElementById('grade-score').textContent = cond.score + '점';
+                document.getElementById('grade-recommendation').textContent = cond.recommendation;
+
+                // 결함 분석 이미지
+                if (cond.annotated_image_base64) {
+                    document.getElementById('defect-img').src = 'data:image/jpeg;base64,' + cond.annotated_image_base64;
+                }
+
+                // 결함 목록
+                const defectList = document.getElementById('defect-list');
+                defectList.innerHTML = '';
+                if (cond.defects && cond.defects.length > 0) {
+                    cond.defects.forEach(d => {
+                        const name = d.type.includes('(') ? d.type.split('(')[1].replace(')', '') : d.type;
+                        defectList.innerHTML += `<li class="flex items-center gap-2 text-sm"><span class="size-2 bg-red-500 rounded-full"></span>${name}</li>`;
+                    });
+                } else {
+                    defectList.innerHTML = '<li class="text-green-500 flex items-center gap-2"><span class="material-symbols-outlined">check_circle</span>결함 없음</li>';
+                }
+
+                // B등급 처리 (경고 표시 + 업사이클링 레시피)
+                const isLowGrade = gradeChar === 'B';
+                const warningSection = document.getElementById('grade-warning-section');
+                const registerBtn = document.getElementById('register-btn');
+
+                if (isLowGrade) {
+                    warningSection.classList.remove('hidden');
+                    registerBtn.classList.add('hidden');
+
+                    // 카테고리별 업사이클링 레시피 표시
+                    const category = analysisResult?.clothing_analysis?.category || '상의';
+                    showUpcyclingRecipes(category);
+                } else {
+                    warningSection.classList.add('hidden');
+                    registerBtn.classList.remove('hidden');
+                }
+            }
+
+            // 배경 제거 이미지
+            if (data.clothing_image_no_bg_base64) {
+                document.getElementById('nobg-img').src = 'data:image/png;base64,' + data.clothing_image_no_bg_base64;
+            }
+
+            // K-Fashion 스타일
+            if (data.clothing_analysis) {
+                const info = data.clothing_analysis;
+                const styleTags = document.getElementById('style-tags');
+                styleTags.innerHTML = '';
+
+                const tags = [
+                    { label: info.style, color: 'bg-purple-100 text-purple-700' },
+                    { label: info.sub_style, color: 'bg-pink-100 text-pink-700' },
+                    { label: info.category, color: 'bg-blue-100 text-blue-700' },
+                    { label: info.sub_category, color: 'bg-indigo-100 text-indigo-700' }
+                ];
+
+                tags.forEach(t => {
+                    if (t.label && t.label !== 'null') {
+                        styleTags.innerHTML += `<span class="px-3 py-1 ${t.color} rounded-full text-sm font-medium">${t.label}</span>`;
+                    }
+                });
+
+                // 세부 속성
+                const attrs = document.getElementById('attributes-grid');
+                attrs.innerHTML = '';
+                const attrList = [
+                    { label: '컬러', value: info.color },
+                    { label: '소재', value: info.material },
+                    { label: '핏', value: info.fit },
+                    { label: '기장', value: info.length },
+                    { label: '넥라인', value: info.neckline },
+                    { label: '소매', value: info.sleeve_length },
+                    { label: '프린트', value: info.print },
+                    { label: '시즌', value: info.season }
+                ];
+
+                attrList.forEach(a => {
+                    if (a.value && a.value !== 'null' && a.value !== null) {
+                        attrs.innerHTML += `
+                            <div class="p-3 bg-white dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark">
+                                <p class="text-xs text-text-light/50 dark:text-text-dark/50 mb-1">${a.label}</p>
+                                <p class="font-medium">${a.value}</p>
+                            </div>
+                        `;
+                    }
+                });
+
+                // 입력 필드 자동 채우기
+                document.getElementById('input-name').value = info.short_name || (info.color + ' ' + (info.sub_category || info.category)) || '';
+                if (info.category) document.getElementById('input-category').value = info.category;
+                document.getElementById('input-color').value = info.color || '';
+                if (info.season) {
+                    const seasonSel = document.getElementById('input-season');
+                    const options = Array.from(seasonSel.options);
+                    const match = options.find(o => info.season.includes(o.value) || o.value.includes(info.season));
+                    if (match) seasonSel.value = match.value;
+                }
+                if (info.style) document.getElementById('input-style').value = info.style;
+            }
+
+            // 케어라벨 정보
+            if (data.tag_analysis && !data.tag_analysis.error) {
+                const tag = data.tag_analysis;
+                document.getElementById('tag-info').innerHTML = `
+                    <p><span class="text-text-light/50 dark:text-text-dark/50">소재:</span> ${tag.material || '-'}</p>
+                    <p><span class="text-text-light/50 dark:text-text-dark/50">사이즈:</span> ${tag.size || '-'}</p>
+                    <p><span class="text-text-light/50 dark:text-text-dark/50">브랜드:</span> ${tag.brand || '-'}</p>
+                    <p><span class="text-text-light/50 dark:text-text-dark/50">세탁:</span> ${tag.washing_instruction || '-'}</p>
+                `;
+                if (tag.size) {
+                    // 태그 사이즈를 드롭다운 옵션과 매칭
+                    const sizeSelect = document.getElementById('input-size');
+                    const sizeMap = {
+                        'XS': 'XS', 'S': 'S', 'M': 'M', 'L': 'L', 'XL': 'XL', 'XXL': 'XXL', 'FREE': 'FREE',
+                        '85': 'XS', '90': 'S', '95': 'M', '100': 'L', '105': 'XL', '110': 'XXL'
+                    };
+                    const normalizedSize = tag.size.toUpperCase().trim();
+                    sizeSelect.value = sizeMap[normalizedSize] || '';
+                }
+            }
+
+            // 스크롤
+            document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ===== 옷장 등록 =====
+        document.getElementById('register-btn').addEventListener('click', async () => {
+            const name = document.getElementById('input-name').value.trim();
+            if (!name) {
+                alert('의류명을 입력해주세요.');
+                return;
+            }
+
+            const btn = document.getElementById('register-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> 등록 중...';
+
+            try {
+                const requestData = {
+                    name: name,
+                    category: document.getElementById('input-category').value,
+                    color: document.getElementById('input-color').value || null,
+                    style: document.getElementById('input-style').value,
+                    season: document.getElementById('input-season').value,
+                    itemSize: document.getElementById('input-size').value || null,
+                    conditionGrade: analysisResult?.condition_analysis?.grade || 'A등급',
+                    detailDesc: analysisResult?.clothing_analysis?.description || '',
+                    imageBase64: processedImageBase64 ? ('data:image/png;base64,' + processedImageBase64) : null,
+                    personalNote: document.getElementById('input-rating').value || null,
+                    material: analysisResult?.tag_info?.material || analysisResult?.clothing_analysis?.material || null,
+                    materialPercentage: 100
+                };
+
+                const response = await fetch('/api/wardrobe/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ 옷장에 등록되었습니다!');
+                    window.location.href = '/wardrobe';
+                } else {
+                    alert('등록 실패: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('서버 오류: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined">add_circle</span> 옷장에 추가하기';
+            }
+        });
+    </script>
+</body>
+
+</html>

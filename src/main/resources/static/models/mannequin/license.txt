@@ -1,0 +1,11 @@
+Model Information:
+* title:	Mannequin
+* source:	https://sketchfab.com/3d-models/mannequin-92bf4d478c6043c1b471a52e275f9422
+* author:	mohamad.sherif (https://sketchfab.com/mohamad.sherif)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Mannequin" (https://sketchfab.com/3d-models/mannequin-92bf4d478c6043c1b471a52e275f9422) by mohamad.sherif (https://sketchfab.com/mohamad.sherif) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
